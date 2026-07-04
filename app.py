@@ -79,13 +79,14 @@ st.markdown("""
   [data-testid="stSidebarCollapsedControl"] { display: none !important; }
   .block-container { padding-top: 2.2rem; max-width: 1180px; }
   h1, h2, h3 { letter-spacing:-.01em; }
-  /* Primary "Analyse" button — dark orange so the white label stays legible. */
+  /* Primary "Analyse" button + selected pills — dark orange, legible white text. */
   .stButton > button[kind="primary"], button[data-testid="stBaseButton-primary"],
   button[data-testid="baseButton-primary"] {
-    background-color:#b34700 !important; border-color:#b34700 !important; color:#fff !important; }
+    background-color:#9a3a00 !important; border-color:#9a3a00 !important; color:#fff !important; }
   .stButton > button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover,
   button[data-testid="baseButton-primary"]:hover {
-    background-color:#9a3d00 !important; border-color:#9a3d00 !important; color:#fff !important; }
+    background-color:#7d2f00 !important; border-color:#7d2f00 !important; color:#fff !important; }
+  [data-baseweb="tag"] { background-color:#9a3a00 !important; color:#fff !important; }
   section[data-testid="stSidebar"] { background:#0a1330; border-right:1px solid #1e2c55;
     transform: none !important; visibility: visible !important;
     width: 21rem !important; min-width: 21rem !important; margin-left: 0 !important; }
@@ -257,7 +258,8 @@ with st.sidebar:
     st.markdown("##### 1 · Client documents")
     up = st.file_uploader("Upload tuned statements (.csv / .json)", type=["csv", "json"],
                           accept_multiple_files=True)
-    picks = st.multiselect("…or load an example client statement", list(SAMPLES.keys()))
+    picks = st.pills("…or load example client statements", list(SAMPLES.keys()),
+                     selection_mode="multi") or []
     b1, b2 = st.columns(2)
     if b1.button("Analyse ▸", type="primary", use_container_width=True):
         sts, labels = [], []

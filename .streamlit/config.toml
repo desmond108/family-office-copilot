@@ -1,7 +1,7 @@
-# Meridian Family Office — navy/gold identity to match the artifact copilot.
+# Meridian Family Office — navy identity with a dark-orange action accent.
 [theme]
 base = "dark"
-primaryColor = "#c8a24a"
+primaryColor = "#9a3a00"   # dark orange: buttons + selected pills read with white text
 backgroundColor = "#0b1430"
 secondaryBackgroundColor = "#131f45"
 textColor = "#e8ecf7"
