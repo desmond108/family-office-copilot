@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -78,6 +79,13 @@ st.markdown("""
   [data-testid="stSidebarCollapsedControl"] { display: none !important; }
   .block-container { padding-top: 2.2rem; max-width: 1180px; }
   h1, h2, h3 { letter-spacing:-.01em; }
+  /* Primary "Analyse" button — dark orange so the white label stays legible. */
+  .stButton > button[kind="primary"], button[data-testid="stBaseButton-primary"],
+  button[data-testid="baseButton-primary"] {
+    background-color:#b34700 !important; border-color:#b34700 !important; color:#fff !important; }
+  .stButton > button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover,
+  button[data-testid="baseButton-primary"]:hover {
+    background-color:#9a3d00 !important; border-color:#9a3d00 !important; color:#fff !important; }
   section[data-testid="stSidebar"] { background:#0a1330; border-right:1px solid #1e2c55;
     transform: none !important; visibility: visible !important;
     width: 21rem !important; min-width: 21rem !important; margin-left: 0 !important; }
@@ -204,6 +212,15 @@ def pill(text: str, color: str) -> str:
     return f"<span class='pill' style='background:{color}'>{text}</span>"
 
 
+def statement_html(path: Path) -> str:
+    """Prepare a formatted statement for inline display: drop the red training
+    banner, and force a white page so its dark text is legible inside the app's
+    dark theme (the statement is styled for a white/print background)."""
+    html = path.read_text()
+    html = re.sub(r'<div class="sample">.*?</div>', "", html, count=1)
+    return html.replace("</head>", "<style>html,body{background:#fff;margin:0;}</style></head>")
+
+
 # --------------------------------------------------------------------------- #
 # State
 # --------------------------------------------------------------------------- #
@@ -242,7 +259,7 @@ with st.sidebar:
                           accept_multiple_files=True)
     picks = st.multiselect("…or load an example client statement", list(SAMPLES.keys()))
     b1, b2 = st.columns(2)
-    if b1.button("Digest ▸", type="primary", use_container_width=True):
+    if b1.button("Analyse ▸", type="primary", use_container_width=True):
         sts, labels = [], []
         for f in (up or []):
             try:
@@ -285,7 +302,7 @@ with st.sidebar:
                     unsafe_allow_html=True)
         st.markdown(f"<div class='prov'>{_book.prov}</div>", unsafe_allow_html=True)
     else:
-        st.info("Add documents above and press **Digest ▸** to begin.")
+        st.info("Add documents above and press **Analyse ▸** to begin.")
 
     st.divider()
     st.markdown("##### Navigate")
@@ -311,13 +328,13 @@ view = st.session_state["view"]
 
 
 def need_book():
-    st.info("👈 Load the client's documents in the sidebar and press **Digest ▸** first.")
+    st.info("👈 Load the client's documents in the sidebar and press **Analyse ▸** first.")
 
 
 # ---- Intake (parameters; documents live in the sidebar) ---- #
 if view == "Intake":
     st.caption("Set the mandate, risk appetite and parameters. Load documents in the sidebar, "
-               "then Digest — every view recomputes from the real engines.")
+               "then Analyse — every view recomputes from the real engines.")
     c2, c3 = st.columns(2, gap="large")
     with c2:
         st.markdown("##### Mandate & risk")
@@ -347,7 +364,7 @@ if view == "Intake":
         ec[1].checkbox("Real estate", key="excl_real_estate")
         ec[2].checkbox("Commodities", key="excl_commodity")
     if statements:
-        st.caption("Documents are digested — switch to **Overview** (sidebar) to see the book, "
+        st.caption("Documents are analysed — switch to **Overview** (sidebar) to see the book, "
                    "or adjust the parameters above and the other views will recompute.")
 
 # ---- Sample statements (view the raw inputs; no digested book required) ---- #
@@ -361,7 +378,7 @@ elif view == "Sample statements":
     html_path = Path(__file__).parent / SAMPLE_HTML.get(fname, "")
     if html_path.is_file():
         st.markdown("**Formatted statement** — the same layout as the PDF, rendered inline:")
-        components.html(html_path.read_text(), height=900, scrolling=True)
+        components.html(statement_html(html_path), height=900, scrolling=True)
 
     pdf = Path(__file__).parent / SAMPLE_PDF.get(fname, "")
     if pdf.is_file():
