@@ -1,7 +1,10 @@
 # Family Office Copilot — Streamlit app (app.py)
-# Install:  pip install -r requirements.txt
+# Demo/POC mode (DEMO_MODE=1, the default) needs only these two:
 streamlit>=1.40
 pandas>=2.0
-yfinance>=0.2.40      # live prices + fund fields (no API key)
-certifi>=2024.0       # TLS roots for the FRED HTTPS call in datafeed.py
-anthropic>=0.40       # optional: grounded-Claude phrasing in "Ask the book"
+
+# Optional — required ONLY when DEMO_MODE=0 (enables live data + Claude phrasing).
+# Uncomment these and add the keys (see .streamlit/secrets.toml.example) to turn them on:
+# yfinance>=0.2.40   # live prices + fund fields
+# certifi>=2024.0    # TLS roots for the FRED HTTPS call in datafeed.py
+# anthropic>=0.40    # grounded-Claude phrasing in "Ask the book"
