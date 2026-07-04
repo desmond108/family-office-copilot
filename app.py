@@ -24,6 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from statement_parser import (FX_SOURCE, STMT_DIR, TODAY, parse_csv_generic,
                               parse_custodian_c, reconcile, to_holdings)
@@ -52,6 +53,11 @@ SAMPLE_PDF = {  # formatted "training" statement matching each sample
     "custodianA_uob.csv": "Example_Statement_A_uob.pdf",
     "custodianB_eurobank.csv": "Example_Statement_B_banque_privee.pdf",
     "custodianC_familyoffice.json": "Example_Statement_C_alpine_trust.pdf",
+}
+SAMPLE_HTML = {  # the formatted statement's HTML source (same layout as the PDF)
+    "custodianA_uob.csv": "_statements_html/A_uob.html",
+    "custodianB_eurobank.csv": "_statements_html/B_banque_privee.html",
+    "custodianC_familyoffice.json": "_statements_html/C_alpine_trust.html",
 }
 ENFORCE_COLOR = {"block": "#c0563d", "flag": "#c78a2a", "disclose": "#4a9c6d", "none": "#4a9c6d"}
 TICKER_BY_ISIN = {"US78462F1030": "SPY", "US46090E1038": "QQQ"}
@@ -351,16 +357,25 @@ elif view == "Sample statements":
                "intact. This is exactly what the app ingests.")
     label = st.selectbox("Example statement", list(SAMPLES.keys()))
     fname = SAMPLES[label]
-    raw = (STMT_DIR / fname).read_text()
-    st.caption(f"Source file: `{fname}`")
-    if fname.endswith(".json"):
-        st.json(json.loads(raw))
-    else:
-        st.code(raw, language="text")
+
+    html_path = Path(__file__).parent / SAMPLE_HTML.get(fname, "")
+    if html_path.is_file():
+        st.markdown("**Formatted statement** — the same layout as the PDF, rendered inline:")
+        components.html(html_path.read_text(), height=900, scrolling=True)
+
     pdf = Path(__file__).parent / SAMPLE_PDF.get(fname, "")
     if pdf.is_file():
-        st.download_button("⬇ Download the formatted statement (PDF)", pdf.read_bytes(),
+        st.download_button("⬇ Download this statement as a PDF", pdf.read_bytes(),
                            file_name=pdf.name, mime="application/pdf")
+
+    with st.expander("Show the raw source the parser reads (CSV / JSON)"):
+        raw = (STMT_DIR / fname).read_text()
+        st.caption(f"Source file: `{fname}`")
+        if fname.endswith(".json"):
+            st.json(json.loads(raw))
+        else:
+            st.code(raw, language="text")
+
     with st.expander("See how the app parses this into positions"):
         stt = load_sample(fname)
         rows = [{"Holding": p.name, "Class": p.asset_class, "Ccy": p.currency,
