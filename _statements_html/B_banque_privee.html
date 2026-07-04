@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@page { size: A4; margin: 16mm 15mm; }
+*{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body{ margin:0; color:#1a2230; font:13px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+.sample{ background:#b5231f; color:#fff; text-align:center; font-weight:700; letter-spacing:.14em;
+  font-size:11px; padding:5px; text-transform:uppercase; }
+.doc{ padding:20px 26px; }
+.head{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--brand);
+  padding-bottom:12px; margin-bottom:16px; }
+.brand{ font-weight:800; font-size:20px; color:var(--brand); letter-spacing:-.01em; }
+.brand .sub{ display:block; font-weight:600; font-size:11px; color:#6b7386; letter-spacing:.12em;
+  text-transform:uppercase; margin-top:3px; }
+.title{ text-align:right; }
+.title h1{ margin:0; font-size:17px; }
+.title .per{ font-size:12px; color:#6b7386; }
+.parties{ display:flex; gap:24px; margin-bottom:14px; }
+.party{ flex:1; background:#f4f6fa; border:1px solid #e2e7f0; border-radius:6px; padding:11px 13px; }
+.party h4{ margin:0 0 7px; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#8a92a6; }
+.row{ display:flex; gap:8px; margin:3px 0; font-size:12px; }
+.row .k{ color:#8a92a6; min-width:96px; }
+.redact{ display:inline-block; min-width:120px; height:12px; background:repeating-linear-gradient(
+  45deg,#20242e,#20242e 5px,#33384a 5px,#33384a 10px); border-radius:2px; vertical-align:middle; }
+.tag{ font-size:9.5px; color:#b5231f; font-weight:700; margin-left:6px; vertical-align:middle; }
+table{ width:100%; border-collapse:collapse; margin:6px 0 4px; }
+th{ text-align:left; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:#8a92a6;
+  border-bottom:1.5px solid var(--brand); padding:7px 6px; }
+td{ padding:7px 6px; border-bottom:1px solid #e8ebf2; font-size:12px; }
+td.n,th.n{ text-align:right; font-variant-numeric:tabular-nums; }
+.tot td{ font-weight:700; border-top:2px solid var(--brand); border-bottom:none; }
+.sec{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--brand); font-weight:700;
+  margin:16px 0 2px; }
+.legend{ margin-top:16px; background:#fff8ec; border:1px solid #f0dcae; border-radius:6px; padding:11px 14px;
+  font-size:11px; color:#5a4a25; }
+.legend b{ color:#3a2f10; }
+.legend .keep{ color:#2f7a52; font-weight:700; }
+.legend .cut{ color:#b5231f; font-weight:700; }
+.foot{ margin-top:14px; font-size:9.5px; color:#9aa0b0; border-top:1px solid #e8ebf2; padding-top:8px; }
+.note{ font-size:10px; color:#8a92a6; font-style:italic; }
+</style>
+<style>:root{--brand:#1f3a5f}</style></head><body><div class="sample">Sample · Tuned for training · not a live account</div><div class="doc"><div class="head"><div class="brand">Banque Privée<span class="sub">Genève</span></div><div class="title"><h1>Relevé de portefeuille</h1><div class="per">Arrêté au 02 juillet 2026</div></div></div><div class="parties"><div class="party"><h4>Account holder</h4><div class="row"><span class="k">Titulaire</span><span><span class="redact" title="redacted confidential data">&nbsp;</span><span class="tag">masqué</span></span></div><div class="row"><span class="k">Adresse</span><span><span class="redact" title="redacted confidential data">&nbsp;</span></span></div><div class="row"><span class="k">Domicile</span><span><span class="redact" title="redacted confidential data">&nbsp;</span></span></div></div><div class="party"><h4>Account &amp; custody</h4><div class="row"><span class="k">N° de compte</span><span><span class="redact" title="redacted confidential data">&nbsp;</span><span class="tag">masqué</span></span></div><div class="row"><span class="k">Devise de réf.</span><span>USD</span></div><div class="row"><span class="k">Conseiller</span><span><span class="redact" title="redacted confidential data">&nbsp;</span></span></div><div class="row"><span class="k">Au</span><span>02.07.2026</span></div></div></div><div class="sec">Positions du portefeuille</div><table><thead><tr><th>Désignation</th><th>Code</th><th>Catégorie</th><th class="n">Nominal / Qté</th><th class="n">Cours</th><th>Devise</th><th class="n">Valeur (devise)</th></tr></thead><tbody><tr><td>Bund 2.3% 07/2031</td><td>XS2345678901</td><td>fixed_income</td><td class="n">200,000</td><td class="n">98.350 %</td><td>EUR</td><td class="n">196,700.00</td></tr><tr><td>US Treasury Note 5Y</td><td>HC-USTREAS5Y <span class="tag">code interne</span></td><td>fixed_income</td><td class="n">150,000</td><td class="n">99.120 %</td><td>USD</td><td class="n">148,680.00</td></tr><tr><td>Euro Equity Fund (acc)</td><td>HC-EUEQ <span class="tag">code interne</span></td><td>equity</td><td class="n">1,200</td><td class="n">145.60</td><td>EUR</td><td class="n">174,720.00</td></tr><tr><td>CHF cash balance</td><td>CHF <span class="tag">code interne</span></td><td>cash</td><td class="n">80,000</td><td class="n">1.00</td><td>CHF</td><td class="n">80,000.00</td></tr></tbody></table><p class="note">Obligations valorisées en % du nominal. Valeurs exprimées en devise de la position; conversion en USD effectuée par la banque au taux du jour. Total déclaré (contre-valeur USD): 639 050,00.</p><div class="legend"><b>Training note — this is a TUNED statement.</b> <span class="cut">Removed (confidential):</span> client name, residential address, account number, relationship-manager name, contact details. <span class="keep">Retained (needed for analysis):</span> instrument names &amp; codes, quantities/nominal, prices, currencies, valuations and dates. The black bars mark redacted fields — learn to confirm every one is removed before a statement leaves the office.</div><div class="foot">Statement generated for educational use. Figures are illustrative. This document does not constitute advice, an offer, or a solicitation.</div></div></body></html>

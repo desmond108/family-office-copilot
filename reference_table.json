@@ -1,0 +1,25 @@
+{
+  "_README": "Verified reference facts that no free feed provides (bond effective duration; real 30-day SEC yield where the factsheet gives it). Each ticker row carries its source (issuer factsheet) and as_of (factsheet date). Values read directly from the official factsheet PDFs on 2026-07-03; PDFs archived in ./_factsheets/. Refresh each quarter when new factsheets publish.",
+  "VCIT": {
+    "effective_duration": 6.1,
+    "source": "Vanguard fact sheet F3146 (fund-docs.vanguard.com/F3146.pdf)",
+    "as_of": "2026-03-31"
+  },
+  "BND": {
+    "effective_duration": 5.7,
+    "source": "Vanguard fact sheet F0928 (fund-docs.vanguard.com/F0928.pdf)",
+    "as_of": "2026-03-31"
+  },
+  "AGG": {
+    "effective_duration": 5.78,
+    "sec_yield_30d": 4.31,
+    "source": "iShares AGG fact sheet (ishares.com, as of 2026-03-31)",
+    "as_of": "2026-03-31"
+  },
+  "IEF": {
+    "effective_duration": 6.98,
+    "sec_yield_30d": 4.07,
+    "source": "iShares IEF fact sheet (blackrock.com, as of 2026-03-31)",
+    "as_of": "2026-03-31"
+  }
+}

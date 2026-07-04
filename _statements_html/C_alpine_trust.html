@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@page { size: A4; margin: 16mm 15mm; }
+*{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body{ margin:0; color:#1a2230; font:13px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+.sample{ background:#b5231f; color:#fff; text-align:center; font-weight:700; letter-spacing:.14em;
+  font-size:11px; padding:5px; text-transform:uppercase; }
+.doc{ padding:20px 26px; }
+.head{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--brand);
+  padding-bottom:12px; margin-bottom:16px; }
+.brand{ font-weight:800; font-size:20px; color:var(--brand); letter-spacing:-.01em; }
+.brand .sub{ display:block; font-weight:600; font-size:11px; color:#6b7386; letter-spacing:.12em;
+  text-transform:uppercase; margin-top:3px; }
+.title{ text-align:right; }
+.title h1{ margin:0; font-size:17px; }
+.title .per{ font-size:12px; color:#6b7386; }
+.parties{ display:flex; gap:24px; margin-bottom:14px; }
+.party{ flex:1; background:#f4f6fa; border:1px solid #e2e7f0; border-radius:6px; padding:11px 13px; }
+.party h4{ margin:0 0 7px; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:#8a92a6; }
+.row{ display:flex; gap:8px; margin:3px 0; font-size:12px; }
+.row .k{ color:#8a92a6; min-width:96px; }
+.redact{ display:inline-block; min-width:120px; height:12px; background:repeating-linear-gradient(
+  45deg,#20242e,#20242e 5px,#33384a 5px,#33384a 10px); border-radius:2px; vertical-align:middle; }
+.tag{ font-size:9.5px; color:#b5231f; font-weight:700; margin-left:6px; vertical-align:middle; }
+table{ width:100%; border-collapse:collapse; margin:6px 0 4px; }
+th{ text-align:left; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; color:#8a92a6;
+  border-bottom:1.5px solid var(--brand); padding:7px 6px; }
+td{ padding:7px 6px; border-bottom:1px solid #e8ebf2; font-size:12px; }
+td.n,th.n{ text-align:right; font-variant-numeric:tabular-nums; }
+.tot td{ font-weight:700; border-top:2px solid var(--brand); border-bottom:none; }
+.sec{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--brand); font-weight:700;
+  margin:16px 0 2px; }
+.legend{ margin-top:16px; background:#fff8ec; border:1px solid #f0dcae; border-radius:6px; padding:11px 14px;
+  font-size:11px; color:#5a4a25; }
+.legend b{ color:#3a2f10; }
+.legend .keep{ color:#2f7a52; font-weight:700; }
+.legend .cut{ color:#b5231f; font-weight:700; }
+.foot{ margin-top:14px; font-size:9.5px; color:#9aa0b0; border-top:1px solid #e8ebf2; padding-top:8px; }
+.note{ font-size:10px; color:#8a92a6; font-style:italic; }
+</style>
+<style>:root{--brand:#2f5d50}</style></head><body><div class="sample">Sample · Tuned for training · not a live account</div><div class="doc"><div class="head"><div class="brand">Alpine Trust<span class="sub">Services · SPV Administration</span></div><div class="title"><h1>Statement of Trust Assets</h1><div class="per">As at 02 July 2026</div></div></div><div class="parties"><div class="party"><h4>Account holder</h4><div class="row"><span class="k">Beneficial owner</span><span><span class="redact" title="redacted confidential data">&nbsp;</span><span class="tag">redacted</span></span></div><div class="row"><span class="k">Settlor</span><span><span class="redact" title="redacted confidential data">&nbsp;</span></span></div><div class="row"><span class="k">Correspondence</span><span><span class="redact" title="redacted confidential data">&nbsp;</span></span></div></div><div class="party"><h4>Account &amp; custody</h4><div class="row"><span class="k">Entity</span><span>Holdco-2<span class="tag">retained</span></span></div><div class="row"><span class="k">Structure</span><span>SPV / Trust</span></div><div class="row"><span class="k">Trustee contact</span><span><span class="redact" title="redacted confidential data">&nbsp;</span></span></div><div class="row"><span class="k">As of</span><span>02 Jul 2026</span></div></div></div><div class="sec">Investments — manual valuations</div><table><thead><tr><th>Holding</th><th>Class</th><th>Valuation basis</th><th class="n">NAV (USD)</th><th class="n">NAV date</th></tr></thead><tbody><tr><td>Evergreen Private Equity Fund III</td><td>alternatives</td><td>manual nav</td><td class="n">1,800,000.00</td><td class="n">2026-03-31</td></tr><tr><td>Direct Real Estate — Zurich office</td><td>real_estate</td><td>manual nav</td><td class="n">2,500,000.00</td><td class="n">2025-12-31</td></tr><tr class="tot"><td colspan="3">Total investments (USD)</td><td class="n">4,300,000.00</td><td></td></tr></tbody></table><div class="sec">Financing</div><table><thead><tr><th>Facility</th><th>Ccy</th><th class="n">Balance (USD)</th><th class="n">Rate</th></tr></thead><tbody><tr><td>Lombard Loan</td><td>USD</td><td class="n">-900,000.00</td><td class="n">5.50%</td></tr></tbody></table><p class="note">Net asset value after financing: 3,400,000.00 USD. Alternatives and direct real estate carry manual NAVs struck at the dates shown — these lag public markets and should be treated as stale between valuation cycles. The entity name is retained (it is not personal data); the underlying individuals are redacted.</p><div class="legend"><b>Training note — this is a TUNED statement.</b> <span class="cut">Removed (confidential):</span> client name, residential address, account number, relationship-manager name, contact details. <span class="keep">Retained (needed for analysis):</span> instrument names &amp; codes, quantities/nominal, prices, currencies, valuations and dates. The black bars mark redacted fields — learn to confirm every one is removed before a statement leaves the office.</div><div class="foot">Statement generated for educational use. Figures are illustrative. This document does not constitute advice, an offer, or a solicitation.</div></div></body></html>

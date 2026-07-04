@@ -1,0 +1,11 @@
+# Meridian Family Office — navy/gold identity to match the artifact copilot.
+[theme]
+base = "dark"
+primaryColor = "#c8a24a"
+backgroundColor = "#0b1430"
+secondaryBackgroundColor = "#131f45"
+textColor = "#e8ecf7"
+font = "sans serif"
+
+[server]
+headless = true

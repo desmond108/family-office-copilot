@@ -1,0 +1,6 @@
+# custodian=UOB Private Bank | Holdings (tuned — PII removed) | base_ccy=USD | as_of=2026-07-02 | stated_total_usd=611300.00 | entity=ENT-A | account_class=custody
+type,identifier,id_type,name,asset_class,quantity,price,price_ccy,valuation_basis
+ETF,US78462F1030,ISIN,SPDR S&P 500 ETF,equity,300,660.00,USD,per_share
+ETF,US46090E1038,ISIN,Invesco QQQ Trust,equity,150,748.00,USD,per_share
+MMF,SGOV,TICKER,iShares 0-3 Month Treasury ETF,cash,2500,100.44,USD,per_share
+CASH,USD,CCY,USD cash balance,cash,50000,1.00,USD,per_share

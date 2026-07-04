@@ -1,0 +1,281 @@
+
+<style>
+:root{
+  --bg:#e9edf4; --panel:#ffffff; --rail:#0f1b3d; --rail-ink:#c7d0ea; --rail-active:#1b2c5c;
+  --ink:#15223f; --ink-soft:#5a648a; --line:#dbe1ee; --gold:#9c7a24;
+  --ok:#2f7a52; --ok-bg:#e4f1e9; --warn:#9a6410; --warn-bg:#f7ebd2; --crit:#a8442f; --crit-bg:#f6ddd6;
+  --mono-ink:#6b7599;
+  --serif:"Hoefler Text","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#080f24; --panel:#111d42; --rail:#0a1330; --rail-ink:#9fb0d8; --rail-active:#1a2a55;
+  --ink:#eaeefa; --ink-soft:#93a0c4; --line:#25335c; --gold:#d2ac57;
+  --ok:#5cc08a; --ok-bg:#173026; --warn:#e8b866; --warn-bg:#33290f; --crit:#e0876a; --crit-bg:#331d16;
+  --mono-ink:#8592b8;
+}}
+:root[data-theme="light"]{
+  --bg:#e9edf4; --panel:#ffffff; --rail:#0f1b3d; --rail-ink:#c7d0ea; --rail-active:#1b2c5c;
+  --ink:#15223f; --ink-soft:#5a648a; --line:#dbe1ee; --gold:#9c7a24;
+  --ok:#2f7a52; --ok-bg:#e4f1e9; --warn:#9a6410; --warn-bg:#f7ebd2; --crit:#a8442f; --crit-bg:#f6ddd6; --mono-ink:#6b7599;
+}
+:root[data-theme="dark"]{
+  --bg:#080f24; --panel:#111d42; --rail:#0a1330; --rail-ink:#9fb0d8; --rail-active:#1a2a55;
+  --ink:#eaeefa; --ink-soft:#93a0c4; --line:#25335c; --gold:#d2ac57;
+  --ok:#5cc08a; --ok-bg:#173026; --warn:#e8b866; --warn-bg:#33290f; --crit:#e0876a; --crit-bg:#331d16; --mono-ink:#8592b8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+/* rail */
+.rail{background:var(--rail);color:var(--rail-ink);padding:22px 14px;display:flex;flex-direction:column;gap:4px}
+.brand{color:#fff;font-family:var(--serif);font-size:18px;font-weight:600;line-height:1.15;margin:2px 8px 4px}
+.brand b{color:var(--gold);display:block;font-family:var(--mono);font-size:9.5px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;margin-top:5px}
+.nav{background:none;border:none;color:var(--rail-ink);font:inherit;font-size:13.5px;text-align:left;
+  padding:9px 12px;border-radius:7px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.nav:hover{background:var(--rail-active)}
+.nav.on{background:var(--rail-active);color:#fff;font-weight:600}
+.nav .dot{font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px}
+.dot.crit{background:var(--crit);color:#fff}.dot.warn{background:var(--warn);color:#1a1206}
+.rail .foot{margin-top:auto;font-family:var(--mono);font-size:9.5px;color:var(--rail-ink);opacity:.6;padding:10px 8px;line-height:1.5}
+/* main */
+.main{padding:26px 30px 60px;max-width:1040px}
+.view{display:none}.view.on{display:block}
+h1{font-family:var(--serif);font-size:26px;font-weight:600;margin:0 0 3px;letter-spacing:-.01em}
+.sub{color:var(--ink-soft);font-size:13px;margin:0 0 20px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:22px 0 10px;font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.k-lab{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em}
+.k-val{font-family:var(--serif);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:5px;line-height:1}
+.k-src{font-family:var(--mono);font-size:9.5px;color:var(--mono-ink);margin-top:7px;line-height:1.3}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:grid;grid-template-columns:120px 1fr 84px;align-items:center;gap:12px;font-size:13px}
+.bar-track{background:var(--line);border-radius:5px;height:9px;overflow:hidden}
+.bar-fill{height:100%;background:var(--gold);border-radius:5px}
+.bar-val{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;font-size:12px;color:var(--ink-soft)}
+.att{display:flex;flex-direction:column;gap:0}
+.att-row{display:flex;gap:11px;align-items:baseline;padding:10px 2px;border-bottom:1px solid var(--line)}
+.att-row:last-child{border:none}
+.pill{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+.pill.block,.pill.crit{background:var(--crit-bg);color:var(--crit)}
+.pill.flag,.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.disclose,.pill.ok{background:var(--ok-bg);color:var(--ok)}
+.att-d{font-size:13px}
+/* ask */
+.askwrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+.askbar{display:flex;gap:10px}
+#q{flex:1;font:inherit;font-size:15px;padding:12px 14px;border:1.5px solid var(--line);border-radius:9px;
+  background:var(--bg);color:var(--ink)}
+#q:focus{outline:none;border-color:var(--gold)}
+.askbtn{font:inherit;font-weight:600;font-size:14px;padding:0 20px;border:none;border-radius:9px;
+  background:var(--rail);color:#fff;cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.chip{font-size:12px;padding:6px 11px;border:1px solid var(--line);border-radius:20px;background:none;
+  color:var(--ink-soft);cursor:pointer}
+.chip:hover{border-color:var(--gold);color:var(--ink)}
+#ans{margin-top:18px}
+.ans-sum{font-size:16px;line-height:1.5;font-family:var(--serif)}
+.ans-facts{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.fact{display:grid;grid-template-columns:200px 1fr;gap:12px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--line)}
+.fact .fl{color:var(--ink-soft)}.fact .fv{font-variant-numeric:tabular-nums}
+.fact .src{grid-column:1/-1;font-family:var(--mono);font-size:10px;color:var(--mono-ink);margin-top:1px}
+.disc{font-family:var(--mono);font-size:10.5px;color:var(--mono-ink);margin-top:14px;line-height:1.5}
+/* tables */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);
+  border-bottom:1px solid var(--line);padding:8px 8px}
+td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.warnflag{color:var(--crit);font-family:var(--mono);font-size:11px}
+.cust-h{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.05em;margin:16px 0 4px;font-weight:700}
+@media(max-width:760px){.app{grid-template-columns:1fr}.rail{flex-direction:row;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+  .rail .foot{display:none}.brand{width:100%}}
+</style>
+
+<div class="app">
+  <nav class="rail">
+    <div class="brand">Meridian<span style="font-family:var(--serif);font-weight:600"> Family Office</span><b>AI Copilot · Confidential</b></div>
+    <button class="nav on" data-view="overview">Overview</button>
+    <button class="nav" data-view="ask">Ask the book</button>
+    <button class="nav" data-view="holdings">Holdings <span id="nh" class="dot"></span></button>
+    <button class="nav" data-view="suit">Suitability <span id="ns" class="dot"></span></button>
+    <button class="nav" data-view="dq">Data quality <span id="nd" class="dot"></span></button>
+    <div class="foot" id="prov"></div>
+  </nav>
+  <main class="main">
+    <section class="view on" id="v-overview">
+      <h1>Consolidated overview</h1>
+      <p class="sub" id="ov-sub"></p>
+      <div class="kpis" id="kpis"></div>
+      <div class="eyebrow">Allocation by asset class</div>
+      <div class="card"><div class="bars" id="alloc"></div></div>
+      <div class="eyebrow">Needs attention</div>
+      <div class="card"><div class="att" id="attn"></div></div>
+    </section>
+
+    <section class="view" id="v-ask">
+      <h1>Ask the book</h1>
+      <p class="sub">Answers are computed from the consolidated statements — every figure shows its source.</p>
+      <div class="askwrap">
+        <div class="askbar">
+          <input id="q" placeholder="e.g. How much is unhedged? What's my largest position?" />
+          <button class="askbtn" onclick="ask(document.getElementById('q').value)">Ask</button>
+        </div>
+        <div class="chips" id="chips"></div>
+        <div id="ans"></div>
+        <div class="disc">Numbers come from the deterministic engine over the embedded book; the assistant
+          never invents a figure. In production the same computed answer is phrased by a grounded LLM.</div>
+      </div>
+    </section>
+
+    <section class="view" id="v-holdings">
+      <h1>Holdings by custodian</h1>
+      <p class="sub">Two entities · three custodians · consolidated to a USD base.</p>
+      <div id="holdings"></div>
+    </section>
+
+    <section class="view" id="v-suit">
+      <h1>Suitability</h1>
+      <p class="sub">The consolidated book checked against the family's mandate bands.</p>
+      <div class="card"><div class="att" id="suit"></div></div>
+    </section>
+
+    <section class="view" id="v-dq">
+      <h1>Data quality</h1>
+      <p class="sub">Surfaced, not silently corrected — resolve before the book is treated as clean.</p>
+      <div class="card"><div class="att" id="dq"></div></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const DATA = {"as_of": "2026-07-02", "provenance": "parsed from 3 custodian statements (as of 2026-07-02); non-USD converted via static demo FX table (wire to a live FX feed)", "gross": 5549913.6, "debt": 900000, "net": 4649913.6, "positions": [{"name": "SPDR S&P 500 ETF", "asset_class": "equity", "instrument_type": "equity_etf", "custodian": "UOB Private Bank", "entity": "ENT-A", "currency": "USD", "value": 198000.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "Invesco QQQ Trust", "asset_class": "equity", "instrument_type": "equity_etf", "custodian": "UOB Private Bank", "entity": "ENT-A", "currency": "USD", "value": 112200.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "iShares 0-3 Month Treasury ETF", "asset_class": "cash", "instrument_type": "money_market", "custodian": "UOB Private Bank", "entity": "ENT-A", "currency": "USD", "value": 251100.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "USD cash balance", "asset_class": "cash", "instrument_type": "cash", "custodian": "UOB Private Bank", "entity": "ENT-A", "currency": "USD", "value": 50000.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "Bund 2.3% 07/2031", "asset_class": "fixed_income", "instrument_type": "govt_bond", "custodian": "Banque Priv\u00e9e", "entity": "ENT-A", "currency": "EUR", "value": 212436.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "US Treasury Note 5Y", "asset_class": "fixed_income", "instrument_type": "govt_bond", "custodian": "Banque Priv\u00e9e", "entity": "ENT-A", "currency": "USD", "value": 148680.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "Euro Equity Fund (acc)", "asset_class": "equity", "instrument_type": "equity_etf", "custodian": "Banque Priv\u00e9e", "entity": "ENT-A", "currency": "EUR", "value": 188697.6, "flags": ["unresolved house-code 'HC-EUEQ' \u2014 needs instrument mapping"], "resolved": false, "val_as_of": "2026-07-02"}, {"name": "CHF cash balance", "asset_class": "cash", "instrument_type": "cash", "custodian": "Banque Priv\u00e9e", "entity": "ENT-A", "currency": "CHF", "value": 88800.0, "flags": [], "resolved": true, "val_as_of": "2026-07-02"}, {"name": "Evergreen Private Equity Fund III", "asset_class": "alternatives", "instrument_type": "alternative", "custodian": "Alpine Trust Services (SPV)", "entity": "Holdco-2", "currency": "USD", "value": 1800000.0, "flags": [], "resolved": true, "val_as_of": "2026-03-31"}, {"name": "Direct Real Estate \u2014 Zurich office", "asset_class": "real_estate", "instrument_type": "real_estate", "custodian": "Alpine Trust Services (SPV)", "entity": "Holdco-2", "currency": "USD", "value": 2500000.0, "flags": ["stale manual valuation \u2014 NAV as of 2025-12-31 (184d old)"], "resolved": true, "val_as_of": "2025-12-31"}], "suitability": [{"enforcement": "flag", "detail": "equity 9.0% below min [30%-65%]"}, {"enforcement": "flag", "detail": "fixed_income 6.5% below min [10%-40%]"}, {"enforcement": "flag", "detail": "alternatives 32.4% held but has no allocation band defined in the profile"}, {"enforcement": "flag", "detail": "real_estate 45.0% held but has no allocation band defined in the profile"}, {"enforcement": "flag", "detail": "Direct Real Estate \u2014 Zurich office 45.0% > 40% fund cap"}, {"enforcement": "disclose", "detail": "cash 7.0% near band edge [5%-90%]"}], "recon": [{"custodian": "UOB Private Bank", "ok": true, "delta": 0.0}, {"custodian": "Banque Priv\u00e9e", "ok": false, "delta": -436.4}, {"custodian": "Alpine Trust Services (SPV)", "ok": true, "delta": 0.0}]};
+const P = DATA.positions, GROSS = DATA.gross;
+const usd = x => "$" + Math.round(x).toLocaleString("en-US");
+const pct = x => (x*100).toFixed(1) + "%";
+const ILLIQ = new Set(["alternatives","real_estate"]);
+const CLASS_SYN = {
+  equity:["equity","equities","stock","shares"], fixed_income:["fixed income","bond","bonds","credit"],
+  commodity:["commodity","gold","commodities"], cash:["cash","money market"],
+  alternatives:["alternative","private equity","pe fund"], real_estate:["real estate","property","real-estate"]};
+
+/* ---- deterministic tools (mirror portfolio_qa.py) ---- */
+const sumBy = f => P.reduce((a,p)=>a+f(p),0);
+function tTotals(){const lev=DATA.debt/DATA.net;
+  return {summary:`Net worth is ${usd(DATA.net)} — ${usd(GROSS)} of assets less ${usd(DATA.debt)} of borrowing (leverage ${pct(lev)}).`,
+   facts:[["Gross assets",usd(GROSS),DATA.provenance],["Liabilities",usd(DATA.debt),"Lombard loan, Alpine Trust statement"],
+    ["Net worth",usd(DATA.net),"gross − liabilities"],["Leverage",pct(lev),"debt ÷ net worth"]]};}
+function tByClass(cls){const v=sumBy(p=>p.asset_class===cls?p.value:0);
+  const names=P.filter(p=>p.asset_class===cls).map(p=>p.name);const lab=cls.replace("_"," ");
+  if(!names.length)return{summary:`There is no ${lab} exposure in the book.`,facts:[]};
+  return{summary:`${lab[0].toUpperCase()+lab.slice(1)} exposure is ${usd(v)} — ${pct(v/GROSS)} of gross, across ${names.length} holding(s).`,
+   facts:[[`${lab} value`,usd(v),DATA.provenance],["% of gross",pct(v/GROSS),"computed"],["Holdings",names.join(", "),"custodian statements"]]};}
+function tByCcy(){const by={};P.forEach(p=>by[p.currency]=(by[p.currency]||0)+p.value);
+  const un=Object.entries(by).filter(([c])=>c!=="USD").reduce((a,[,v])=>a+v,0);
+  const parts=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`${c} ${pct(v/GROSS)}`).join(", ");
+  return{summary:`By currency: ${parts}. Unhedged non-USD exposure is ${usd(un)} (${pct(un/GROSS)} of gross).`,
+   facts:[["Currency mix",parts,DATA.provenance],["Unhedged non-USD",`${usd(un)} (${pct(un/GROSS)})`,"FX via static demo table"]]};}
+function tByCust(name){const by={};P.forEach(p=>{(by[p.custodian]=by[p.custodian]||[]).push(p)});
+  let keys=Object.keys(by);if(name){const m=keys.filter(k=>k.toLowerCase().includes(name));if(m.length)keys=m;}
+  return{summary:"Holdings by custodian: "+keys.map(k=>`${k} ${usd(by[k].reduce((a,p)=>a+p.value,0))}`).join("; ")+".",
+   facts:keys.map(k=>[k,`${usd(by[k].reduce((a,p)=>a+p.value,0))} · ${by[k].length} holdings`,`${k} statement`])};}
+function tSuit(){const b=DATA.suitability.filter(f=>f.enforcement!=="none"&&f.enforcement!=="disclose");
+  if(!b.length)return{summary:"The book is within all defined suitability bands.",facts:[]};
+  return{summary:`${b.length} suitability issue(s) need attention.`,facts:b.map(f=>[f.enforcement,f.detail,"suitability engine"])};}
+function tConc(){const t=[...P].sort((a,b)=>b.value-a.value).slice(0,3);
+  return{summary:`Largest position is ${t[0].name} at ${usd(t[0].value)} (${pct(t[0].value/GROSS)} of gross).`,
+   facts:t.map(p=>[p.name,`${usd(p.value)} (${pct(p.value/GROSS)})`,`${p.custodian} statement`])};}
+function tRate(){const fi=P.filter(p=>p.asset_class==="fixed_income");const t=fi.reduce((a,p)=>a+p.value,0);
+  return{summary:`Fixed-income exposure is ${usd(t)} across ${fi.length} bond(s). A precise +100bp impact needs each bond's effective duration, which is not sourced for these instruments — the assistant will not estimate it.`,
+   facts:fi.map(p=>[p.name,usd(p.value),"duration not sourced → [SOURCE REQUIRED]"])};}
+function tLiq(){const l=sumBy(p=>ILLIQ.has(p.asset_class)?0:p.value);const il=GROSS-l;
+  return{summary:`Liquid holdings are ${usd(l)} (${pct(l/GROSS)}); illiquid (alternatives + real estate) are ${usd(il)} (${pct(il/GROSS)}).`,
+   facts:[["Liquid",`${usd(l)} (${pct(l/GROSS)})`,DATA.provenance],["Illiquid",`${usd(il)} (${pct(il/GROSS)})`,"alternatives + real estate"]]};}
+function tDQ(){const f=[];DATA.recon.forEach(r=>{if(!r.ok)f.push(["reconciliation",`${r.custodian}: Δ $${r.delta.toLocaleString()}`,"parsed vs stated total"]);});
+  P.forEach(p=>(p.flags||[]).forEach(x=>f.push(["data flag",`${p.name}: ${x}`,`${p.custodian} statement`])));
+  if(!f.length)return{summary:"No data-quality issues detected.",facts:[]};
+  return{summary:`${f.length} data-quality item(s) to resolve before the book is treated as clean.`,facts:f};}
+
+function route(q){const s=q.toLowerCase();
+  for(const [c,syn] of Object.entries(CLASS_SYN))
+    if(syn.some(w=>s.includes(w))&&["expos","how much","holding","have","allocation","weight"," in "].some(w=>s.includes(w)))return()=>tByClass(c);
+  if(["currency","fx"," eur"," chf","unhedged","dollar"].some(w=>s.includes(w)))return tByCcy;
+  if(["custodian","uob","banque","alpine","by bank","hold at"].some(w=>s.includes(w))){const n=["uob","banque","alpine"].find(x=>s.includes(x))||"";return()=>tByCust(n);}
+  if(["suitab","breach","mandate","complian","band","unsuitab"].some(w=>s.includes(w)))return tSuit;
+  if(["concentrat","largest","biggest","top position","single"].some(w=>s.includes(w)))return tConc;
+  if(["rate","duration","interest","+100","100bp","hike"].some(w=>s.includes(w)))return tRate;
+  if(["stale","unresolved","data qual","reconcil","clean","issue"].some(w=>s.includes(w)))return tDQ;
+  if(["liquid","illiquid"].some(w=>s.includes(w)))return tLiq;
+  if(["net worth","total","leverage","debt","borrow","worth"].some(w=>s.includes(w)))return tTotals;
+  for(const [c,syn] of Object.entries(CLASS_SYN))if(syn.some(w=>s.includes(w)))return()=>tByClass(c);
+  return tTotals;}
+
+function ask(q){if(!q||!q.trim())return;document.getElementById("q").value=q;
+  const a=route(q)();const el=document.getElementById("ans");
+  el.innerHTML=`<div class="ans-sum">${a.summary}</div>`+(a.facts.length?
+    `<div class="ans-facts">`+a.facts.map(([l,v,s])=>
+      `<div class="fact"><span class="fl">${l}</span><span class="fv">${v}</span><span class="src">${s}</span></div>`).join("")+`</div>`:"");}
+
+/* ---- render panels ---- */
+function chip(kind){return kind==="block"?"block":kind==="flag"?"flag":kind==="disclose"?"disclose":kind;}
+document.addEventListener("DOMContentLoaded",()=>{
+  const lev=DATA.debt/DATA.net, liq=sumBy(p=>ILLIQ.has(p.asset_class)?0:p.value);
+  document.getElementById("ov-sub").textContent=`As of ${DATA.as_of} · two entities · three custodians`;
+  document.getElementById("prov").textContent=DATA.provenance;
+  document.getElementById("kpis").innerHTML=[
+    ["Net worth",usd(DATA.net),"gross − liabilities"],
+    ["Gross assets",usd(GROSS),"Σ parsed holdings"],
+    ["Leverage",pct(lev),"Lombard loan ÷ net"],
+    ["Liquid",pct(liq/GROSS),"ex-alternatives / RE"]
+  ].map(([l,v,s])=>`<div class="card"><div class="k-lab">${l}</div><div class="k-val">${v}</div><div class="k-src">${s}</div></div>`).join("");
+
+  const by={};P.forEach(p=>by[p.asset_class]=(by[p.asset_class]||0)+p.value);
+  const mx=Math.max(...Object.values(by));
+  document.getElementById("alloc").innerHTML=Object.entries(by).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+    `<div class="bar-row"><span>${c.replace("_"," ")}</span><span class="bar-track"><span class="bar-fill" style="width:${v/mx*100}%"></span></span><span class="bar-val">${usd(v)} · ${pct(v/GROSS)}</span></div>`).join("");
+
+  const attn=[...tSuit().facts.map(f=>[f[0],f[1]]),...tDQ().facts.map(f=>["review",f[1]])];
+  document.getElementById("attn").innerHTML=attn.map(([k,d])=>
+    `<div class="att-row"><span class="pill ${chip(k)}">${k}</span><span class="att-d">${d}</span></div>`).join("")||'<div class="att-d">Nothing needs attention.</div>';
+
+  // rail badges
+  const nb=(id,n,cls)=>{const e=document.getElementById(id);if(n){e.textContent=n;e.className="dot "+cls;}};
+  nb("ns",DATA.suitability.filter(f=>f.enforcement==="flag"||f.enforcement==="block").length,"warn");
+  nb("nd",tDQ().facts.length,"crit");
+  nb("nh",P.length,"warn");document.getElementById("nh").style.background="var(--rail-active)";
+  document.getElementById("nh").style.color="#fff";
+
+  // holdings
+  const cust={};P.forEach(p=>{(cust[p.custodian]=cust[p.custodian]||[]).push(p)});
+  document.getElementById("holdings").innerHTML=Object.entries(cust).map(([c,ps])=>{
+    const tot=ps.reduce((a,p)=>a+p.value,0);
+    return `<div class="cust-h">${c} · ${ps[0].entity}</div><div class="card scroll"><table><thead><tr>
+      <th>Holding</th><th>Class</th><th>Ccy</th><th class="n">Value (USD)</th></tr></thead><tbody>`+
+      ps.map(p=>`<tr><td>${p.name}${p.resolved?"":' <span class="warnflag">· unresolved id</span>'}${(p.flags||[]).map(f=>`<div class="warnflag">⚠ ${f}</div>`).join("")}</td>
+        <td>${p.asset_class}</td><td>${p.currency}</td><td class="n">${usd(p.value)}</td></tr>`).join("")+
+      `<tr><td colspan="3"><b>Total</b></td><td class="n"><b>${usd(tot)}</b></td></tr></tbody></table></div>`;
+  }).join("");
+
+  document.getElementById("suit").innerHTML=DATA.suitability.map(f=>
+    `<div class="att-row"><span class="pill ${chip(f.enforcement)}">${f.enforcement}</span><span class="att-d">${f.detail}</span></div>`).join("");
+  document.getElementById("dq").innerHTML=tDQ().facts.map(f=>
+    `<div class="att-row"><span class="pill warn">${f[0]}</span><span class="att-d">${f[1]}<div class="k-src">${f[2]}</div></span></div>`).join("")
+    ||'<div class="att-d">No data-quality issues.</div>';
+
+  document.getElementById("chips").innerHTML=[
+    "How much is unhedged?","What's my largest position?","Which holdings breach my mandate?",
+    "How much of the book is illiquid?","What happens to my bonds if rates rise 1%?","Any data-quality issues?"
+  ].map(q=>`<button class="chip" onclick="ask('${q.replace(/'/g,"\\'")}')">${q}</button>`).join("");
+
+  document.querySelectorAll(".nav").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll(".nav").forEach(x=>x.classList.remove("on"));b.classList.add("on");
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+    document.getElementById("v-"+b.dataset.view).classList.add("on");
+    if(b.dataset.view==="ask")document.getElementById("q").focus();}));
+  document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter")ask(e.target.value);});
+});
+</script>

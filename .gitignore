@@ -1,0 +1,28 @@
+# --- Secrets: never commit API keys ---
+.streamlit/secrets.toml
+ALPACA_API_KEY
+ALPACA_SECRET_KEY
+FMP_API_KEY
+FRED_API_KEY
+POLYGON_API_KEY
+ANTHROPIC_API_KEY
+API_KEY_260627
+*.key
+*.pem
+.env
+.env.*
+
+# --- Runtime artifacts ---
+# continuity store written at parse time
+synthetic_statements/.account_keys.json
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# --- Local tooling / OS ---
+.claude/
+.DS_Store

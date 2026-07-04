@@ -1,0 +1,33 @@
+{
+  "custodian": "Alpine Trust Services (SPV)",
+  "base_currency": "USD",
+  "as_of": "2026-07-02",
+  "entity": "Holdco-2",
+  "account_class": "trust",
+  "stated_total_usd": 4300000.00,
+  "positions": [
+    {
+      "name": "Evergreen Private Equity Fund III",
+      "asset_class": "alternatives",
+      "instrument_type": "alternative",
+      "valuation": "manual_nav",
+      "nav_usd": 1800000,
+      "nav_as_of": "2026-03-31",
+      "identifier": null,
+      "id_type": null
+    },
+    {
+      "name": "Direct Real Estate — Zurich office",
+      "asset_class": "real_estate",
+      "instrument_type": "real_estate",
+      "valuation": "manual_nav",
+      "nav_usd": 2500000,
+      "nav_as_of": "2025-12-31",
+      "identifier": null,
+      "id_type": null
+    }
+  ],
+  "liabilities": [
+    { "type": "lombard_loan", "currency": "USD", "balance": -900000, "rate": 0.055, "as_of": "2026-07-02" }
+  ]
+}

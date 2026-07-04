@@ -1,0 +1,7 @@
+# Family Office Copilot — Streamlit app (app.py)
+# Install:  pip install -r requirements.txt
+streamlit>=1.40
+pandas>=2.0
+yfinance>=0.2.40      # live prices + fund fields (no API key)
+certifi>=2024.0       # TLS roots for the FRED HTTPS call in datafeed.py
+anthropic>=0.40       # optional: grounded-Claude phrasing in "Ask the book"
