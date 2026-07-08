@@ -1,7 +1,9 @@
 # Family Office Copilot — Streamlit app (app.py)
-# Demo/POC mode (DEMO_MODE=1, the default) needs only these two:
+# Demo/POC mode (DEMO_MODE=1, the default) needs these:
 streamlit>=1.40
 pandas>=2.0
+python-pptx>=1.0   # generate the Proposal deck as PowerPoint
+reportlab>=4.0     # generate the Proposal deck as PDF
 
 # Optional — required ONLY when DEMO_MODE=0 (enables live data + Claude phrasing).
 # Uncomment these and add the keys (see .streamlit/secrets.toml.example) to turn them on:

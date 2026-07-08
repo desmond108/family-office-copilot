@@ -38,7 +38,7 @@ from statement_parser import (FX_SOURCE, STMT_DIR, TODAY, parse_csv_generic,
 from suitability_check import (Bands, ConcentrationLimits, Constraints,
                                RiskProfile, suitability_check, worst_enforcement)
 from portfolio_qa import Book, ask, ask_ai
-from proposal_deck import deck_html
+import generate_proposal
 
 # --------------------------------------------------------------------------- #
 # Config
@@ -207,6 +207,71 @@ def rebalance(book: Book, target: dict) -> pd.DataFrame:
                      "Trade (USD)": delta, "After": (0.0 if unbanded else t),
                      "Direction": direction, "Note": note})
     return pd.DataFrame(rows)
+
+
+def proposal_model(book: Book, params: dict) -> dict:
+    """Compute the proposal deck's content from the parsed book — every value
+    from the deterministic engine (parser / suitability / rebalancer). Consumed
+    by generate_proposal's HTML / PPTX / PDF renderers so all three agree."""
+    money = lambda v: f"${v:,.0f}"
+    pct = lambda f: f"{f * 100:.1f}%"
+    positions = book.positions
+    gross, debt, net = book.gross, book.debt, book.net
+
+    alloc: dict[str, float] = {}
+    for q in positions:
+        alloc[q.asset_class] = alloc.get(q.asset_class, 0.0) + q.mv_base
+    liquid = sum(q.mv_base for q in positions if q.asset_class not in ILLIQ)
+    target = {c: params["target"][c] / 100 for c in CLASSES}
+
+    alloc_rows = []
+    for c in dict.fromkeys(CLASSES + list(alloc)):
+        cur = alloc.get(c, 0.0)
+        w = cur / gross if gross else 0.0
+        t = target.get(c)
+        drift = "—" if t is None else f"{(w - t) * 100:+.1f} pp"
+        alloc_rows.append([c.replace("_", " ").title(), money(cur), pct(w),
+                           "no target" if t is None else pct(t), drift])
+
+    reb = rebalance(book, params["target"])
+    reb_rows = [[str(r["Class"]).title(), f'{r["Before"] * 100:.1f}%', f'{r["Target"] * 100:.1f}%',
+                 f'{r["Trade (USD)"]:+,.0f}', str(r["Direction"]), str(r["Note"])]
+                for _, r in reb.iterrows()]
+    buys = reb.loc[reb["Trade (USD)"] > 1, "Trade (USD)"].sum()
+    sells = -reb.loc[reb["Trade (USD)"] < -1, "Trade (USD)"].sum()
+    net_trades = buys - sells
+
+    suit_items = [(f.enforcement, f"rule {f.rule} · {f.detail}")
+                  for f in book.suit if f.enforcement != "none"]
+    dq = [("Reconciliation", f"{c}: parsed vs stated differ by ${d:,.2f}")
+          for c, ok, d in book.recon if not ok]
+    dq += [("Data flag", f"{q.name}: {fl}") for q in positions for fl in q.flags]
+
+    notes = [f"{LABEL_BY_KEY[k]}: {params['notes'][k]}"
+             for k in ALLOC_KEYS if params["notes"].get(k)]
+    overlays = [f"{LABEL_BY_KEY[k]} {params['target_all'][k]:.1f}%"
+                for k in EXTRA_ALLOC if params["target_all"].get(k)]
+
+    return {
+        "title": "Asset Allocation Proposal",
+        "subtitle": f"Consolidated Portfolio · {money(net)} net worth",
+        "as_of": book.as_of, "prov": book.prov,
+        "meta": {"custodians": len({q.custodian for q in positions}),
+                 "entities": len({q.entity for q in positions}), "positions": len(positions),
+                 "mandate": params["mandate"], "risk": params["risk"],
+                 "ability": params["ability"]},
+        "custodian_list": sorted({q.custodian for q in positions}),
+        "metrics": [("Net worth", money(net)), ("Gross assets", money(gross)),
+                    ("Liabilities", money(debt)),
+                    ("Leverage (debt/net)", f"{debt / net:.1%}" if net else "—"),
+                    ("Liquid assets", pct(liquid / gross) if gross else "—")],
+        "gross_str": money(gross),
+        "alloc_rows": alloc_rows, "reb_rows": reb_rows,
+        "reb_summary": {"buys": money(buys), "sells": money(sells),
+                        "net": f"${net_trades:+,.0f}", "selffund": abs(net_trades) < 1000},
+        "gate": worst_enforcement(book.suit), "suit_items": suit_items,
+        "data_quality": dq, "analyst_notes": notes, "overlays": overlays,
+    }
 
 
 def resolve_ticker(q) -> str | None:
@@ -490,47 +555,38 @@ elif view == "Sample statements":
                      use_container_width=True, hide_index=True)
         st.caption("Parsed by the same real adapter used on the Intake flow.")
 
-# ---- Proposal (house-format deck + PPTX / PDF download) ---- #
+# ---- Proposal (deck GENERATED from the parsed book + PPTX / PDF download) ---- #
 elif view == "Proposal":
-    st.caption("The recommendation in the house proposal format — the same deck delivered to "
-               "the client, downloadable as PowerPoint or PDF.")
-    here = Path(__file__).parent
-    pptx = here / "Portfolio_Proposal_USD3M_English.pptx"
-    pdf = here / "Portfolio_Proposal_USD3M_English.pdf"
-    d1, d2, _ = st.columns([1, 1, 2])
-    if pptx.is_file():
-        d1.download_button("⬇ Download PPTX", pptx.read_bytes(), file_name=pptx.name,
-                           mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                           use_container_width=True)
-    if pdf.is_file():
-        d2.download_button("⬇ Download PDF", pdf.read_bytes(), file_name=pdf.name,
-                           mime="application/pdf", use_container_width=True)
-
-    if analyst_inputs_present():
-        with st.expander("Analyst inputs folded into this proposal"):
-            render_analyst_inputs()
-
-    st.markdown("**Proposal deck** — rendered inline (identical to the downloadable files):")
-    components.html(deck_html(), height=760, scrolling=True)
-
-    if book:
-        with st.expander("Live rebalancing analysis from the loaded book (before → after)"):
-            prop = rebalance(book, params["target"])
-            buys = prop.loc[prop["Trade (USD)"] > 1, "Trade (USD)"].sum()
-            sells = -prop.loc[prop["Trade (USD)"] < -1, "Trade (USD)"].sum()
-            st.dataframe(
-                prop.style.format({"Before": "{:.1%}", "Target": "{:.1%}", "After": "{:.1%}",
-                                   "Trade (USD)": "{:+,.0f}"}),
-                use_container_width=True, hide_index=True)
-            net = buys - sells
-            st.metric("Self-funding check (net of trades)", f"${net:+,.0f}",
-                      f"buys ${buys:,.0f} · sells ${sells:,.0f}",
-                      delta_color="normal" if abs(net) < 1000 else "inverse")
-            st.caption("Computed live from the parsed book by the deterministic engine. The deck "
-                       "above is the polished USD-3.0m house example used for the demo.")
+    if not book:
+        st.info("👈 Load the client's documents in the sidebar and press **Analyse ▸** — the "
+                "proposal deck is generated from the parsed book.")
     else:
-        st.caption("Load a client's documents in the sidebar to also see a live "
-                   "before → after rebalance from the parsed book.")
+        st.caption("The recommendation, generated from the loaded statements — the same deck "
+                   "you can download as PowerPoint or PDF. Every figure is computed by the "
+                   "deterministic engine from the client's holdings; nothing is invented.")
+        model = proposal_model(book, params)
+        stem = "Portfolio_Proposal_" + re.sub(r"[^A-Za-z0-9]+", "_",
+                                               st.session_state.get("source", "book"))[:40]
+        d1, d2, _ = st.columns([1, 1, 2])
+        try:
+            d1.download_button("⬇ Download PPTX", generate_proposal.render_pptx(model),
+                               file_name=f"{stem}.pptx", use_container_width=True,
+                               mime="application/vnd.openxmlformats-officedocument."
+                                    "presentationml.presentation")
+            d2.download_button("⬇ Download PDF", generate_proposal.render_pdf(model),
+                               file_name=f"{stem}.pdf", mime="application/pdf",
+                               use_container_width=True)
+        except Exception as e:  # noqa: BLE001
+            st.error(f"Deck export unavailable: {type(e).__name__} — {e}. "
+                     "Add `python-pptx` and `reportlab` to requirements.txt.")
+
+        if analyst_inputs_present():
+            with st.expander("Analyst inputs folded into this proposal"):
+                render_analyst_inputs()
+
+        st.markdown("**Proposal deck** — generated from the parsed book (identical to the "
+                    "downloads above):")
+        components.html(generate_proposal.render_html(model), height=760, scrolling=True)
 
 elif not book:
     need_book()
