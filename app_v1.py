@@ -1,10 +1,4 @@
-"""app_v2.py — the Family Office Copilot (Version 2), driven by the REAL engines.
-
-Version 2 adds, on top of app.py: a sidebar uploader for other documents (emails,
-notes, research); FX + structured-products overlay sleeves in Allocation & limits;
-a free-text note per sleeve; an "Ability to take risk" (capacity) input alongside
-risk appetite; and a Proposal page that renders the house-format deck inline
-(proposal_deck.py) with PPTX / PDF download buttons.
+"""app.py — the Family Office Copilot as a Streamlit app, driven by the REAL engines.
 
 Unlike the browser artifact (which needed a JavaScript re-implementation of the
 parser and suitability rules), this runs the actual Python modules server-side:
@@ -18,7 +12,7 @@ Layout mirrors the artifact: a light left rail (brand + live book status) and a
 spacious tabbed workspace whose first tab is a three-column intake page. No number
 is invented; every figure carries provenance.
 
-Run:  streamlit run app_v2.py
+Run:  streamlit run app.py
       (first time:  pip install -r requirements.txt)
 """
 from __future__ import annotations
@@ -38,23 +32,11 @@ from statement_parser import (FX_SOURCE, STMT_DIR, TODAY, parse_csv_generic,
 from suitability_check import (Bands, ConcentrationLimits, Constraints,
                                RiskProfile, suitability_check, worst_enforcement)
 from portfolio_qa import Book, ask, ask_ai
-from proposal_deck import deck_html
 
 # --------------------------------------------------------------------------- #
 # Config
 # --------------------------------------------------------------------------- #
 CLASSES = ["equity", "fixed_income", "commodity", "cash"]
-# Allocation options shown on the Intake page. The first four are the asset
-# classes the parser + suitability engine understand; FX and structured products
-# (v2) are policy-overlay sleeves the analyst sizes and annotates — captured as
-# input to the proposal, not fabricated into the deterministic book figures.
-ALLOC_OPTIONS = [
-    ("equity", "Equity"), ("fixed_income", "Fixed income"),
-    ("commodity", "Commodity"), ("cash", "Cash"),
-    ("fx", "FX"), ("structured_products", "Structured products"),
-]
-ALLOC_KEYS = [k for k, _ in ALLOC_OPTIONS]
-EXTRA_ALLOC = ["fx", "structured_products"]  # not modelled by the engine
 ILLIQ = {"alternatives", "real_estate"}
 PRESETS = {  # target allocation in PERCENT
     "Conservative": {"equity": 20, "fixed_income": 45, "commodity": 5, "cash": 30},
@@ -86,8 +68,8 @@ TICKER_BY_ISIN = {"US78462F1030": "SPY", "US46090E1038": "QQQ"}
 # Default ON. Flip it off in production by setting DEMO_MODE=0 as an env var / secret.
 DEMO_MODE = os.environ.get("DEMO_MODE", "1").lower() not in ("0", "false", "no", "off")
 
-st.set_page_config(page_title="Meridian Family Office Copilot · v2", page_icon="🏛️",
-                   layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Meridian Family Office Copilot", page_icon="🏛️", layout="wide",
+                   initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -249,19 +231,15 @@ def apply_preset():
 
 
 def init_state():
-    defaults = {"risk": "Balanced", "ability": "Medium", "mandate": "advisory",
-                "complex": "Yes", "accredited": "Yes",
+    defaults = {"risk": "Balanced", "mandate": "advisory", "complex": "Yes", "accredited": "Yes",
                 "tol": 15.0, "minliq": 10.0, "maxfx": 30.0, "maxpos": 40.0,
                 "horizon": 10, "baseccy": "USD", "usperson": "No", "objective": "balanced",
                 "excl_alternatives": False, "excl_real_estate": False, "excl_commodity": False,
-                "statements": [], "source": "", "live": False, "view": "Intake",
-                "other_docs": [], "t_fx": 0.0, "t_structured_products": 0.0}
+                "statements": [], "source": "", "live": False, "view": "Intake"}
     for k, v in defaults.items():
         st.session_state.setdefault(k, v)
     for c, v in PRESETS["Balanced"].items():
         st.session_state.setdefault(f"t_{c}", float(v))
-    for k in ALLOC_KEYS:  # per-sleeve free-text notes (v2)
-        st.session_state.setdefault(f"note_{k}", "")
 
 
 init_state()
@@ -273,9 +251,8 @@ init_state()
 statements = st.session_state["statements"]
 
 with st.sidebar:
-    st.markdown("<div class='brand'>Meridian<br><b style='font-size:13px'>Family Office</b>"
-                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v2</span>"
-                "</div>", unsafe_allow_html=True)
+    st.markdown("<div class='brand'>Meridian<br><b style='font-size:13px'>Family Office</b></div>",
+                unsafe_allow_html=True)
     st.markdown("<div class='kicker'>AI Copilot · Confidential</div>", unsafe_allow_html=True)
     st.divider()
     st.markdown("##### 1 · Client documents")
@@ -329,23 +306,6 @@ with st.sidebar:
     else:
         st.info("Add documents above and press **Analyse ▸** to begin.")
 
-    # --- Other documents (v2): emails, notes, research — extra context ------ #
-    st.divider()
-    st.markdown("##### 2 · Other documents")
-    st.caption("Emails, meeting notes, internal or external research — extra context for "
-               "the copilot alongside the statements.")
-    other = st.file_uploader(
-        "Upload emails, notes, research (.pdf / .docx / .txt / .md / .eml / .msg)",
-        type=["pdf", "docx", "doc", "txt", "md", "eml", "msg", "rtf", "html", "png", "jpg"],
-        accept_multiple_files=True, key="other_uploader")
-    st.session_state["other_docs"] = [{"name": f.name, "size": f.size} for f in (other or [])]
-    if st.session_state["other_docs"]:
-        st.markdown(
-            "<div class='prov'>Attached: "
-            + " · ".join(f"{d['name']} ({d['size'] / 1024:,.0f} KB)"
-                         for d in st.session_state["other_docs"])
-            + "</div>", unsafe_allow_html=True)
-
     st.divider()
     st.markdown("##### Navigate")
     st.radio("Navigate", ["Intake", "Sample statements", "Overview", "Holdings", "Suitability",
@@ -357,47 +317,16 @@ with st.sidebar:
 # Main — view dispatch (navigation lives in the sidebar rail)
 # --------------------------------------------------------------------------- #
 st.title("Family Office Copilot")
-st.caption("Version 2")
 
 params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk"],
-          "ability": st.session_state["ability"],
           "complex": st.session_state["complex"], "tol": st.session_state["tol"],
           "minliq": st.session_state["minliq"], "maxfx": st.session_state["maxfx"],
           "maxpos": st.session_state["maxpos"],
           "target": {c: st.session_state[f"t_{c}"] for c in CLASSES},
-          "target_all": {k: st.session_state[f"t_{k}"] for k in ALLOC_KEYS},
-          "notes": {k: st.session_state[f"note_{k}"].strip() for k in ALLOC_KEYS},
           "excl": {c: st.session_state[f"excl_{c}"]
                    for c in ("alternatives", "real_estate", "commodity")}}
 book = build_book(statements, build_profile(params)) if statements else None
 view = st.session_state["view"]
-
-
-def analyst_inputs_present() -> bool:
-    """Any of the v2 free-text notes / other-docs supplied by the analyst?"""
-    return (any(params["notes"].values())
-            or bool(st.session_state.get("other_docs"))
-            or any(st.session_state[f"t_{k}"] for k in EXTRA_ALLOC))
-
-
-def render_analyst_inputs():
-    """Surface the captured notes, overlay sleeves and attachments — the human
-    context the copilot folds into the proposal (never invented into figures)."""
-    notes = {LABEL_BY_KEY[k]: v for k, v in params["notes"].items() if v}
-    overlays = {LABEL_BY_KEY[k]: st.session_state[f"t_{k}"]
-                for k in EXTRA_ALLOC if st.session_state[f"t_{k}"]}
-    docs = st.session_state.get("other_docs", [])
-    if overlays:
-        st.markdown("**Overlay sleeves (policy targets):** "
-                    + " · ".join(f"{k} {v:.1f}%" for k, v in overlays.items()))
-    if docs:
-        st.markdown("**Attached documents:** "
-                    + " · ".join(d["name"] for d in docs))
-    for label, text in notes.items():
-        st.markdown(f"- **{label} note:** {text}")
-
-
-LABEL_BY_KEY = dict(ALLOC_OPTIONS)
 
 
 def need_book():
@@ -413,11 +342,6 @@ if view == "Intake":
         st.markdown("##### Mandate & risk")
         st.selectbox("Mandate", ["execution_only", "advisory", "discretionary"], key="mandate")
         st.selectbox("Risk appetite", list(PRESETS.keys()), key="risk", on_change=apply_preset)
-        st.caption("Willingness to take risk — drives the target allocation preset above.")
-        st.selectbox("Ability to take risk",
-                     ["Low", "Below average", "Medium", "Above average", "High"], key="ability")
-        st.caption("Capacity to absorb loss (liquidity, horizon, income) — independent of "
-                   "appetite; the lower of the two should govern.")
         st.selectbox("Objective", ["preservation", "income", "balanced", "growth"], key="objective")
         cc = st.columns(2)
         cc[0].number_input("Time horizon (yrs)", 1, 40, key="horizon")
@@ -426,17 +350,12 @@ if view == "Intake":
         st.radio("US person? (tax)", ["No", "Yes"], horizontal=True, key="usperson")
     with c3:
         st.markdown("##### Allocation & limits")
-        st.caption("Target weight and a free-text note per sleeve. FX and structured products "
-                   "(v2) are overlay sleeves captured for the proposal — the core four drive "
-                   "the live suitability engine.")
         tot = 0.0
-        for k, label in ALLOC_OPTIONS:
-            row = st.columns([1, 1.6])
-            row[0].number_input(label, 0.0, 100.0, step=0.1, key=f"t_{k}")
-            row[1].text_input(f"{label} note", key=f"note_{k}", label_visibility="hidden",
-                              placeholder=f"Notes on {label.lower()}…")
-            tot += st.session_state[f"t_{k}"]
-        (st.success if abs(tot - 100) < 0.05 else st.error)(f"Target total (6 sleeves) {tot:.1f}%")
+        ac = st.columns(2)
+        for i, c in enumerate(CLASSES):
+            ac[i % 2].number_input(c.replace("_", " ").title(), 0.0, 100.0, step=0.1, key=f"t_{c}")
+            tot += st.session_state[f"t_{c}"]
+        (st.success if abs(tot - 100) < 0.05 else st.error)(f"Target total {tot:.1f}%")
         st.slider("Band tolerance (±)", 5.0, 30.0, step=0.5, key="tol", format="%.1f%%")
         st.slider("Minimum liquidity", 0.0, 50.0, step=0.5, key="minliq", format="%.1f%%")
         st.slider("Max unhedged FX", 0.0, 60.0, step=0.5, key="maxfx", format="%.1f%%")
@@ -446,12 +365,6 @@ if view == "Intake":
         ec[0].checkbox("Alternatives", key="excl_alternatives")
         ec[1].checkbox("Real estate", key="excl_real_estate")
         ec[2].checkbox("Commodities", key="excl_commodity")
-    if analyst_inputs_present():
-        st.divider()
-        st.markdown("##### Analyst inputs the copilot will incorporate")
-        st.caption("Free-text notes, overlay sleeves and attached documents — folded into the "
-                   "proposal as human context. Figures are never invented from them.")
-        render_analyst_inputs()
     if statements:
         st.caption("Documents are analysed — switch to **Overview** (sidebar) to see the book, "
                    "or adjust the parameters above and the other views will recompute.")
@@ -489,48 +402,6 @@ elif view == "Sample statements":
         st.dataframe(pd.DataFrame(rows).style.format({"Value (USD)": "${:,.0f}"}),
                      use_container_width=True, hide_index=True)
         st.caption("Parsed by the same real adapter used on the Intake flow.")
-
-# ---- Proposal (house-format deck + PPTX / PDF download) ---- #
-elif view == "Proposal":
-    st.caption("The recommendation in the house proposal format — the same deck delivered to "
-               "the client, downloadable as PowerPoint or PDF.")
-    here = Path(__file__).parent
-    pptx = here / "Portfolio_Proposal_USD3M_English.pptx"
-    pdf = here / "Portfolio_Proposal_USD3M_English.pdf"
-    d1, d2, _ = st.columns([1, 1, 2])
-    if pptx.is_file():
-        d1.download_button("⬇ Download PPTX", pptx.read_bytes(), file_name=pptx.name,
-                           mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                           use_container_width=True)
-    if pdf.is_file():
-        d2.download_button("⬇ Download PDF", pdf.read_bytes(), file_name=pdf.name,
-                           mime="application/pdf", use_container_width=True)
-
-    if analyst_inputs_present():
-        with st.expander("Analyst inputs folded into this proposal"):
-            render_analyst_inputs()
-
-    st.markdown("**Proposal deck** — rendered inline (identical to the downloadable files):")
-    components.html(deck_html(), height=760, scrolling=True)
-
-    if book:
-        with st.expander("Live rebalancing analysis from the loaded book (before → after)"):
-            prop = rebalance(book, params["target"])
-            buys = prop.loc[prop["Trade (USD)"] > 1, "Trade (USD)"].sum()
-            sells = -prop.loc[prop["Trade (USD)"] < -1, "Trade (USD)"].sum()
-            st.dataframe(
-                prop.style.format({"Before": "{:.1%}", "Target": "{:.1%}", "After": "{:.1%}",
-                                   "Trade (USD)": "{:+,.0f}"}),
-                use_container_width=True, hide_index=True)
-            net = buys - sells
-            st.metric("Self-funding check (net of trades)", f"${net:+,.0f}",
-                      f"buys ${buys:,.0f} · sells ${sells:,.0f}",
-                      delta_color="normal" if abs(net) < 1000 else "inverse")
-            st.caption("Computed live from the parsed book by the deterministic engine. The deck "
-                       "above is the polished USD-3.0m house example used for the demo.")
-    else:
-        st.caption("Load a client's documents in the sidebar to also see a live "
-                   "before → after rebalance from the parsed book.")
 
 elif not book:
     need_book()
@@ -638,6 +509,30 @@ elif view == "Data quality":
     for kind, detail in items:
         st.markdown(f"{pill('review', '#c78a2a')}&nbsp; <b>{kind}</b> · {detail}",
                     unsafe_allow_html=True)
+
+# ---- Proposal ---- #
+elif view == "Proposal":
+    st.subheader("Rebalancing proposal — before → after")
+    prop = rebalance(book, params["target"])
+    buys = prop.loc[prop["Trade (USD)"] > 1, "Trade (USD)"].sum()
+    sells = -prop.loc[prop["Trade (USD)"] < -1, "Trade (USD)"].sum()
+    st.dataframe(
+        prop.style.format({"Before": "{:.1%}", "Target": "{:.1%}", "After": "{:.1%}",
+                           "Trade (USD)": "{:+,.0f}"}),
+        use_container_width=True, hide_index=True)
+    net = buys - sells
+    breaches = [f for f in book.suit if f.enforcement in ("block", "flag")]
+    fixed = len([f for f in breaches if any(x in f.detail for x in
+                 ("below min", "above max", "cap", "no allocation", "exclusion list"))])
+    st.metric("Self-funding check (net of trades)", f"${net:+,.0f}",
+              f"buys ${buys:,.0f} · sells ${sells:,.0f}",
+              delta_color="normal" if abs(net) < 1000 else "inverse")
+    st.info(f"Rebalancing the target classes to policy weight clears **{fixed}** "
+            f"allocation-band / single-position breach(es); trades net to ≈$0 (self-funding) "
+            f"and leverage of {book.debt / book.net:.1%} is unchanged. Illiquid sleeves "
+            f"(alternatives, real estate) cannot be traded on demand — either amend the "
+            f"mandate to add those sleeves to the target, or stage the reduction against "
+            f"redemption windows. FX and liquidity depend on the instruments purchased.")
 
 # ---- Ask the book ---- #
 elif view == "Ask the book":
