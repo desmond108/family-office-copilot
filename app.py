@@ -320,25 +320,40 @@ LIMITS = {"tol": ("Band tolerance (±)", 5.0, 30.0), "minliq": ("Minimum liquidi
           "maxfx": ("Max unhedged FX", 0.0, 60.0), "maxpos": ("Max single position", 10.0, 60.0)}
 
 
-def _sync_limit(key: str, src: str):
-    """Mirror a limit edited via one control (slider 'sl' / number 'ni') onto the
-    canonical key and the sibling control, so both stay in lock-step."""
-    val = st.session_state[f"{key}_{src}"]
+def _set_limit(key: str, val: float, lo: float, hi: float):
+    """Write a clamped value onto the canonical key and both sibling controls."""
+    val = min(hi, max(lo, round(val, 1)))
     st.session_state[key] = val
     st.session_state[f"{key}_sl"] = val
     st.session_state[f"{key}_ni"] = val
 
 
+def _sync_limit(key: str, src: str, lo: float, hi: float):
+    """Mirror a limit edited via slider ('sl') or number ('ni') onto the others."""
+    _set_limit(key, st.session_state[f"{key}_{src}"], lo, hi)
+
+
+def _step_limit(key: str, delta: float, lo: float, hi: float):
+    """+/- button: nudge the limit by one step, clamped to range."""
+    _set_limit(key, st.session_state[key] + delta, lo, hi)
+
+
 def linked_limit(key: str, lo: float, hi: float, step: float = 0.5):
-    """A slider + numeric box bound to the same value (st.session_state[key])."""
+    """A slider plus a numeric box with − / + step buttons, all bound to the same
+    value (st.session_state[key]) and kept in lock-step."""
     label = LIMITS[key][0]
     st.session_state.setdefault(f"{key}_sl", st.session_state[key])
     st.session_state.setdefault(f"{key}_ni", st.session_state[key])
-    sl, ni = st.columns([3, 1])
-    sl.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
-              on_change=_sync_limit, args=(key, "sl"))
-    ni.number_input(label, lo, hi, step=step, key=f"{key}_ni", format="%.1f",
-                    on_change=_sync_limit, args=(key, "ni"), label_visibility="hidden")
+    st.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
+              on_change=_sync_limit, args=(key, "sl", lo, hi))
+    minus, box, plus = st.columns([1, 3, 1])
+    minus.button("−", key=f"{key}_minus", use_container_width=True,
+                 on_click=_step_limit, args=(key, -step, lo, hi))
+    box.number_input(label, lo, hi, step=step, key=f"{key}_ni", format="%.1f",
+                     on_change=_sync_limit, args=(key, "ni", lo, hi),
+                     label_visibility="collapsed")
+    plus.button("+", key=f"{key}_plus", use_container_width=True,
+                on_click=_step_limit, args=(key, step, lo, hi))
 
 
 def init_state():
@@ -535,7 +550,11 @@ if view == "Intake":
                               placeholder=f"Notes on {label.lower()}…")
             tot += st.session_state[f"t_{k}"]
         (st.success if abs(tot - 100) < 0.05 else st.error)(f"Target total (6 sleeves) {tot:.1f}%")
-        st.caption("Each limit takes a slider **or** the numeric box beside it — they stay in sync.")
+        st.text_area("Additional considerations for the analysis", key="alloc_notes",
+                     placeholder="Anything else the copilot should weigh — constraints, client "
+                                 "preferences, upcoming liquidity events, tax or regulatory notes…")
+        st.caption("Each limit takes a slider **or** the numeric box (with − / + steppers) — "
+                   "they stay in sync.")
         for _k, (_lo, _hi) in {"tol": (5.0, 30.0), "minliq": (0.0, 50.0),
                                "maxfx": (0.0, 60.0), "maxpos": (10.0, 60.0)}.items():
             linked_limit(_k, _lo, _hi)
@@ -544,9 +563,6 @@ if view == "Intake":
         ec[0].checkbox("Alternatives", key="excl_alternatives")
         ec[1].checkbox("Real estate", key="excl_real_estate")
         ec[2].checkbox("Commodities", key="excl_commodity")
-        st.text_area("Additional considerations for the analysis", key="alloc_notes",
-                     placeholder="Anything else the copilot should weigh — constraints, client "
-                                 "preferences, upcoming liquidity events, tax or regulatory notes…")
     if analyst_inputs_present():
         st.divider()
         st.markdown("##### Analyst inputs the copilot will incorporate")
