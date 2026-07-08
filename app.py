@@ -333,29 +333,17 @@ def _sync_limit(key: str, src: str, lo: float, hi: float):
     _set_limit(key, st.session_state[f"{key}_{src}"], lo, hi)
 
 
-def _step_limit(key: str, delta: float, lo: float, hi: float):
-    """+/- button: nudge the limit by one step, clamped to range."""
-    _set_limit(key, st.session_state[key] + delta, lo, hi)
-
-
 def linked_limit(key: str, lo: float, hi: float, step: float = 0.5):
-    """One row: a slider next to a compact − / numeric-box / + stepper, all bound
-    to the same value (st.session_state[key]) and kept in lock-step."""
+    """One row: a numeric box (styled like the allocation-sleeve inputs) next to a
+    slider, both bound to the same value (st.session_state[key]) and kept in sync."""
     label = LIMITS[key][0]
     st.session_state.setdefault(f"{key}_sl", st.session_state[key])
     st.session_state.setdefault(f"{key}_ni", st.session_state[key])
-    st.markdown(f"<div style='font-size:0.86rem;margin:4px 0 -8px'>{label}</div>",
-                unsafe_allow_html=True)
-    sl, minus, box, plus = st.columns([6, 1, 2, 1], vertical_alignment="center")
-    sl.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
-              on_change=_sync_limit, args=(key, "sl", lo, hi), label_visibility="collapsed")
-    minus.button("−", key=f"{key}_minus", use_container_width=True,
-                 on_click=_step_limit, args=(key, -step, lo, hi))
+    box, sl = st.columns([1, 1.6])
     box.number_input(label, lo, hi, step=step, key=f"{key}_ni", format="%.1f",
-                     on_change=_sync_limit, args=(key, "ni", lo, hi),
-                     label_visibility="collapsed")
-    plus.button("+", key=f"{key}_plus", use_container_width=True,
-                on_click=_step_limit, args=(key, step, lo, hi))
+                     on_change=_sync_limit, args=(key, "ni", lo, hi))
+    sl.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
+              on_change=_sync_limit, args=(key, "sl", lo, hi), label_visibility="hidden")
 
 
 def init_state():
@@ -555,8 +543,7 @@ if view == "Intake":
         st.text_area("Additional considerations for the analysis", key="alloc_notes",
                      placeholder="Anything else the copilot should weigh — constraints, client "
                                  "preferences, upcoming liquidity events, tax or regulatory notes…")
-        st.caption("Each limit takes a slider **or** the numeric box (with − / + steppers) — "
-                   "they stay in sync.")
+        st.caption("Each limit takes a slider **or** the numeric box beside it — they stay in sync.")
         for _k, (_lo, _hi) in {"tol": (5.0, 30.0), "minliq": (0.0, 50.0),
                                "maxfx": (0.0, 60.0), "maxpos": (10.0, 60.0)}.items():
             linked_limit(_k, _lo, _hi)
