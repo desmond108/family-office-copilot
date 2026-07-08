@@ -529,7 +529,7 @@ if view == "Intake":
     with c3:
         st.markdown("##### Allocation & limits")
         st.caption("Target weight and a free-text note per sleeve. FX and structured products "
-                   "(v2) are overlay sleeves captured for the proposal — the core four drive "
+                   "are overlay sleeves captured for the proposal — the core four drive "
                    "the live suitability engine.")
         tot = 0.0
         for k, label in ALLOC_OPTIONS:
