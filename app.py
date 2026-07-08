@@ -249,6 +249,8 @@ def proposal_model(book: Book, params: dict) -> dict:
 
     notes = [f"{LABEL_BY_KEY[k]}: {params['notes'][k]}"
              for k in ALLOC_KEYS if params["notes"].get(k)]
+    if params.get("considerations"):
+        notes.append(f"Additional considerations: {params['considerations']}")
     overlays = [f"{LABEL_BY_KEY[k]} {params['target_all'][k]:.1f}%"
                 for k in EXTRA_ALLOC if params["target_all"].get(k)]
 
@@ -313,6 +315,32 @@ def apply_preset():
         st.session_state[f"t_{c}"] = float(v)
 
 
+# Limits the analyst can set with EITHER a slider or a numeric box (kept in sync).
+LIMITS = {"tol": ("Band tolerance (±)", 5.0, 30.0), "minliq": ("Minimum liquidity", 0.0, 50.0),
+          "maxfx": ("Max unhedged FX", 0.0, 60.0), "maxpos": ("Max single position", 10.0, 60.0)}
+
+
+def _sync_limit(key: str, src: str):
+    """Mirror a limit edited via one control (slider 'sl' / number 'ni') onto the
+    canonical key and the sibling control, so both stay in lock-step."""
+    val = st.session_state[f"{key}_{src}"]
+    st.session_state[key] = val
+    st.session_state[f"{key}_sl"] = val
+    st.session_state[f"{key}_ni"] = val
+
+
+def linked_limit(key: str, lo: float, hi: float, step: float = 0.5):
+    """A slider + numeric box bound to the same value (st.session_state[key])."""
+    label = LIMITS[key][0]
+    st.session_state.setdefault(f"{key}_sl", st.session_state[key])
+    st.session_state.setdefault(f"{key}_ni", st.session_state[key])
+    sl, ni = st.columns([3, 1])
+    sl.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
+              on_change=_sync_limit, args=(key, "sl"))
+    ni.number_input(label, lo, hi, step=step, key=f"{key}_ni", format="%.1f",
+                    on_change=_sync_limit, args=(key, "ni"), label_visibility="hidden")
+
+
 def init_state():
     defaults = {"risk": "Balanced", "ability": "Medium", "mandate": "advisory",
                 "complex": "Yes", "accredited": "Yes",
@@ -320,7 +348,8 @@ def init_state():
                 "horizon": 10, "baseccy": "USD", "usperson": "No", "objective": "balanced",
                 "excl_alternatives": False, "excl_real_estate": False, "excl_commodity": False,
                 "statements": [], "source": "", "live": False, "view": "Intake",
-                "other_docs": [], "t_fx": 0.0, "t_structured_products": 0.0}
+                "other_docs": [], "t_fx": 0.0, "t_structured_products": 0.0,
+                "alloc_notes": ""}
     for k, v in defaults.items():
         st.session_state.setdefault(k, v)
     for c, v in PRESETS["Balanced"].items():
@@ -432,6 +461,7 @@ params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk
           "target": {c: st.session_state[f"t_{c}"] for c in CLASSES},
           "target_all": {k: st.session_state[f"t_{k}"] for k in ALLOC_KEYS},
           "notes": {k: st.session_state[f"note_{k}"].strip() for k in ALLOC_KEYS},
+          "considerations": st.session_state["alloc_notes"].strip(),
           "excl": {c: st.session_state[f"excl_{c}"]
                    for c in ("alternatives", "real_estate", "commodity")}}
 book = build_book(statements, build_profile(params)) if statements else None
@@ -441,6 +471,7 @@ view = st.session_state["view"]
 def analyst_inputs_present() -> bool:
     """Any of the v2 free-text notes / other-docs supplied by the analyst?"""
     return (any(params["notes"].values())
+            or bool(params.get("considerations"))
             or bool(st.session_state.get("other_docs"))
             or any(st.session_state[f"t_{k}"] for k in EXTRA_ALLOC))
 
@@ -460,6 +491,8 @@ def render_analyst_inputs():
                     + " · ".join(d["name"] for d in docs))
     for label, text in notes.items():
         st.markdown(f"- **{label} note:** {text}")
+    if params.get("considerations"):
+        st.markdown(f"**Additional considerations:** {params['considerations']}")
 
 
 LABEL_BY_KEY = dict(ALLOC_OPTIONS)
@@ -502,15 +535,18 @@ if view == "Intake":
                               placeholder=f"Notes on {label.lower()}…")
             tot += st.session_state[f"t_{k}"]
         (st.success if abs(tot - 100) < 0.05 else st.error)(f"Target total (6 sleeves) {tot:.1f}%")
-        st.slider("Band tolerance (±)", 5.0, 30.0, step=0.5, key="tol", format="%.1f%%")
-        st.slider("Minimum liquidity", 0.0, 50.0, step=0.5, key="minliq", format="%.1f%%")
-        st.slider("Max unhedged FX", 0.0, 60.0, step=0.5, key="maxfx", format="%.1f%%")
-        st.slider("Max single position", 10.0, 60.0, step=0.5, key="maxpos", format="%.1f%%")
+        st.caption("Each limit takes a slider **or** the numeric box beside it — they stay in sync.")
+        for _k, (_lo, _hi) in {"tol": (5.0, 30.0), "minliq": (0.0, 50.0),
+                               "maxfx": (0.0, 60.0), "maxpos": (10.0, 60.0)}.items():
+            linked_limit(_k, _lo, _hi)
         st.markdown("**Exclusions (won't hold)**")
         ec = st.columns(3)
         ec[0].checkbox("Alternatives", key="excl_alternatives")
         ec[1].checkbox("Real estate", key="excl_real_estate")
         ec[2].checkbox("Commodities", key="excl_commodity")
+        st.text_area("Additional considerations for the analysis", key="alloc_notes",
+                     placeholder="Anything else the copilot should weigh — constraints, client "
+                                 "preferences, upcoming liquidity events, tax or regulatory notes…")
     if analyst_inputs_present():
         st.divider()
         st.markdown("##### Analyst inputs the copilot will incorporate")
