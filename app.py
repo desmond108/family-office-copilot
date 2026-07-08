@@ -456,7 +456,6 @@ with st.sidebar:
 # Main — view dispatch (navigation lives in the sidebar rail)
 # --------------------------------------------------------------------------- #
 st.title("Family Office Copilot")
-st.caption("Version 2")
 
 params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk"],
           "ability": st.session_state["ability"],
