@@ -38,7 +38,9 @@ from statement_parser import (FX_SOURCE, STMT_DIR, TODAY, parse_csv_generic,
 from suitability_check import (Bands, ConcentrationLimits, Constraints,
                                RiskProfile, suitability_check, worst_enforcement)
 from portfolio_qa import Book, ask, ask_ai
+from datafeed import resolve_key
 import generate_proposal
+import narrative
 
 # --------------------------------------------------------------------------- #
 # Config
@@ -270,7 +272,7 @@ def proposal_model(book: Book, params: dict) -> dict:
         "gross_str": money(gross),
         "alloc_rows": alloc_rows, "reb_rows": reb_rows,
         "reb_summary": {"buys": money(buys), "sells": money(sells),
-                        "net": f"${net_trades:+,.0f}", "selffund": abs(net_trades) < 1000},
+                        "net": f"${net_trades:+,.0f}", "selffund": bool(abs(net_trades) < 1000)},
         "gate": worst_enforcement(book.suit), "suit_items": suit_items,
         "data_quality": dq, "analyst_notes": notes, "overlays": overlays,
     }
@@ -606,6 +608,56 @@ elif view == "Proposal":
                    "you can download as PowerPoint or PDF. Every figure is computed by the "
                    "deterministic engine from the client's holdings; nothing is invented.")
         model = proposal_model(book, params)
+
+        # ---- v3: grounded CIO commentary (optional LLM narrative) --------- #
+        narr_key = resolve_key("ANTHROPIC_API_KEY") or resolve_key("API_KEY_260627")
+        llm_on = (not DEMO_MODE) and bool(narr_key)
+        with st.expander("💬 CIO commentary — generate a grounded narrative", expanded=False):
+            st.caption(
+                "An optional Claude-written commentary layered on top of the deck. It is "
+                "grounded strictly on the computed figures (the FACTS block) and shaped by "
+                "your sleeve notes and considerations (analyst guidance) — Claude may quote "
+                "the numbers but never invents or alters them. Tables and charts stay "
+                "deterministic.")
+            if "narr_prompt" not in st.session_state:
+                st.session_state["narr_prompt"] = narrative.build_prompt(model)
+            if st.button("↻ Rebuild prompt from current inputs"):
+                st.session_state["narr_prompt"] = narrative.build_prompt(model)
+            st.text_area(
+                "Prompt sent to Claude (editable)", key="narr_prompt", height=280,
+                help="Edit freely before generating. The FACTS block is the only source of "
+                     "numbers; the analyst guidance is intent and context, not figures.")
+            gen = st.button("✨ Generate commentary", type="primary")
+            if not llm_on:
+                st.caption("🔒 Claude is disabled in demo mode / no API key — **Generate** "
+                           "produces a deterministic grounded summary from the same figures.")
+            if gen:
+                if llm_on:
+                    try:
+                        text, src = narrative.generate_claude(
+                            st.session_state["narr_prompt"], narr_key)
+                    except Exception as e:  # noqa: BLE001
+                        st.warning(f"Claude unavailable ({type(e).__name__}) — using the "
+                                   "deterministic grounded summary.")
+                        text, src = narrative.deterministic_summary(model), "deterministic"
+                else:
+                    text, src = narrative.deterministic_summary(model), "deterministic"
+                st.session_state["narrative_text"] = text
+                st.session_state["narrative_src"] = src
+            if st.session_state.get("narrative_text"):
+                src = st.session_state.get("narrative_src", "deterministic")
+                badge = ("Claude · claude-opus-4-8" if src == "claude"
+                         else "deterministic fallback (no model call)")
+                st.markdown(f"**Generated commentary** · _{badge}_")
+                st.write(st.session_state["narrative_text"])
+                st.caption("Folded into the deck below and the PPTX/PDF downloads as a "
+                           "commentary slide after the cover.")
+                if st.button("✕ Clear commentary"):
+                    st.session_state.pop("narrative_text", None)
+                    st.session_state.pop("narrative_src", None)
+        if st.session_state.get("narrative_text"):
+            model["narrative"] = st.session_state["narrative_text"]
+
         stem = "Portfolio_Proposal_" + re.sub(r"[^A-Za-z0-9]+", "_",
                                                st.session_state.get("source", "book"))[:40]
         d1, d2, _ = st.columns([1, 1, 2])

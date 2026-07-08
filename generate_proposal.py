@@ -56,9 +56,17 @@ def _stat(lab, big):
             f'<div class="big">{html.escape(big)}</div></div>')
 
 
+def _narr_paras(text: str) -> str:
+    """Split a narrative string into <p> paragraphs for the HTML deck."""
+    return "".join(f'<p class="note" style="font-size:14px;line-height:1.6">'
+                   f'{html.escape(p.strip())}</p>'
+                   for p in text.split("\n\n") if p.strip())
+
+
 def render_html(m: dict) -> str:
     meta = m["meta"]
     ent = "entity" if meta["entities"] == 1 else "entities"
+    off = 1 if m.get("narrative") else 0
 
     s1 = _slide(1, "", "", (
         '<div class="eyebrow">Portfolio Proposal · Confidential</div>'
@@ -70,8 +78,17 @@ def render_html(m: dict) -> str:
         f'invented.</div>'
         f'<div class="stamp">As of {html.escape(str(m["as_of"]))}</div>'), cover=True)
 
+    snarr = ""
+    if m.get("narrative"):
+        snarr = _slide(2, "Investment Commentary", "Chief Investment Office — Commentary", (
+            _narr_paras(m["narrative"])
+            + '<p class="note" style="color:#9AA4C4"><b>Note:</b> This commentary is '
+            'generated prose grounded strictly in the deterministic figures shown in the '
+            'following slides; it quotes those figures but does not compute or alter any of '
+            'them. For discussion only; not investment advice.</p>'))
+
     stats = "".join(_stat(l, v) for l, v in m["metrics"])
-    s2 = _slide(2, "Position", "Current Consolidated Position", (
+    s2 = _slide(2 + off, "Position", "Current Consolidated Position", (
         f'<div class="grid2">{stats}</div>'
         f'<p class="note"><b>Mandate</b> {html.escape(meta["mandate"])} · <b>Risk appetite</b> '
         f'{html.escape(meta["risk"])} · <b>Ability to take risk</b> {html.escape(meta["ability"])}. '
@@ -82,7 +99,7 @@ def render_html(m: dict) -> str:
         ["Asset class", "Value (USD)", "% of gross", "Target", "Drift"],
         m["alloc_rows"], aligns=["left", "right", "right", "right", "right"],
         total_row=["Gross assets", m["gross_str"], "100.0%", "", ""])
-    s3 = _slide(3, "Allocation", "Current Allocation vs Target", (
+    s3 = _slide(3 + off, "Allocation", "Current Allocation vs Target", (
         atable
         + '<p class="note">Weights are computed from parsed statement values against the '
         'mandate target. Sleeves with <b>no target</b> (e.g. alternatives, real estate) are '
@@ -94,7 +111,7 @@ def render_html(m: dict) -> str:
     rs = m["reb_summary"]
     fund = ("nets to ≈$0 — self-funding" if rs["selffund"]
             else "requires external cash / raises proceeds")
-    s4 = _slide(4, "Proposal", "Rebalancing Proposal — Before → After", (
+    s4 = _slide(4 + off, "Proposal", "Rebalancing Proposal — Before → After", (
         rtable
         + f'<p class="note"><b>Buys</b> {rs["buys"]} · <b>Sells</b> {rs["sells"]} · '
         f'<b>Net of trades</b> {rs["net"]} ({fund}). Illiquid sleeves cannot be traded on '
@@ -111,7 +128,7 @@ def render_html(m: dict) -> str:
             for e, d in m["suit_items"])
     else:
         rows = '<p class="note">Book is within all defined suitability bands.</p>'
-    s5 = _slide(5, "Suitability", "Suitability of the Proposed Book", (
+    s5 = _slide(5 + off, "Suitability", "Suitability of the Proposed Book", (
         f'<p class="note" style="margin-top:0">Mandate gate · '
         f'<b>{html.escape(m["gate"])}</b></p>{rows}'))
 
@@ -137,14 +154,15 @@ def render_html(m: dict) -> str:
     if not notes_html:
         notes_html = '<p class="note" style="margin-top:0">No analyst notes captured.</p>'
 
-    s6 = _slide(6, "Data & Method", "Data Quality, Analyst Notes & Provenance", (
+    s6 = _slide(6 + off, "Data & Method", "Data Quality, Analyst Notes & Provenance", (
         '<div class="two"><div><h3>Reconciliation & data-quality flags</h3>' + dq + "</div>"
         '<div><h3>Analyst notes folded into this proposal</h3>' + notes_html
         + f'<p class="note">{html.escape(m["prov"])} Figures are computed by the deterministic '
         f'suitability / rebalancing engine; unresolved ids and stale marks are flagged, never '
         f'smoothed. For discussion only; not investment advice.</p></div></div>'))
 
-    return STYLE + '<div class="wrap">' + "".join([s1, s2, s3, s4, s5, s6]) + "</div>"
+    slides = [s1] + ([snarr] if snarr else []) + [s2, s3, s4, s5, s6]
+    return STYLE + '<div class="wrap">' + "".join(slides) + "</div>"
 
 
 # --------------------------------------------------------------------------- #
@@ -160,6 +178,7 @@ def render_pptx(m: dict) -> bytes:
         return RGBColor.from_string(hexs.lstrip("#").upper())
 
     NAVY_C, GOLD_C, SOFT_C, WHITE_C = rgb(NAVY), rgb(GOLD), rgb(SOFT), rgb("#FFFFFF")
+    off = 1 if m.get("narrative") else 0
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
     W, H = prs.slide_width, prs.slide_height
@@ -254,6 +273,23 @@ def render_pptx(m: dict) -> bytes:
     tf = textbox(s, Inches(0.8), Inches(5.9), Inches(11), Inches(0.5))
     para(tf, f"As of {m['as_of']}", 13, rgb("#C8A24A"), bold=True, first=True)
 
+    # ---- Slide 2 · CIO commentary (optional) ----------------------------- #
+    if m.get("narrative"):
+        s = prs.slides.add_slide(blank)
+        header(s, "Investment Commentary", "Chief Investment Office — Commentary")
+        tf = textbox(s, Inches(0.6), Inches(1.9), Inches(12.1), Inches(4.6))
+        first = True
+        for pblock in m["narrative"].split("\n\n"):
+            if pblock.strip():
+                para(tf, pblock.strip(), 14, NAVY_C, first=first, space=10)
+                first = False
+        tf = textbox(s, Inches(0.6), Inches(6.5), Inches(12.1), Inches(0.7))
+        para(tf, "Generated prose grounded strictly in the deterministic figures in the "
+                 "following slides — it quotes those figures but does not compute or alter "
+                 "them. For discussion only; not investment advice.", 10, rgb("#9AA4C4"),
+             first=True)
+        footer(s, 2)
+
     # ---- Slide 2 · position ---------------------------------------------- #
     s = prs.slides.add_slide(blank)
     header(s, "Position", "Current Consolidated Position")
@@ -271,7 +307,7 @@ def render_pptx(m: dict) -> bytes:
              f"{meta['ability']}.", 13, NAVY_C, bold=True, first=True, space=8)
     para(tf, "Consolidated across " + ", ".join(m["custodian_list"]) + ".", 12, SOFT_C)
     para(tf, m["prov"], 11, SOFT_C)
-    footer(s, 2)
+    footer(s, 2 + off)
 
     # ---- Slide 3 · allocation -------------------------------------------- #
     s = prs.slides.add_slide(blank)
@@ -284,7 +320,7 @@ def render_pptx(m: dict) -> bytes:
     para(tf, "Weights are computed from parsed statement values against the mandate target. "
              "Sleeves with no target (e.g. alternatives, real estate) are flagged on the "
              "suitability slide, not treated as compliant by omission.", 11, SOFT_C, first=True)
-    footer(s, 3)
+    footer(s, 3 + off)
 
     # ---- Slide 4 · rebalance --------------------------------------------- #
     s = prs.slides.add_slide(blank)
@@ -299,7 +335,7 @@ def render_pptx(m: dict) -> bytes:
     para(tf, f"Buys {rs['buys']} · Sells {rs['sells']} · Net of trades {rs['net']} ({fund}). "
              f"Illiquid sleeves cannot be traded on demand — amend the mandate to add them to "
              f"target, or stage the reduction against redemption windows.", 11, SOFT_C, first=True)
-    footer(s, 4)
+    footer(s, 4 + off)
 
     # ---- Slide 5 · suitability ------------------------------------------- #
     s = prs.slides.add_slide(blank)
@@ -311,7 +347,7 @@ def render_pptx(m: dict) -> bytes:
             para(tf, f"[{e.upper()}]  {d}", 12, rgb(ENFORCE.get(e, SOFT)), space=7)
     else:
         para(tf, "Book is within all defined suitability bands.", 12, rgb(OK))
-    footer(s, 5)
+    footer(s, 5 + off)
 
     # ---- Slide 6 · data & method ----------------------------------------- #
     s = prs.slides.add_slide(blank)
@@ -334,7 +370,7 @@ def render_pptx(m: dict) -> bytes:
         para(tf, "No analyst notes captured.", 11, SOFT_C)
     para(tf, m["prov"] + " For discussion only; not investment advice.", 10, rgb("#9AA4C4"),
          space=6)
-    footer(s, 6)
+    footer(s, 6 + off)
 
     buf = BytesIO()
     prs.save(buf)
@@ -357,6 +393,7 @@ def render_pdf(m: dict) -> bytes:
     MARGIN = 40
     NAVY_C, GOLD_C, SOFT_C, RULE_C = (HexColor(NAVY), HexColor(GOLD), HexColor(SOFT), HexColor(RULE))
     WHITE = HexColor("#FFFFFF")
+    off = 1 if m.get("narrative") else 0
 
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=PAGE)
@@ -434,6 +471,20 @@ def render_pdf(m: dict) -> bytes:
     c.drawString(MARGIN + 10, 70, f"As of {m['as_of']}")
     c.showPage()
 
+    # ---- Slide 2 · CIO commentary (optional) ----------------------------- #
+    if m.get("narrative"):
+        header("Investment Commentary", "Chief Investment Office — Commentary")
+        y = PH - 120
+        for pblock in m["narrative"].split("\n\n"):
+            if pblock.strip():
+                y = wrapped(pblock.strip(), MARGIN, y, PW - 2 * MARGIN, size=12,
+                            color=NAVY_C, leading=17) - 12
+        wrapped("Generated prose grounded strictly in the deterministic figures in the "
+                "following pages — it quotes those figures but does not compute or alter "
+                "them. For discussion only; not investment advice.", MARGIN, y - 6,
+                PW - 2 * MARGIN, size=9, color=HexColor("#9AA4C4"), leading=12)
+        footer(2); c.showPage()
+
     # ---- Slide 2 · position ---------------------------------------------- #
     header("Position", "Current Consolidated Position")
     n = len(m["metrics"]); cw = (PW - 2 * MARGIN) / n
@@ -449,7 +500,7 @@ def render_pdf(m: dict) -> bytes:
     y = wrapped("Consolidated across " + ", ".join(m["custodian_list"]) + ".", MARGIN, y - 6,
                 PW - 2 * MARGIN, size=11, color=SOFT_C)
     wrapped(m["prov"], MARGIN, y - 4, PW - 2 * MARGIN, size=10, color=SOFT_C)
-    footer(2); c.showPage()
+    footer(2 + off); c.showPage()
 
     # ---- Slide 3 · allocation -------------------------------------------- #
     header("Allocation", "Current Allocation vs Target")
@@ -461,7 +512,7 @@ def render_pdf(m: dict) -> bytes:
             "Sleeves with no target (e.g. alternatives, real estate) are flagged on the "
             "suitability slide, not treated as compliant by omission.", MARGIN, y - 20,
             PW - 2 * MARGIN, size=10, color=SOFT_C)
-    footer(3); c.showPage()
+    footer(3 + off); c.showPage()
 
     # ---- Slide 4 · rebalance --------------------------------------------- #
     header("Proposal", "Rebalancing Proposal — Before → After")
@@ -474,7 +525,7 @@ def render_pdf(m: dict) -> bytes:
             f"Illiquid sleeves cannot be traded on demand — amend the mandate to add them to "
             f"target, or stage the reduction against redemption windows.", MARGIN, y - 20,
             PW - 2 * MARGIN, size=10, color=SOFT_C)
-    footer(4); c.showPage()
+    footer(4 + off); c.showPage()
 
     # ---- Slide 5 · suitability ------------------------------------------- #
     header("Suitability", "Suitability of the Proposed Book")
@@ -488,7 +539,7 @@ def render_pdf(m: dict) -> bytes:
     else:
         wrapped("Book is within all defined suitability bands.", MARGIN, y, PW - 2 * MARGIN,
                 size=11, color=HexColor(OK))
-    footer(5); c.showPage()
+    footer(5 + off); c.showPage()
 
     # ---- Slide 6 · data & method ----------------------------------------- #
     header("Data & Method", "Data Quality, Analyst Notes & Provenance")
@@ -515,7 +566,7 @@ def render_pdf(m: dict) -> bytes:
         y = wrapped("No analyst notes captured.", rx, y, colw, size=10, color=SOFT_C) - 5
     wrapped(m["prov"] + " For discussion only; not investment advice.", rx, y - 6, colw,
             size=9, color=HexColor("#9AA4C4"), leading=12)
-    footer(6); c.showPage()
+    footer(6 + off); c.showPage()
 
     c.save()
     return buf.getvalue()

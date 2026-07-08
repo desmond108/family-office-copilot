@@ -9,4 +9,6 @@ reportlab>=4.0     # generate the Proposal deck as PDF
 # Uncomment these and add the keys (see .streamlit/secrets.toml.example) to turn them on:
 # yfinance>=0.2.40   # live prices + fund fields
 # certifi>=2024.0    # TLS roots for the FRED HTTPS call in datafeed.py
-# anthropic>=0.40    # grounded-Claude phrasing in "Ask the book"
+# anthropic>=0.40    # grounded-Claude phrasing in "Ask the book" + the CIO commentary
+#                    # on the Proposal deck (narrative.py). Without it / in DEMO_MODE both
+#                    # degrade to a deterministic grounded summary — no model call.
