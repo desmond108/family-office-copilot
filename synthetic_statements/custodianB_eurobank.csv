@@ -1,6 +1,7 @@
-# custodian=Banque Privée | Releve de portefeuille (tuned) | base_ccy=USD | as_of=2026-07-02 | stated_total_usd=639050.00 | entity=ENT-A | account_class=custody | sep=';' | decimal=','
+# custodian=Banque Privée | Releve de portefeuille (tuned) | base_ccy=USD | as_of=2026-07-02 | stated_total_usd=759050.00 | entity=ENT-A | account_class=custody | sep=';' | decimal=','
 categorie;code;code_type;libelle;classe;nominal_ou_qte;cours;devise;base_valo
 Obligation;XS2345678901;ISIN;Bund 2.3% 07/2031;fixed_income;200000;98,350;EUR;pct_nominal
 Obligation;HC-USTREAS5Y;HOUSE;US Treasury Note 5Y;fixed_income;150000;99,120;USD;pct_nominal
 Fonds;HC-EUEQ;HOUSE;Euro Equity Fund (acc);equity;1200;145,60;EUR;par_part
 Liquidite;CHF;CCY;CHF cash balance;cash;80000;1,00;CHF;par_part
+Change;EURUSD;CCY;Couverture de change EUR/USD (overlay FX);fx;1;120000,00;USD;par_part
