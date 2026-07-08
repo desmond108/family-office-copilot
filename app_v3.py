@@ -54,17 +54,26 @@ import narrative
 # --------------------------------------------------------------------------- #
 CLASSES = ["equity", "fixed_income", "commodity", "cash"]
 # Allocation options shown on the Intake page. The first four are the asset
-# classes the parser + suitability engine understand; FX and structured products
-# (v2) are policy-overlay sleeves the analyst sizes and annotates — captured as
-# input to the proposal, not fabricated into the deterministic book figures.
+# classes the parser + suitability engine always understand; FX and structured
+# products are the extra two. All six share one 100% target budget, and any of the
+# six that carries a target weight drives the suitability engine (allocation bands)
+# and the rebalance — see banded_keys(). The engine never fabricates holdings: an
+# unheld weighted sleeve simply reads 0% held and is checked/rebalanced to target.
 ALLOC_OPTIONS = [
     ("equity", "Equity"), ("fixed_income", "Fixed income"),
     ("commodity", "Commodity"), ("cash", "Cash"),
     ("fx", "FX"), ("structured_products", "Structured products"),
 ]
 ALLOC_KEYS = [k for k, _ in ALLOC_OPTIONS]
-EXTRA_ALLOC = ["fx", "structured_products"]  # not modelled by the engine
+EXTRA_ALLOC = ["fx", "structured_products"]  # engine-driven only when weighted
 ILLIQ = {"alternatives", "real_estate"}
+
+
+def banded_keys(target_all: dict) -> list[str]:
+    """Asset classes the engine bands: the core four always, plus FX / structured
+    products only when the analyst has given them a target weight. Keeps the deck
+    and suitability output unchanged when those two sleeves are left at 0%."""
+    return CLASSES + [k for k in EXTRA_ALLOC if target_all.get(k, 0)]
 PRESETS = {  # target allocation in PERCENT
     "Conservative": {"equity": 20, "fixed_income": 45, "commodity": 5, "cash": 30},
     "Moderate":     {"equity": 35, "fixed_income": 40, "commodity": 5, "cash": 20},
@@ -167,9 +176,11 @@ def load_sample(fname: str):
 # Book + profile from current parameters
 # --------------------------------------------------------------------------- #
 def build_profile(p: dict) -> RiskProfile:
-    target = {c: p["target"][c] / 100 for c in CLASSES}
+    ta = p.get("target_all", p["target"])
+    keys = banded_keys(ta)
+    target = {k: ta[k] / 100 for k in keys}
     tol = p["tol"] / 100
-    bands = {c: Bands(max(0.0, target[c] - tol), min(1.0, target[c] + tol)) for c in CLASSES}
+    bands = {k: Bands(max(0.0, target[k] - tol), min(1.0, target[k] + tol)) for k in keys}
     excl = [c for c in ("alternatives", "real_estate", "commodity") if p["excl"][c]]
     cons = Constraints(excluded_asset_classes=excl, base_currency="USD",
                        max_unhedged_fx_pct=p["maxfx"] / 100)
@@ -196,10 +207,11 @@ def rebalance(book: Book, target: dict) -> pd.DataFrame:
     by = {}
     for q in book.positions:
         by[q.asset_class] = by.get(q.asset_class, 0.0) + q.mv_base
+    keys = banded_keys(target)
     rows = []
-    for c in dict.fromkeys(CLASSES + list(by)):
+    for c in dict.fromkeys(keys + list(by)):
         before = by.get(c, 0.0)
-        unbanded = c not in CLASSES
+        unbanded = c not in keys
         t = 0.0 if unbanded else target.get(c, 0.0) / 100
         delta = t * book.gross - before
         if abs(delta) < 1:
@@ -231,10 +243,11 @@ def proposal_model(book: Book, params: dict) -> dict:
     for q in positions:
         alloc[q.asset_class] = alloc.get(q.asset_class, 0.0) + q.mv_base
     liquid = sum(q.mv_base for q in positions if q.asset_class not in ILLIQ)
-    target = {c: params["target"][c] / 100 for c in CLASSES}
+    keys = banded_keys(params["target_all"])
+    target = {k: params["target_all"][k] / 100 for k in keys}
 
     alloc_rows = []
-    for c in dict.fromkeys(CLASSES + list(alloc)):
+    for c in dict.fromkeys(keys + list(alloc)):
         cur = alloc.get(c, 0.0)
         w = cur / gross if gross else 0.0
         t = target.get(c)
@@ -242,7 +255,7 @@ def proposal_model(book: Book, params: dict) -> dict:
         alloc_rows.append([c.replace("_", " ").title(), money(cur), pct(w),
                            "no target" if t is None else pct(t), drift])
 
-    reb = rebalance(book, params["target"])
+    reb = rebalance(book, params["target_all"])
     reb_rows = [[str(r["Class"]).title(), f'{r["Before"] * 100:.1f}%', f'{r["Target"] * 100:.1f}%',
                  f'{r["Trade (USD)"]:+,.0f}', str(r["Direction"]), str(r["Note"])]
                 for _, r in reb.iterrows()]
@@ -260,8 +273,9 @@ def proposal_model(book: Book, params: dict) -> dict:
              for k in ALLOC_KEYS if params["notes"].get(k)]
     if params.get("considerations"):
         notes.append(f"Additional considerations: {params['considerations']}")
-    overlays = [f"{LABEL_BY_KEY[k]} {params['target_all'][k]:.1f}%"
-                for k in EXTRA_ALLOC if params["target_all"].get(k)]
+    # FX / structured products now drive the engine and appear in the allocation &
+    # rebalance tables directly, so they are no longer surfaced as separate overlays.
+    overlays: list[str] = []
 
     return {
         "title": "Asset Allocation Proposal",
@@ -425,6 +439,7 @@ with st.sidebar:
                           "minliq": st.session_state["minliq"], "maxfx": st.session_state["maxfx"],
                           "maxpos": st.session_state["maxpos"],
                           "target": {c: st.session_state[f"t_{c}"] for c in CLASSES},
+                          "target_all": {k: st.session_state[f"t_{k}"] for k in ALLOC_KEYS},
                           "excl": {c: st.session_state[f"excl_{c}"]
                                    for c in ("alternatives", "real_estate", "commodity")}}
         _book = build_book(statements, build_profile(params_preview))
@@ -485,20 +500,14 @@ def analyst_inputs_present() -> bool:
     """Any of the v2 free-text notes / other-docs supplied by the analyst?"""
     return (any(params["notes"].values())
             or bool(params.get("considerations"))
-            or bool(st.session_state.get("other_docs"))
-            or any(st.session_state[f"t_{k}"] for k in EXTRA_ALLOC))
+            or bool(st.session_state.get("other_docs")))
 
 
 def render_analyst_inputs():
     """Surface the captured notes, overlay sleeves and attachments — the human
     context the copilot folds into the proposal (never invented into figures)."""
     notes = {LABEL_BY_KEY[k]: v for k, v in params["notes"].items() if v}
-    overlays = {LABEL_BY_KEY[k]: st.session_state[f"t_{k}"]
-                for k in EXTRA_ALLOC if st.session_state[f"t_{k}"]}
     docs = st.session_state.get("other_docs", [])
-    if overlays:
-        st.markdown("**Overlay sleeves (policy targets):** "
-                    + " · ".join(f"{k} {v:.1f}%" for k, v in overlays.items()))
     if docs:
         st.markdown("**Attached documents:** "
                     + " · ".join(d["name"] for d in docs))
@@ -537,9 +546,9 @@ if view == "Intake":
         st.radio("US person? (tax)", ["No", "Yes"], horizontal=True, key="usperson")
     with c3:
         st.markdown("##### Allocation & limits")
-        st.caption("Target weight and a free-text note per sleeve. FX and structured products "
-                   "(v2) are overlay sleeves captured for the proposal — the core four drive "
-                   "the live suitability engine.")
+        st.caption("Target weight and a free-text note per sleeve. All six sleeves share one "
+                   "100% budget; any sleeve with a target weight — including FX and structured "
+                   "products — drives the live suitability engine and the rebalance.")
         tot = 0.0
         for k, label in ALLOC_OPTIONS:
             row = st.columns([1, 1.6])
@@ -706,8 +715,9 @@ elif view == "Overview":
     by = {}
     for q in book.positions:
         by[q.asset_class] = by.get(q.asset_class, 0.0) + q.mv_base
-    target = {c: params["target"][c] / 100 for c in CLASSES}
-    for c in dict.fromkeys(CLASSES + list(by)):
+    keys = banded_keys(params["target_all"])
+    target = {k: params["target_all"][k] / 100 for k in keys}
+    for c in dict.fromkeys(keys + list(by)):
         w = by.get(c, 0.0) / book.gross
         t = target.get(c, 0.0)
         tgt = f"<div class='bartgt' style='left:{min(100, t * 100):.0f}%'></div>" if t else ""
