@@ -95,7 +95,7 @@ TICKER_BY_ISIN = {"US78462F1030": "SPY", "US46090E1038": "QQQ"}
 # Default ON. Flip it off in production by setting DEMO_MODE=0 as an env var / secret.
 DEMO_MODE = os.environ.get("DEMO_MODE", "1").lower() not in ("0", "false", "no", "off")
 
-st.set_page_config(page_title="Meridian Family Office Copilot · v2", page_icon="🏛️",
+st.set_page_config(page_title="Meridian Family Office Copilot · v3", page_icon="🏛️",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -382,7 +382,7 @@ statements = st.session_state["statements"]
 
 with st.sidebar:
     st.markdown("<div class='brand'>Meridian<br><b style='font-size:13px'>Family Office</b>"
-                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v2</span>"
+                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v3</span>"
                 "</div>", unsafe_allow_html=True)
     st.markdown("<div class='kicker'>AI Copilot · Confidential</div>", unsafe_allow_html=True)
     st.divider()
@@ -465,7 +465,7 @@ with st.sidebar:
 # Main — view dispatch (navigation lives in the sidebar rail)
 # --------------------------------------------------------------------------- #
 st.title("Family Office Copilot")
-st.caption("Version 2")
+st.caption("Version 3")
 
 params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk"],
           "ability": st.session_state["ability"],
