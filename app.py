@@ -339,14 +339,16 @@ def _step_limit(key: str, delta: float, lo: float, hi: float):
 
 
 def linked_limit(key: str, lo: float, hi: float, step: float = 0.5):
-    """A slider plus a numeric box with − / + step buttons, all bound to the same
-    value (st.session_state[key]) and kept in lock-step."""
+    """One row: a slider next to a compact − / numeric-box / + stepper, all bound
+    to the same value (st.session_state[key]) and kept in lock-step."""
     label = LIMITS[key][0]
     st.session_state.setdefault(f"{key}_sl", st.session_state[key])
     st.session_state.setdefault(f"{key}_ni", st.session_state[key])
-    st.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
-              on_change=_sync_limit, args=(key, "sl", lo, hi))
-    minus, box, plus = st.columns([1, 3, 1])
+    st.markdown(f"<div style='font-size:0.86rem;margin:4px 0 -8px'>{label}</div>",
+                unsafe_allow_html=True)
+    sl, minus, box, plus = st.columns([6, 1, 2, 1], vertical_alignment="center")
+    sl.slider(label, lo, hi, step=step, format="%.1f%%", key=f"{key}_sl",
+              on_change=_sync_limit, args=(key, "sl", lo, hi), label_visibility="collapsed")
     minus.button("−", key=f"{key}_minus", use_container_width=True,
                  on_click=_step_limit, args=(key, -step, lo, hi))
     box.number_input(label, lo, hi, step=step, key=f"{key}_ni", format="%.1f",
