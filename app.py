@@ -74,6 +74,8 @@ def banded_keys(target_all: dict) -> list[str]:
     products only when the analyst has given them a target weight. Keeps the deck
     and suitability output unchanged when those two sleeves are left at 0%."""
     return CLASSES + [k for k in EXTRA_ALLOC if target_all.get(k, 0)]
+
+
 PRESETS = {  # target allocation in PERCENT
     "Conservative": {"equity": 20, "fixed_income": 45, "commodity": 5, "cash": 30},
     "Moderate":     {"equity": 35, "fixed_income": 40, "commodity": 5, "cash": 20},
