@@ -200,6 +200,41 @@ def parse_custodian_c(path: Path) -> ParsedStatement:
         liabilities=d.get("liabilities", []))
 
 
+def parse_extracted(d: dict) -> ParsedStatement:
+    """Adapter for the v5 vision extractor (see vision_extract.py).
+
+    Takes the canonical dict the model TRANSCRIBED from a PDF/image statement and
+    builds a ParsedStatement — doing here (deterministically) all the maths the
+    model was forbidden from doing: FX conversion of each printed market value to
+    the USD base, house-code resolution (flag, never guess), and leaving the
+    reconciliation to reconcile(). The model supplied only printed figures; every
+    derived number below is computed by this code."""
+    custodian = d.get("custodian") or "(extracted)"
+    entity = d.get("entity") or "ENT-A"
+    positions: list[Position] = []
+    for p in d.get("positions", []):
+        flags: list[str] = []
+        ident, idt, itype_override, issuer = _resolve(
+            p.get("identifier"), p.get("id_type"), flags)
+        ccy = p.get("currency") or d.get("base_currency") or "USD"
+        mv_ccy = float(p.get("market_value_ccy") or 0)
+        mv_base = _to_usd(mv_ccy, ccy, flags)
+        positions.append(Position(
+            custodian=custodian, entity=entity,
+            name=p.get("name", ""), asset_class=p.get("asset_class", "unknown"),
+            instrument_type=itype_override or p.get("instrument_type") or "unknown",
+            identifier=ident, id_type=idt, currency=ccy,
+            mv_ccy=round(mv_ccy, 2), mv_base=round(mv_base, 2),
+            val_as_of=p.get("val_as_of") or d.get("as_of", ""), issuer=issuer,
+            resolved=(idt != "HOUSE"), flags=flags))
+    return ParsedStatement(
+        custodian=custodian, entity=entity,
+        account_class=d.get("account_class") or "custody",
+        base_currency=d.get("base_currency") or "USD", as_of=d.get("as_of") or "",
+        stated_total=float(d.get("stated_total_usd") or 0), positions=positions,
+        liabilities=d.get("liabilities") or [])
+
+
 # ---- reconciliation + continuity ------------------------------------------ #
 
 def reconcile(st: ParsedStatement, tol_abs: float = 250.0, tol_pct: float = 0.0002) -> ParsedStatement:
