@@ -713,9 +713,7 @@ elif view == "Proposal":
             if st.button("↻ Rebuild prompt from current inputs"):
                 st.session_state["narr_prompt"] = narrative.build_prompt(model)
             st.caption("📋 Copy the full prompt and paste it into any LLM chat to rebuild "
-                       "this deck. The button copies the current (edited) prompt.")
-            copy_button(st.session_state["narr_prompt"], "📋 Copy prompt to clipboard",
-                        key="copy_top")
+                       "this deck.")
             st.text_area(
                 "Prompt sent to LLM (editable)", key="narr_prompt", height=280,
                 help="Edit freely before generating. The FACTS block is the only source of "
