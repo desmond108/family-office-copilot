@@ -1,19 +1,23 @@
-"""narrative.py — the v3 LLM layer: a grounded CIO commentary for the proposal.
+"""narrative.py — the v4 LLM layer: a self-contained, portable deck-generation prompt.
 
 Everything else in the app is deterministic; this is the one place an LLM writes
 prose. It is kept honest by construction:
 
-  * The prompt hands Claude a FACTS block (the computed figures from
-    proposal_model) plus an ANALYST GUIDANCE block (the free-text sleeve notes and
-    "additional considerations"). Claude may quote the figures but is instructed
-    never to invent, alter, or add a number that is not in FACTS.
-  * The assembled prompt is returned so the app can show it to the user (and let
-    them edit it) before anything is sent — full transparency.
+  * `build_prompt` assembles a SELF-CONTAINED prompt: it inlines the full role +
+    grounding rules, the exact 7-section deck specification (matching
+    generate_proposal), a FACTS block (every figure from proposal_model) and an
+    ANALYST GUIDANCE block (the free-text sleeve notes and "additional
+    considerations"). Because nothing is hidden in a separate system message, the
+    prompt can be COPIED VERBATIM into any LLM chat to regenerate the same
+    proposal deck as a PPTX and a PDF. The LLM may quote the FACTS figures but is
+    instructed never to invent, alter, or add a number that is not in FACTS.
+  * The assembled prompt is returned so the app can show it to the user, let them
+    edit it, and copy it — full transparency.
   * With no API key / in DEMO_MODE, `deterministic_summary()` produces a grounded
-    commentary from the same figures with no model call at all, so the feature
-    degrades gracefully instead of failing.
+    commentary from the same figures with no model call at all, so the in-app
+    commentary degrades gracefully instead of failing.
 
-Model: claude-opus-4-8 with adaptive thinking (accuracy matters — the note must
+Model: claude-opus-4-8 with adaptive thinking (accuracy matters — the deck must
 not misquote a figure). The call is lazy-imported so `anthropic` stays optional.
 """
 from __future__ import annotations
@@ -22,32 +26,28 @@ import json
 
 NARR_MODEL = "claude-opus-4-8"
 
+# The prompt built by build_prompt() is fully self-contained (all instructions are
+# in the user message so it stays portable), so the API system message is kept
+# minimal and neutral — it only reinforces the grounding rule.
 SYSTEM = (
-    "You are the Chief Investment Officer of a family office, writing a short "
-    "commentary to accompany a portfolio proposal for the firm's staff and the "
-    "client. Write 150-220 words in a measured, professional voice, as flowing "
-    "prose in 2-3 short paragraphs — no headings, no bullet lists.\n\n"
-    "GROUNDING RULES (non-negotiable):\n"
-    "1. You may use ONLY figures that appear in the FACTS JSON. Quote them exactly "
-    "as written — never invent, estimate, re-round, or introduce any number that "
-    "is not in FACTS.\n"
-    "2. Weave in the analyst's notes and considerations where they are relevant; "
-    "treat them as intent and context, not as sources of new figures.\n"
-    "3. Do not give personalised investment advice or guarantees. Frame the note "
-    "as 'for discussion'. If a figure needed to make a point is not in FACTS, say "
-    "the data is not yet available rather than guessing."
+    "You are a private-banking portfolio analyst assistant. Follow the user's "
+    "prompt exactly. Use ONLY the figures given in the prompt's FACTS block — "
+    "never invent, estimate, re-round, or alter a number."
 )
 
 
 def facts_block(model: dict) -> dict:
     """The subset of the computed proposal model handed to the LLM as ground truth."""
     return {
+        "title": model["title"],
         "as_of": model["as_of"],
         "provenance": model["prov"],
         "portfolio": model["subtitle"],
         "custodians": model["meta"]["custodians"],
+        "custodian_list": model["custodian_list"],
         "entities": model["meta"]["entities"],
         "positions": model["meta"]["positions"],
+        "gross_assets_total": model["gross_str"],
         "mandate": model["meta"]["mandate"],
         "risk_appetite": model["meta"]["risk"],
         "ability_to_take_risk": model["meta"]["ability"],
@@ -79,16 +79,70 @@ def guidance_block(model: dict) -> list[str]:
     return lines
 
 
+# The deck specification — the 7 sections, in order, matching generate_proposal's
+# renderers. Inlined into the prompt so an external LLM reproduces the same deck.
+DECK_SPEC = """\
+You are a private-banking portfolio analyst. Build a client PORTFOLIO PROPOSAL deck from the \
+FACTS below and produce it as BOTH a Microsoft PowerPoint (.pptx) file and a PDF (.pdf) file, \
+ready to download.
+
+ABSOLUTE GROUNDING RULE: every number in the deck must be copied verbatim from the FACTS JSON. \
+Never invent, estimate, re-round, or add a figure that is not in FACTS. You may write the \
+labels and prose; you may not write a figure that is not in FACTS. If a number needed to make a \
+point is missing, say the data is not yet available rather than guessing.
+
+HOUSE STYLE: landscape 16:9 slides, one slide per section below. Navy #1e2a56 titles on white, \
+gold #b0872a eyebrows/accents, muted slate #5a648a body notes; a full-navy cover slide. Put a \
+footer on every content slide: "Portfolio Proposal · Confidential". Measured, professional tone.
+
+SLIDES (produce them in this exact order):
+1. COVER (full navy background). Eyebrow "PORTFOLIO PROPOSAL · CONFIDENTIAL". Title = FACTS.title. \
+Subtitle = FACTS.portfolio. One lede line: "Generated from {FACTS.custodians} parsed custodian \
+statement(s) across {FACTS.entities} entit(y/ies) · {FACTS.positions} positions. Every figure is \
+computed from the client's own holdings — nothing is invented." Bottom stamp: "As of {FACTS.as_of}".
+2. INVESTMENT COMMENTARY. Eyebrow "Investment Commentary", title "Chief Investment Office — \
+Commentary". Write a 150-220 word CIO commentary in 2-3 short paragraphs (no headings, no bullets), \
+measured and professional, grounded strictly in FACTS and shaped by the ANALYST GUIDANCE (guidance \
+is intent/context, not a source of numbers). End with a small note: this is generated prose that \
+quotes but does not alter the figures — for discussion only, not investment advice.
+3. CURRENT CONSOLIDATED POSITION. Eyebrow "Position". Show each FACTS.headline_metrics entry as a \
+metric card (label above value). Below the cards: "Mandate {FACTS.mandate} · Risk appetite \
+{FACTS.risk_appetite} · Ability to take risk {FACTS.ability_to_take_risk}."; then "Consolidated \
+across {FACTS.custodian_list joined by commas}."; then the FACTS.provenance line.
+4. CURRENT ALLOCATION VS TARGET. Eyebrow "Allocation". A table with columns [Asset class, \
+Value (USD), % of gross, Target, Drift] — one row per FACTS.allocation_vs_target entry (sleeve, \
+value_usd, pct_of_gross, target, drift) — plus a bold total row \
+["Gross assets", FACTS.gross_assets_total, "100.0%", "", ""]. Note underneath: weights are computed \
+from parsed statement values against the mandate target; sleeves with no target are flagged on the \
+suitability slide, not treated as compliant by omission.
+5. REBALANCING PROPOSAL — BEFORE → AFTER. Eyebrow "Proposal". A table with columns [Sleeve, Before, \
+Target, Trade (USD), Action, Note] — one row per FACTS.rebalancing.trades entry. Below: "Buys \
+{FACTS.rebalancing.buys} · Sells {FACTS.rebalancing.sells} · Net of trades \
+{FACTS.rebalancing.net_of_trades}" and state whether the programme is self-funding \
+(FACTS.rebalancing.self_funding).
+6. SUITABILITY OF THE PROPOSED BOOK. Eyebrow "Suitability". Line "Mandate gate · \
+{FACTS.suitability_gate}". Then list every FACTS.suitability_findings item; if the list is empty, \
+state the book is within all defined suitability bands.
+7. DATA QUALITY, ANALYST NOTES & PROVENANCE. Eyebrow "Data & Method". Left column: list every \
+FACTS.data_quality_flags item (or "No data-quality issues detected." if empty). Right column: the \
+ANALYST GUIDANCE items, folded into the proposal. Close with the FACTS.provenance line and "For \
+discussion only; not investment advice."
+
+If your environment cannot create files, instead output the full slide-by-slide content in the \
+exact order above so it can be pasted into slides."""
+
+
 def build_prompt(model: dict) -> str:
-    """Assemble the user prompt (FACTS + ANALYST GUIDANCE + TASK) shown to the user."""
+    """Assemble the self-contained, portable deck-generation prompt shown to the
+    user. Copied verbatim into any LLM chat it regenerates this proposal as a PPTX
+    and a PDF, using only the FACTS figures."""
     facts = json.dumps(facts_block(model), indent=2)
     guidance = guidance_block(model)
     g = "\n".join(f"- {line}" for line in guidance) if guidance else "- (none supplied)"
     return (
+        f"{DECK_SPEC}\n\n"
         f"FACTS (JSON — the only figures you may use):\n{facts}\n\n"
-        f"ANALYST GUIDANCE (intent and context — not a source of numbers):\n{g}\n\n"
-        "TASK: Write the CIO commentary described in your instructions, grounded "
-        "strictly in the FACTS above and shaped by the analyst guidance."
+        f"ANALYST GUIDANCE (intent and context — NOT a source of numbers):\n{g}"
     )
 
 
