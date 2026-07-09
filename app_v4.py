@@ -56,6 +56,47 @@ from datafeed import resolve_key
 import generate_proposal
 import narrative
 
+
+def copy_button(text: str, label: str = "📋 Copy to clipboard",
+                key: str = "copy", height: int = 46):
+    """An explicit, always-visible copy button (a small HTML/JS component).
+
+    Streamlit's built-in copy affordance (the hover icon on st.code) is easy to
+    miss, so this renders a real button. It tries the async Clipboard API and
+    falls back to a hidden-textarea + execCommand("copy") so it still works
+    inside the component iframe. Shows a brief "Copied!" confirmation."""
+    payload = json.dumps(text)
+    html = f"""
+    <div style="font-family:'Source Sans Pro',sans-serif">
+      <button id="{key}-btn" style="
+          background:#9a3a00;color:#fff;border:0;border-radius:8px;
+          padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;
+          box-shadow:0 1px 2px rgba(0,0,0,.25)">{label}</button>
+      <span id="{key}-msg" style="margin-left:10px;color:#2f7a52;
+          font-size:13px;font-weight:600"></span>
+    </div>
+    <script>
+      const b = document.getElementById("{key}-btn");
+      const m = document.getElementById("{key}-msg");
+      const txt = {payload};
+      b.addEventListener("click", async () => {{
+        try {{ await navigator.clipboard.writeText(txt); }}
+        catch (e) {{
+          const ta = document.createElement("textarea");
+          ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          try {{ document.execCommand("copy"); }} catch (e2) {{}}
+          document.body.removeChild(ta);
+        }}
+        m.textContent = "✓ Copied!";
+        b.style.background = "#2f7a52";
+        setTimeout(() => {{ m.textContent = ""; b.style.background = "#9a3a00"; }}, 1800);
+      }});
+    </script>
+    """
+    components.html(html, height=height)
+
+
 # --------------------------------------------------------------------------- #
 # Config
 # --------------------------------------------------------------------------- #
@@ -671,13 +712,16 @@ elif view == "Proposal":
                 st.session_state["narr_prompt"] = narrative.build_prompt(model)
             if st.button("↻ Rebuild prompt from current inputs"):
                 st.session_state["narr_prompt"] = narrative.build_prompt(model)
+            st.caption("📋 Copy the full prompt and paste it into any LLM chat to rebuild "
+                       "this deck. The button copies the current (edited) prompt.")
+            copy_button(st.session_state["narr_prompt"], "📋 Copy prompt to clipboard",
+                        key="copy_top")
             st.text_area(
                 "Prompt sent to LLM (editable)", key="narr_prompt", height=280,
                 help="Edit freely before generating. The FACTS block is the only source of "
                      "numbers; the analyst guidance is intent and context, not figures.")
-            st.caption("📋 Copy the full prompt below to paste into any LLM chat and "
-                       "reproduce this deck — use the copy icon at its top-right corner.")
-            st.code(st.session_state["narr_prompt"], language="markdown")
+            copy_button(st.session_state["narr_prompt"], "📋 Copy prompt to clipboard",
+                        key="copy_bottom")
             gen = st.button("✨ Generate commentary", type="primary")
             if not llm_on:
                 st.caption("🔒 The built-in model is off in demo mode / no API key — "
