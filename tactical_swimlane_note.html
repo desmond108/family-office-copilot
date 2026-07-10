@@ -1,0 +1,200 @@
+<style>
+  :root {
+    --ground: #eef0f6; --paper: #ffffff; --ink: #16203c; --ink-soft: #47517a;
+    --ink-faint: #838cad; --navy: #1e2a56; --navy-deep: #131d3d; --gold: #9c7422;
+    --gold-br: #b0872a; --gold-tint: #f7efdc; --green: #2f6f57; --green-tint: #e6f1eb;
+    --amber: #b06a17; --amber-tint: #fbe6d2; --line: #dfe2ee; --line-strong: #c8cddd;
+    --slate-tint: #eef0f6; --client-tint: #eef2fb;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #05091a; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+      --ink-faint: #7883a6; --navy: #dbe2f6; --navy-deep: #0a1430; --gold: #d3a94f;
+      --gold-br: #d3a94f; --gold-tint: #241f10; --green: #6bbf9a; --green-tint: #10281f;
+      --amber: #e0954a; --amber-tint: #2c1c0c; --line: #22305a; --line-strong: #33477b;
+      --slate-tint: #14203f; --client-tint: #141d3a;
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #eef0f6; --paper: #ffffff; --ink: #16203c; --ink-soft: #47517a;
+    --ink-faint: #838cad; --navy: #1e2a56; --navy-deep: #131d3d; --gold: #9c7422;
+    --gold-br: #b0872a; --gold-tint: #f7efdc; --green: #2f6f57; --green-tint: #e6f1eb;
+    --amber: #b06a17; --amber-tint: #fbe6d2; --line: #dfe2ee; --line-strong: #c8cddd;
+    --slate-tint: #eef0f6; --client-tint: #eef2fb;
+  }
+  :root[data-theme="dark"] {
+    --ground: #05091a; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+    --ink-faint: #7883a6; --navy: #dbe2f6; --navy-deep: #0a1430; --gold: #d3a94f;
+    --gold-br: #d3a94f; --gold-tint: #241f10; --green: #6bbf9a; --green-tint: #10281f;
+    --amber: #e0954a; --amber-tint: #2c1c0c; --line: #22305a; --line-strong: #33477b;
+    --slate-tint: #14203f; --client-tint: #141d3a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans);
+    line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: clamp(18px,4vw,44px) clamp(14px,3vw,30px); }
+
+  .eyebrow { font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; color: var(--gold-br); margin: 0 0 10px; }
+  h1 { font-family: var(--serif); font-weight: 600; color: var(--navy); font-size: clamp(24px,4.4vw,34px); line-height: 1.12; letter-spacing: -.01em; margin: 0 0 10px; text-wrap: balance; }
+  .dek { font-size: clamp(15px,2.2vw,17px); color: var(--ink-soft); margin: 0 0 24px; max-width: 66ch; }
+
+  /* answer callout */
+  .answer { display: flex; gap: 16px; background: var(--paper); border: 1px solid var(--line);
+    border-left: 4px solid var(--gold-br); border-radius: 10px; padding: 20px 22px; margin-bottom: 28px; }
+  .answer .q { font-size: 26px; line-height: 1; color: var(--gold-br); font-family: var(--serif); flex: none; }
+  .answer h2 { margin: 0 0 8px; font-size: 16px; font-weight: 800; color: var(--ink); font-family: var(--sans); }
+  .answer p { margin: 0 0 8px; font-size: 13.8px; color: var(--ink-soft); line-height: 1.55; }
+  .answer p:last-child { margin-bottom: 0; }
+  .answer b { color: var(--ink); }
+  .answer .no { color: var(--amber); font-weight: 800; }
+
+  /* legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 14px; font-size: 12.5px; color: var(--ink-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 13px; height: 13px; border-radius: 3px; border: 1px solid var(--line-strong); }
+  .sw.you { background: var(--paper); border-color: var(--gold-br); border-left-width: 3px; }
+  .sw.bot { background: var(--slate-tint); }
+  .sw.cli { background: var(--client-tint); border-color: color-mix(in srgb, var(--navy) 30%, var(--line)); }
+  .sw.dec { background: var(--amber-tint); border-color: var(--amber); transform: rotate(45deg); border-radius: 2px; }
+
+  /* swimlane grid */
+  .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+  .swim { display: grid; grid-template-columns: 128px repeat(4, minmax(216px, 1fr)); min-width: 940px; }
+  .phdr, .lane-cell, .lane-label { border-right: 1px solid var(--line); }
+  .phdr { padding: 13px 15px; background: var(--navy-deep); color: #eef1fb; font-size: 12.5px; font-weight: 700; border-bottom: 1px solid var(--line); }
+  .phdr .pn { font-family: var(--mono); font-size: 11px; color: var(--gold-br); margin-right: 6px; }
+  .phdr.corner { background: var(--navy-deep); }
+  .lane-label { display: flex; flex-direction: column; justify-content: center; gap: 3px; padding: 14px 12px;
+    font-weight: 800; font-size: 13px; border-bottom: 1px solid var(--line); }
+  .lane-label small { font-weight: 600; font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); }
+  .lane-label.you  { color: var(--gold); background: color-mix(in srgb, var(--gold-tint) 40%, var(--paper)); }
+  .lane-label.bot  { color: var(--ink-soft); background: var(--slate-tint); }
+  .lane-label.cli  { color: var(--navy); background: var(--client-tint); }
+  .lane-cell { padding: 15px 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+  .lane-cell.you { background: color-mix(in srgb, var(--gold-tint) 16%, var(--paper)); }
+  .lane-cell.bot { background: color-mix(in srgb, var(--slate-tint) 55%, var(--paper)); }
+  .lane-cell.cli { background: color-mix(in srgb, var(--client-tint) 55%, var(--paper)); }
+
+  /* action boxes */
+  .box { border-radius: 9px; padding: 11px 13px; font-size: 13px; line-height: 1.4; position: relative; }
+  .box .n { display: inline-flex; align-items: center; justify-content: center; width: 21px; height: 21px;
+    border-radius: 50%; font-family: var(--mono); font-size: 11.5px; font-weight: 700; margin-right: 8px; vertical-align: 1px; }
+  .box .t { font-weight: 700; color: var(--ink); }
+  .box .d { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; line-height: 1.4; }
+  .box .btn { font-family: var(--mono); font-size: 11px; background: var(--navy-deep); color: #fff; padding: 1px 6px; border-radius: 4px; }
+  .box.you { background: var(--paper); border: 1px solid var(--line); border-left: 3px solid var(--gold-br); }
+  .box.you .n { background: var(--gold-br); color: #fff; }
+  .box.bot { background: var(--paper); border: 1px dashed var(--line-strong); }
+  .box.bot .t { color: var(--ink-soft); font-weight: 700; }
+  .box.bot .gear { font-size: 11px; color: var(--ink-faint); font-weight: 700; letter-spacing: .04em; }
+  .box.cli { background: var(--paper); border: 1px solid color-mix(in srgb, var(--navy) 22%, var(--line)); }
+  .box.cli .tag { font-size: 10px; font-weight: 800; letter-spacing: .05em; color: var(--navy); text-transform: uppercase; }
+  .manual { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--amber); background: var(--amber-tint); border-radius: 4px; padding: 1px 6px; margin-left: 6px; }
+
+  /* decision diamond */
+  .decision { background: var(--amber-tint); border: 1.5px solid var(--amber); border-radius: 9px; padding: 10px 12px; }
+  .decision .t { font-weight: 800; color: var(--amber); font-size: 12.5px; }
+  .decision .br { font-size: 11.5px; color: var(--ink-soft); margin-top: 5px; }
+  .decision .br b { color: var(--ink); }
+  .loop { font-size: 11px; color: var(--amber); font-weight: 700; }
+
+  /* connectors */
+  .down { text-align: center; color: var(--line-strong); font-size: 15px; line-height: 1; margin: -3px 0; }
+  .hand { font-size: 10.5px; color: var(--ink-faint); font-style: italic; }
+
+  .foot { margin-top: 22px; font-size: 12.5px; color: var(--ink-faint); }
+  .foot b { color: var(--ink-soft); }
+
+  @media print { body { background:#fff; } .scroll { overflow: visible; } .swim { min-width: 0; } }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Meridian Family Office Copilot · v6</p>
+  <h1>Tactical instructions — who does what, and when</h1>
+  <p class="dek">The end-to-end process across three actors. The <b>You</b> lane is what the analyst does; the <b>Copilot</b> lane happens automatically.</p>
+
+  <div class="answer">
+    <span class="q">?</span>
+    <div>
+      <h2>Do confirmed items auto-fill my allocations &amp; limits?</h2>
+      <p><span class="no">No.</span> You set the allocation targets and limits <b>yourself</b> (Step 3). Confirmed tactical items become <b>analyst guidance</b> plus a <b>monitoring watchlist</b> that inform those decisions — they never auto-populate the engine. This is deliberate: no computed number ever comes from free text.</p>
+      <p><b>And the Analyse button?</b> It processes the client's <b>statements</b> (Step 1) — a separate, earlier step. After you press <b>Confirm items</b>, every view updates <b>live</b>; you do <b>not</b> press Analyse again.</p>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw you"></span> You (analyst) — do this</span>
+    <span><span class="sw bot"></span> Copilot — automatic</span>
+    <span><span class="sw cli"></span> Client — provides input</span>
+    <span><span class="sw dec"></span> Your decision</span>
+  </div>
+
+  <div class="scroll">
+    <div class="swim">
+      <!-- header row -->
+      <div class="phdr corner">Actor ↓ / Phase →</div>
+      <div class="phdr"><span class="pn">A</span>Ingest statements</div>
+      <div class="phdr"><span class="pn">B</span>Set policy — manual</div>
+      <div class="phdr"><span class="pn">C</span>Capture tactical instructions</div>
+      <div class="phdr"><span class="pn">D</span>Review &amp; generate</div>
+
+      <!-- CLIENT lane -->
+      <div class="lane-label cli">Client<small>Source</small></div>
+      <div class="lane-cell cli">
+        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Hands over bank / custodian statements</div></div>
+        <div class="down">↓</div>
+      </div>
+      <div class="lane-cell cli"></div>
+      <div class="lane-cell cli">
+        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Gives tactical instructions in plain language</div><div class="d">“gold below $4,000”, “buy in tranches”, “low fees”…</div></div>
+        <div class="down">↓</div>
+      </div>
+      <div class="lane-cell cli"></div>
+
+      <!-- YOU lane -->
+      <div class="lane-label you">You<small>Analyst</small></div>
+      <div class="lane-cell you">
+        <div class="box you"><span class="n">1</span><span class="t">Upload statements</span><div class="d">then press <span class="btn">Analyse ▸</span> in the sidebar</div></div>
+      </div>
+      <div class="lane-cell you">
+        <div class="box you"><span class="n">2</span><span class="t">Set mandate, risk &amp; ability</span></div>
+        <div class="box you"><span class="n">3</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">You decide the numbers — informed by, but not filled from, the tactical items.</div></div>
+      </div>
+      <div class="lane-cell you">
+        <div class="box you"><span class="n">4</span><span class="t">Paste instructions →</span> <span class="btn">Sort into items</span></div>
+        <div class="hand">↓ copilot sorts · ↑ you review</div>
+        <div class="box you"><span class="n">5</span><span class="t">Review the sorted list</span><div class="d">Edit type / level · untick <b>Keep</b> to ignore · add <b>Notes</b></div></div>
+        <div class="decision"><div class="t">◇ Any ⚠️ needs-clarification items?</div>
+          <div class="br"><b>Yes</b> → resolve or ask the client <span class="loop">⟲ back to Step 5</span></div>
+          <div class="br"><b>No</b> ↓</div></div>
+        <div class="box you"><span class="n">6</span><span class="t">Press</span> <span class="btn">Confirm items</span><div class="d">No re-Analyse needed — views update live.</div></div>
+      </div>
+      <div class="lane-cell you">
+        <div class="box you"><span class="n">7</span><span class="t">Review Overview / Suitability</span><div class="d">Check the watchlist &amp; the folded-in guidance.</div></div>
+        <div class="box you"><span class="n">8</span><span class="t">Open Proposal →</span> <span class="btn">Generate deck</span><div class="d">Download PPTX / PDF.</div></div>
+      </div>
+
+      <!-- COPILOT lane -->
+      <div class="lane-label bot">Copilot<small>System</small></div>
+      <div class="lane-cell bot">
+        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Parses statements → builds the consolidated book</div></div>
+      </div>
+      <div class="lane-cell bot">
+        <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation vs target, drift &amp; suitability</div><div class="d">Recomputes on every change to Steps 2–3.</div></div>
+      </div>
+      <div class="lane-cell bot">
+        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask into a typed item</div><div class="d">Copies stated levels; flags unclear ones — invents nothing.</div></div>
+        <div class="box bot"><span class="gear">⚙ ON CONFIRM</span><div class="t" style="margin-top:3px">Triggers → 📡 watchlist; all → guidance</div><div class="d">needs-clarification items are held out until resolved.</div></div>
+      </div>
+      <div class="lane-cell bot">
+        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Generates PPTX / PDF</div><div class="d">Figures deterministic; guidance folded in as notes.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot"><b>Read it like this:</b> follow the numbered boxes 1 → 8 down the <b>You</b> lane; the dashed <b>Copilot</b> boxes are the system's automatic response at each phase. The only things you type are the policy numbers (Steps 2–3) and the client's instructions (Step 4). · Confidential.</p>
+</div>
