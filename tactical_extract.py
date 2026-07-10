@@ -35,8 +35,13 @@ import re
 
 TACTICAL_MODEL = "claude-opus-4-8"
 
-ITEM_TYPES = ["entry_trigger", "execution_style", "selection_criteria", "question",
-              "needs_clarification", "other"]
+ITEM_TYPES = ["allocation_target", "entry_trigger", "execution_style", "selection_criteria",
+              "question", "needs_clarification", "other"]
+
+# The six allocation sleeves the app can pre-fill from an allocation_target item
+# (must match app.ALLOC_KEYS). Any allocation_target the client states is mapped to
+# one of these, aggregated, and PROPOSED to the analyst — never auto-applied.
+SLEEVES = ["equity", "fixed_income", "commodity", "cash", "fx", "structured_products"]
 
 INSTRUCTIONS = (
     "You are a private-banking portfolio analyst. You are given a client's or "
@@ -56,6 +61,12 @@ INSTRUCTIONS = (
     "'needs_clarification' and put the SPECIFIC question / what is unclear in "
     "`detail` — do NOT guess its meaning or silently file it under 'other'.\n\n"
     "The item types:\n"
+    "  allocation_target — a TARGET PORTFOLIO WEIGHT for an asset class / sleeve "
+    "(e.g. '20% in gold', 'allocate 30% to the S&P 500', 'money market fund: 10%'). "
+    "Set `weight_pct` to the number and map it to one `asset_class` from this list: "
+    + ", ".join(SLEEVES) + " (gold/precious→commodity, S&P/Nasdaq/stocks→equity, "
+    "bond/treasury→fixed_income, money-market/cash→cash). A weight to buy AT a "
+    "condition (e.g. 'buy 5% once it dips') is an entry_trigger, NOT this.\n"
     "  entry_trigger    — a conditional rule keyed to a price or valuation level "
     "(e.g. 'buy below $4,000', 'add after a 15-20% pullback'). Monitorable.\n"
     "  execution_style  — HOW to build the position: lump sum, tranches / "
@@ -73,6 +84,8 @@ INSTRUCTIONS = (
     "    {\n"
     '      "type": one of ' + ", ".join(ITEM_TYPES) + ",\n"
     '      "instrument": string|null,   // sleeve / instrument it applies to, if named\n'
+    '      "asset_class": string|null,  // allocation_target ONLY: one of the sleeves above\n'
+    '      "weight_pct": number|null,   // allocation_target ONLY: the target weight, e.g. 20\n'
     '      "action": string|null,       // e.g. "buy", "buy initial 5%", "park in money market"\n'
     '      "threshold": string|null,    // the stated level, VERBATIM; null if none stated\n'
     '      "detail": string,            // one-line normalised statement of the instruction\n'
@@ -108,9 +121,18 @@ def _clean(items: list) -> list[dict]:
         detail = (it.get("detail") or it.get("verbatim") or "").strip()
         if not detail:
             continue
+        ac = it.get("asset_class")
+        ac = ac if ac in SLEEVES else None
+        wp = it.get("weight_pct")
+        try:
+            wp = float(wp) if wp is not None and str(wp).strip() != "" else None
+        except (TypeError, ValueError):
+            wp = None
         out.append({
             "type": t,
             "instrument": (it.get("instrument") or None),
+            "asset_class": ac,         # allocation_target only (else None)
+            "weight_pct": wp,          # allocation_target only (else None)
             "action": (it.get("action") or None),
             "threshold": (it.get("threshold") or None),
             "detail": detail,
@@ -173,6 +195,48 @@ _CRIT_KW = ("low fee", "low-fee", "low cost", "low-cost", "cheap", "expense rati
 _UNCLEAR_KW = ("not sure", "unsure", "maybe", "somehow", "i think", "tbc",
                "to be confirmed", "to be discussed", "figure out", "??", "etc etc")
 
+# Map an instrument name to an allocation sleeve (first match wins; order matters —
+# commodity before equity so 'gold' isn't swallowed by a generic term).
+_ASSET_MAP = [
+    (("money market", "mmf", "t-bill", "treasury bill", "cash", "deposit"), "cash"),
+    (("gold", "silver", "precious", "commodit", "oil", "bullion"), "commodity"),
+    (("bond", "treasur", "fixed income", "fixed-income", "govt", "government debt",
+      "credit", "duration", "aggregate"), "fixed_income"),
+    (("s&p", "sp 500", "sp500", "nasdaq", "equit", "stock", "shares", "msci",
+      "russell", "dow"), "equity"),
+    (("structured", "autocall", "phoenix", "note"), "structured_products"),
+    (("fx", "currency", "forex", "eurusd", "hedge the"), "fx"),
+]
+# Cues that a percentage is a TARGET WEIGHT rather than a conditional/entry level.
+_ALLOC_CUE = ("allocate", "allocation", "benchmark", "target", "weight", "long-term",
+              "long term", "hold ", "of the portfolio", "of portfolio")
+_PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s?%")
+
+
+def _asset_of(low: str) -> str | None:
+    for names, sleeve in _ASSET_MAP:
+        if any(n in low for n in names):
+            return sleeve
+    return None
+
+
+def _alloc_from(phrase: str):
+    """If the phrase states a target weight for an asset class, return
+    (asset_class, weight_pct); else None. Requires an asset, a percentage, and an
+    allocation cue (an allocation cue keyword, or a 'name: NN%' colon pattern), and
+    NO entry-trigger cue — so 'buy 5% once it dips' stays a trigger."""
+    low = phrase.lower().strip()
+    if any(k in low for k in _TRIGGER_KW):
+        return None
+    m = _PCT_RE.search(phrase)
+    asset = _asset_of(low)
+    if not m or not asset:
+        return None
+    colon = bool(re.search(r":\s*[^%]*\d+(?:\.\d+)?\s?%", phrase))
+    if not colon and not any(c in low for c in _ALLOC_CUE):
+        return None
+    return asset, float(m.group(1))
+
 
 def _split(text: str) -> list[str]:
     """Split free text into candidate instructions (sentences / clauses / lines)."""
@@ -209,6 +273,13 @@ def heuristic_extract(text: str) -> dict:
     Used in DEMO_MODE / when no key is present so the flow works keyless."""
     items = []
     for phrase in _split(text or ""):
+        alloc = _alloc_from(phrase)
+        if alloc:
+            asset, pct = alloc
+            items.append({"type": "allocation_target", "asset_class": asset,
+                          "weight_pct": pct, "instrument": None, "action": None,
+                          "threshold": None, "detail": phrase, "verbatim": phrase})
+            continue
         t = _classify(phrase)
         m = _LEVEL_RE.search(phrase)
         items.append({
