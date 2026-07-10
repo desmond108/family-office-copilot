@@ -113,16 +113,17 @@
 </style>
 
 <div class="wrap">
-  <p class="eyebrow">Meridian Family Office Copilot · v6</p>
+  <p class="eyebrow">Meridian Family Office Copilot · v7</p>
   <h1>Tactical instructions — who does what, and when</h1>
   <p class="dek">The end-to-end process across three actors. The <b>You</b> lane is what the analyst does; the <b>Copilot</b> lane happens automatically.</p>
 
   <div class="answer">
     <span class="q">?</span>
     <div>
-      <h2>Do confirmed items auto-fill my allocations &amp; limits?</h2>
-      <p><span class="no">No.</span> You set the allocation targets and limits <b>yourself</b> (Step 3). Confirmed tactical items become <b>analyst guidance</b> plus a <b>monitoring watchlist</b> that inform those decisions — they never auto-populate the engine. This is deliberate: no computed number ever comes from free text.</p>
-      <p><b>And the Analyse button?</b> It processes the client's <b>statements</b> (Step 1) — a separate, earlier step. After you press <b>Confirm items</b>, every view updates <b>live</b>; you do <b>not</b> press Analyse again.</p>
+      <h2>Does “Confirm items” fill my Allocations &amp; Limits?</h2>
+      <p><span class="no">By itself, no.</span> <b>Confirm items</b> commits the interpreted instructions — it produces a <b>monitoring watchlist</b> (triggers) and <b>guidance</b> folded into the proposal. It writes into <b>no field</b>.</p>
+      <p><b>Allocations</b> are filled only by a <b>second, separate click</b>: if the instructions named target weights (“Gold ETF: 20%”), a <b>📥 Proposed allocation</b> panel appears with an <b>Apply to allocation targets</b> button (Step 7). You still verify and adjust. <b>Limits</b> (band tolerance, liquidity, FX, position caps) are <b>always manual</b> — never extracted.</p>
+      <p><b>And Analyse?</b> It processes the client’s <b>statements</b> (Step 1). After Confirm, the views update <b>live</b> — you don’t press Analyse again.</p>
     </div>
   </div>
 
@@ -138,7 +139,7 @@
       <!-- header row -->
       <div class="phdr corner">Actor ↓ / Phase →</div>
       <div class="phdr"><span class="pn">A</span>Ingest statements</div>
-      <div class="phdr"><span class="pn">B</span>Set policy — manual</div>
+      <div class="phdr"><span class="pn">B</span>Set mandate &amp; policy</div>
       <div class="phdr"><span class="pn">C</span>Capture tactical instructions</div>
       <div class="phdr"><span class="pn">D</span>Review &amp; generate</div>
 
@@ -162,7 +163,7 @@
       </div>
       <div class="lane-cell you">
         <div class="box you"><span class="n">2</span><span class="t">Set mandate, risk &amp; ability</span></div>
-        <div class="box you"><span class="n">3</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">You decide the numbers — informed by, but not filled from, the tactical items.</div></div>
+        <div class="box you"><span class="n">3</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">Limits are always manual. Allocation sleeves can be <b>pre-filled</b> by Step 7 — you still verify.</div></div>
       </div>
       <div class="lane-cell you">
         <div class="box you"><span class="n">4</span><span class="t">Paste instructions →</span> <span class="btn">Sort into items</span></div>
@@ -171,11 +172,12 @@
         <div class="decision"><div class="t">◇ Any ⚠️ needs-clarification items?</div>
           <div class="br"><b>Yes</b> → resolve or ask the client <span class="loop">⟲ back to Step 5</span></div>
           <div class="br"><b>No</b> ↓</div></div>
-        <div class="box you"><span class="n">6</span><span class="t">Press</span> <span class="btn">Confirm items</span><div class="d">No re-Analyse needed — views update live.</div></div>
+        <div class="box you"><span class="n">6</span><span class="t">Press</span> <span class="btn">Confirm items</span><div class="d">Commits guidance + watchlist. <b>Fills no fields.</b> No re-Analyse — views update live.</div></div>
+        <div class="box you"><span class="n">7</span><span class="t">If weights were stated:</span> <span class="btn">Apply to allocation targets</span><div class="d">The <b>only</b> action that fills the allocation sleeves (Step 3). Optional; limits stay manual. <span class="loop">⤶ fills Step 3</span></div></div>
       </div>
       <div class="lane-cell you">
-        <div class="box you"><span class="n">7</span><span class="t">Review Overview / Suitability</span><div class="d">Check the watchlist &amp; the folded-in guidance.</div></div>
-        <div class="box you"><span class="n">8</span><span class="t">Open Proposal →</span> <span class="btn">Generate deck</span><div class="d">Download PPTX / PDF.</div></div>
+        <div class="box you"><span class="n">8</span><span class="t">Review Overview / Suitability</span><div class="d">Check the watchlist &amp; the folded-in guidance.</div></div>
+        <div class="box you"><span class="n">9</span><span class="t">Open Proposal →</span> <span class="btn">Generate deck</span><div class="d">Download PPTX / PDF.</div></div>
       </div>
 
       <!-- COPILOT lane -->
@@ -187,8 +189,9 @@
         <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation vs target, drift &amp; suitability</div><div class="d">Recomputes on every change to Steps 2–3.</div></div>
       </div>
       <div class="lane-cell bot">
-        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask into a typed item</div><div class="d">Copies stated levels; flags unclear ones — invents nothing.</div></div>
+        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask into a typed item</div><div class="d">Copies stated levels &amp; weights; flags unclear ones — invents nothing.</div></div>
         <div class="box bot"><span class="gear">⚙ ON CONFIRM</span><div class="t" style="margin-top:3px">Triggers → 📡 watchlist; all → guidance</div><div class="d">needs-clarification items are held out until resolved.</div></div>
+        <div class="box bot"><span class="gear">⚙ IF WEIGHTS GIVEN</span><div class="t" style="margin-top:3px">Builds a Proposed allocation (per sleeve)</div><div class="d">Offered for you to Apply in Step 7 — never applied on its own.</div></div>
       </div>
       <div class="lane-cell bot">
         <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Generates PPTX / PDF</div><div class="d">Figures deterministic; guidance folded in as notes.</div></div>
@@ -196,5 +199,5 @@
     </div>
   </div>
 
-  <p class="foot"><b>Read it like this:</b> follow the numbered boxes 1 → 8 down the <b>You</b> lane; the dashed <b>Copilot</b> boxes are the system's automatic response at each phase. The only things you type are the policy numbers (Steps 2–3) and the client's instructions (Step 4). · Confidential.</p>
+  <p class="foot"><b>Read it like this:</b> follow the numbered boxes 1 → 9 down the <b>You</b> lane; the dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> Confirm (6) fills no fields — the allocation sleeves are written only if you click Apply (7), and limits are always manual. · Confidential.</p>
 </div>
