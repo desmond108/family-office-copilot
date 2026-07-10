@@ -156,9 +156,6 @@ def build(mode: str) -> str:
         cx = (PX[i] + PX[i+1]) / 2
         add(f'<text x="{cx:.0f}" y="{PH_Y+PH_H/2+4:.0f}" text-anchor="middle" font-size="12.5" '
             f'font-weight="700" font-style="italic" fill="{P["phase_text"]}">{esc(name)}</text>')
-    for xb in PX[1:-1]:
-        add(f'<line x1="{xb}" y1="{PH_Y}" x2="{xb}" y2="{H}" stroke="{P["line_strong"]}" '
-            f'stroke-width="1.3" stroke-dasharray="3 5"/>')
     # lanes
     for i, (name, sub) in enumerate(LANES):
         y = TOP + i * LANE_H
@@ -172,6 +169,12 @@ def build(mode: str) -> str:
         add(f'<text x="44" y="{cy:.0f}" text-anchor="middle" font-size="9" font-weight="600" '
             f'letter-spacing="1" fill="{P["lane_sub"]}" transform="rotate(-90 44 {cy:.0f})">'
             f'{esc(sub.upper())}</text>')
+
+    # phase dividers — drawn AFTER the lane fills so the dashed lines run the full
+    # height (top to bottom), then the nodes are drawn on top of them.
+    for xb in PX[1:-1]:
+        add(f'<line x1="{xb}" y1="{PH_Y}" x2="{xb}" y2="{H-1}" stroke="{P["line_strong"]}" '
+            f'stroke-width="1.4" stroke-dasharray="4 5"/>')
 
     # ----- nodes ----- #
     term(156, 175, ["Client gives", "instructions"])
