@@ -1,0 +1,378 @@
+<style>
+  :root {
+    --ground: #eef0f6;
+    --paper: #ffffff;
+    --ink: #16203c;
+    --ink-soft: #47517a;
+    --ink-faint: #838cad;
+    --navy: #1e2a56;
+    --gold: #9c7422;
+    --gold-tint: #f7efdc;
+    --green: #2f6f57;
+    --green-tint: #e6f1eb;
+    --line: #dfe2ee;
+    --line-strong: #c8cddd;
+    --slate-tint: #eceef6;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #070d20;
+      --paper: #0f1830;
+      --ink: #e8ebf6;
+      --ink-soft: #aab3d1;
+      --ink-faint: #7883a6;
+      --navy: #cdd6f2;
+      --gold: #d3a94f;
+      --gold-tint: #2a2412;
+      --green: #6bbf9a;
+      --green-tint: #10281f;
+      --line: #22305a;
+      --line-strong: #2e3f6e;
+      --slate-tint: #16224a;
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #eef0f6; --paper: #ffffff; --ink: #16203c; --ink-soft: #47517a;
+    --ink-faint: #838cad; --navy: #1e2a56; --gold: #9c7422; --gold-tint: #f7efdc;
+    --green: #2f6f57; --green-tint: #e6f1eb; --line: #dfe2ee; --line-strong: #c8cddd;
+    --slate-tint: #eceef6;
+  }
+  :root[data-theme="dark"] {
+    --ground: #070d20; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+    --ink-faint: #7883a6; --navy: #cdd6f2; --gold: #d3a94f; --gold-tint: #2a2412;
+    --green: #6bbf9a; --green-tint: #10281f; --line: #22305a; --line-strong: #2e3f6e;
+    --slate-tint: #16224a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); line-height: 1.65;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: 812px; margin: 0 auto; padding: clamp(20px, 5vw, 60px) clamp(18px, 5vw, 46px); }
+  .sheet {
+    background: var(--paper); border: 1px solid var(--line);
+    border-radius: 4px; padding: clamp(26px, 5vw, 60px);
+    box-shadow: 0 1px 2px rgba(10,18,40,.05), 0 18px 46px -30px rgba(10,18,40,.32);
+  }
+
+  .eyebrow {
+    font-size: 11.5px; letter-spacing: .19em; text-transform: uppercase;
+    font-weight: 700; color: var(--gold); margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--serif); font-weight: 600; color: var(--navy);
+    font-size: clamp(28px, 5.2vw, 40px); line-height: 1.12; letter-spacing: -.01em;
+    margin: 0 0 16px; text-wrap: balance;
+  }
+  .dek {
+    font-size: clamp(16px, 2.4vw, 18.5px); color: var(--ink-soft);
+    margin: 0 0 22px; max-width: 60ch; text-wrap: pretty;
+  }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+    font-size: 12.5px; color: var(--ink-faint); padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+  .meta b { color: var(--ink-soft); font-weight: 600; }
+  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--line-strong); }
+
+  h2 {
+    font-family: var(--serif); font-weight: 600; color: var(--navy);
+    font-size: clamp(20px, 3.2vw, 25px); letter-spacing: -.01em;
+    margin: 0 0 6px; text-wrap: balance;
+  }
+  section { margin-top: clamp(38px, 6vw, 58px); }
+  .kicker {
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    font-weight: 700; color: var(--gold); margin: 0 0 14px;
+  }
+  p { margin: 0 0 15px; }
+  p:last-child { margin-bottom: 0; }
+  .lede { font-size: 17px; }
+  strong { color: var(--ink); font-weight: 650; }
+  .mono { font-family: var(--mono); font-size: .9em; }
+
+  /* partner question pull-quote */
+  .quote {
+    border-left: 3px solid var(--gold); padding: 4px 0 4px 22px;
+    margin: 0 0 8px; font-family: var(--serif); font-style: italic;
+    font-size: clamp(18px, 2.8vw, 21px); color: var(--ink); line-height: 1.42;
+  }
+  .quote-src { font-family: var(--sans); font-style: normal; font-size: 13px;
+    color: var(--ink-faint); margin-top: 10px; }
+
+  /* four-type mapping */
+  .types { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+  .type-row {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    gap: 14px; padding: 15px 17px; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 6px;
+  }
+  .type-row.hero { border-color: color-mix(in srgb, var(--gold) 45%, var(--line)); background: color-mix(in srgb, var(--gold-tint) 45%, var(--paper)); }
+  .said { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+  .said span { display: block; }
+  .arrow { color: var(--ink-faint); font-size: 17px; }
+  .to { }
+  .chip {
+    display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: 4px 10px; border-radius: 100px;
+    background: var(--slate-tint); color: var(--ink-soft);
+    border: 1px solid var(--line-strong);
+  }
+  .chip.gold { background: var(--gold-tint); color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent); }
+  .type-note { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
+  .type-note b { color: var(--ink); }
+
+  /* two-column contrast */
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
+  .card {
+    border: 1px solid var(--line); border-radius: 8px; padding: 20px 20px 22px;
+    background: var(--paper);
+  }
+  .card.weak { }
+  .card.good { border-color: color-mix(in srgb, var(--green) 38%, var(--line)); }
+  .card h3 {
+    margin: 0 0 12px; font-size: 15px; font-family: var(--sans); font-weight: 700;
+    display: flex; align-items: center; gap: 9px; color: var(--ink);
+  }
+  .tag { font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px; }
+  .tag.no { background: var(--slate-tint); color: var(--ink-faint); }
+  .tag.yes { background: var(--green-tint); color: var(--green); }
+  .card ul { margin: 0; padding-left: 18px; }
+  .card li { font-size: 13.8px; color: var(--ink-soft); margin-bottom: 7px; line-height: 1.5; }
+  .card li:last-child { margin-bottom: 0; }
+
+  /* fused-ask split */
+  .split {
+    margin-top: 20px; padding: 20px 22px; border-radius: 8px;
+    background: var(--slate-tint); border: 1px solid var(--line);
+  }
+  .split .said { font-size: 14px; color: var(--ink); margin-bottom: 14px; display: block; }
+  .split-to { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-faint); }
+
+  /* rule callout */
+  .rule {
+    margin-top: 24px; display: flex; gap: 16px; align-items: flex-start;
+    padding: 20px 22px; border-radius: 8px;
+    background: var(--navy); color: #eaeefb;
+  }
+  :root[data-theme="dark"] .rule, :root:not([data-theme="light"]) .rule { background: color-mix(in srgb, var(--navy) 14%, var(--paper)); border: 1px solid var(--line-strong); color: var(--ink); }
+  @media (prefers-color-scheme: dark) { .rule { background: color-mix(in srgb, var(--gold) 8%, var(--paper)); border: 1px solid var(--line-strong); color: var(--ink); } }
+  .rule .mark { font-family: var(--serif); font-size: 30px; line-height: 1; color: var(--gold); flex: none; }
+  .rule p { margin: 0; font-size: 14.5px; line-height: 1.55; }
+  .rule b { color: #fff; }
+  @media (prefers-color-scheme: dark) { .rule b { color: var(--ink); } }
+  :root[data-theme="light"] .rule b { color: #fff; }
+
+  /* process flow */
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; counter-reset: step; }
+  .step {
+    position: relative; padding: 18px 15px 16px; border-radius: 8px;
+    background: var(--paper); border: 1px solid var(--line);
+  }
+  .step::before {
+    counter-increment: step; content: counter(step);
+    font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--gold);
+    display: inline-block; margin-bottom: 8px;
+    border: 1.5px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    width: 22px; height: 22px; line-height: 19px; text-align: center; border-radius: 50%;
+  }
+  .step h4 { margin: 0 0 4px; font-size: 13.5px; color: var(--ink); font-weight: 700; }
+  .step p { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+  .flow-out { margin-top: 12px; font-size: 13px; color: var(--ink-soft); text-align: center; }
+  .flow-out b { color: var(--green); }
+
+  /* watchlist mock */
+  .watch { margin-top: 20px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--paper); }
+  .watch-head { display: flex; align-items: center; gap: 9px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 700; color: var(--ink); }
+  .live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: .05em; margin-left: auto; }
+  .live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px var(--green-tint); }
+  .tblwrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint); font-weight: 700; padding: 11px 16px; }
+  td { padding: 12px 16px; border-top: 1px solid var(--line); color: var(--ink-soft); vertical-align: middle; }
+  td.inst { color: var(--ink); font-weight: 600; }
+  td .lvl { font-family: var(--mono); font-size: 12.5px; color: var(--gold); }
+  .watch-cap { font-size: 12.5px; color: var(--ink-faint); padding: 11px 16px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--gold-tint) 30%, var(--paper)); }
+
+  /* build + limits */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
+  .panel { border: 1px solid var(--line); border-radius: 8px; padding: 20px; background: var(--paper); }
+  .panel .kicker { margin-bottom: 12px; }
+  .panel ul { margin: 0; padding-left: 17px; }
+  .panel li { font-size: 13.6px; color: var(--ink-soft); margin-bottom: 8px; line-height: 1.5; }
+  .panel li:last-child { margin-bottom: 0; }
+  .panel li b { color: var(--ink); font-weight: 650; }
+
+  /* bottom line */
+  .bottom {
+    margin-top: clamp(38px, 6vw, 54px); padding: 26px 28px; border-radius: 8px;
+    background: color-mix(in srgb, var(--gold-tint) 55%, var(--paper));
+    border: 1px solid color-mix(in srgb, var(--gold) 34%, var(--line));
+  }
+  .bottom .kicker { color: var(--gold); }
+  .bottom p { font-size: 16px; color: var(--ink); margin: 0; line-height: 1.6; }
+
+  .foot { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12px; color: var(--ink-faint); }
+
+  @media (max-width: 660px) {
+    .type-row { grid-template-columns: 1fr; gap: 9px; text-align: left; }
+    .arrow { display: none; }
+    .cols, .grid2 { grid-template-columns: 1fr; }
+    .flow { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .sheet { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+
+<div class="wrap">
+  <div class="sheet">
+
+    <p class="eyebrow">Product Design Note · Meridian Family Office</p>
+    <h1>Turning ad-hoc client asks into things the copilot can act on</h1>
+    <p class="dek">How we capture varied, in-passing client instructions — <em>“buy in tranches,” “gold below $4,000,” “low fees, good quality”</em> — without ever letting the model invent a number.</p>
+    <div class="meta">
+      <span><b>Copilot v6</b> · Tactical instructions</span>
+      <span class="dot"></span>
+      <span>Prototype built &amp; tested</span>
+      <span class="dot"></span>
+      <span>For partner review</span>
+    </div>
+
+    <section>
+      <p class="kicker">The question</p>
+      <p class="quote">“How do we put these asks into the UI — ‘buying in tranches,’ ‘interest-rate expectations,’ ‘low fees, good quality’? Just another free-text box? They can be very ad-hoc and very varied.”
+        <span class="quote-src">— the question we're answering</span>
+      </p>
+      <p class="lede" style="margin-top:20px">Short answer: <strong>keep a free-text box — but treat it as the way in, not the way it's stored.</strong> A single box is the weakest option for this product, and the fix is small because it reuses what we already built.</p>
+    </section>
+
+    <section>
+      <h2>Varied isn't the same as unstructured</h2>
+      <p>Every ad-hoc line in the client's message lands in one of <strong>four recognisable types</strong>. Once you see the buckets, the design decides itself.</p>
+      <div class="types">
+        <div class="type-row hero">
+          <div class="said"><span>“add Nasdaq only after a 15–20% pullback”</span><span>“gold below USD 4,000/oz”</span></div>
+          <div class="arrow">→</div>
+          <div class="to"><span class="chip gold">Entry trigger</span><div class="type-note">A level to <b>watch</b> — becomes a monitored rule.</div></div>
+        </div>
+        <div class="type-row">
+          <div class="said"><span>“buy the bond fund in tranches”</span><span>“an initial 5%, park the rest”</span></div>
+          <div class="arrow">→</div>
+          <div class="to"><span class="chip">Execution style</span><div class="type-note"><b>How</b> to build the position.</div></div>
+        </div>
+        <div class="type-row">
+          <div class="said"><span>“low fees, good liquidity, good quality”</span></div>
+          <div class="arrow">→</div>
+          <div class="to"><span class="chip">Selection criteria</span><div class="type-note"><b>Screens</b> the products chosen.</div></div>
+        </div>
+        <div class="type-row">
+          <div class="said"><span>“what's the impact of rate-hike expectations?”</span></div>
+          <div class="arrow">→</div>
+          <div class="to"><span class="chip">Open question</span><div class="type-note">To <b>answer</b>, not to encode.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Why not just one free-text box</h2>
+      <div class="cols">
+        <div class="card weak">
+          <h3><span class="tag no">One box</span> Loses what matters</h3>
+          <ul>
+            <li>Everything becomes prose the model paraphrases.</li>
+            <li>“Gold below $4,000” is never <em>watched</em> — just restated.</li>
+            <li>Fused asks stay fused (see below).</li>
+          </ul>
+        </div>
+        <div class="card good">
+          <h3><span class="tag yes">Typed slots</span> Keeps it actionable</h3>
+          <ul>
+            <li>Each ask lands where it can be acted on.</li>
+            <li>Levels are <em>copied</em> from the client, never invented.</li>
+            <li>A human confirms before anything counts.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="split">
+        <span class="said">“buy the bond fund in tranches — but what about rate hikes?”</span>
+        <div class="split-to">one line, two asks →&nbsp; <span class="chip">Execution style</span> <span style="color:var(--ink-faint)">+</span> <span class="chip">Open question</span></div>
+      </div>
+
+      <div class="rule">
+        <span class="mark">§</span>
+        <p><b>The rule that shapes everything.</b> The system never invents a number. The model only <em>sorts</em> the client's words and <em>copies</em> the levels they actually stated — if a level isn't given, the field stays empty. That's the difference between a note and a monitorable rule.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>The pattern — reused from statement ingestion</h2>
+      <p>The same <strong>capture → sort → review → confirm</strong> gate we built for reading PDF statements in v5. It fits the discipline instead of fighting it.</p>
+      <div class="flow">
+        <div class="step"><h4>Free text</h4><p>Client's asks, typed in plain language.</p></div>
+        <div class="step"><h4>Sort into types</h4><p>The model classifies each ask — copying levels, inventing none.</p></div>
+        <div class="step"><h4>Review &amp; edit</h4><p>Analyst fixes any type or wording in a table.</p></div>
+        <div class="step"><h4>Confirm</h4><p>Only confirmed items count.</p></div>
+      </div>
+      <p class="flow-out">→ drives the proposal as guidance, and triggers become a <b>monitoring watchlist</b></p>
+    </section>
+
+    <section>
+      <h2>Where it pays off: the watchlist</h2>
+      <p>Confirmed entry triggers become a live list the book can be watched against — the retention hook. Here's the client's own message, sorted:</p>
+      <div class="watch">
+        <div class="watch-head">📡 Monitoring watchlist <span class="live">Watching</span></div>
+        <div class="tblwrap">
+          <table>
+            <thead><tr><th>Instrument</th><th>Condition</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td class="inst">S&amp;P 500 ETF</td><td><span class="lvl">−15% to −20%</span> from recent high</td><td>Consider buying</td></tr>
+              <tr><td class="inst">Gold ETF</td><td>below <span class="lvl">USD 4,000 / oz</span></td><td>Buy</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="watch-cap">Levels copied verbatim from the client — the copilot computes nothing here.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>What's built, and what's next</h2>
+      <div class="grid2">
+        <div class="panel">
+          <p class="kicker">Working prototype</p>
+          <ul>
+            <li>A <b>Tactical instructions</b> box on the intake page → <b>Sort into items</b> → editable review table → <b>Confirm</b>.</li>
+            <li>Works <b>with or without</b> an API key (a keyword pass runs the demo build).</li>
+            <li>Tested on the client's real message: both triggers captured <b>with their levels</b>; the tranche instruction and the rate-hike question split apart.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <p class="kicker">Honest limits / next</p>
+          <ul>
+            <li>The watchlist is <b>captured, not yet live-monitored</b> — wiring it to price alerts is the next step, and the highest-value one.</li>
+            <li>Selection criteria are captured as guidance, <b>not yet a live product screen</b>.</li>
+            <li>The keyword pass is a first draft; that's exactly why a human confirms.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="bottom">
+      <p class="kicker">Bottom line</p>
+      <p>Yes to a free-text box — as the <strong>capture surface, not the format</strong>. Sorting ad-hoc guidance into four typed, human-confirmed items turns it into things the copilot can act on and monitor — without ever letting the model invent a number.</p>
+    </div>
+
+    <p class="foot">Meridian Family Office Copilot · v6 · Tactical instructions · confidential — for internal partner discussion.</p>
+
+  </div>
+</div>
