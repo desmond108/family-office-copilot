@@ -988,9 +988,16 @@ if view == "Intake":
         st.caption("Free-text notes, overlay sleeves and attached documents — folded into the "
                    "proposal as human context. Figures are never invented from them.")
         render_analyst_inputs()
+    # Next-step hand-off. The proposal deck is built from the PARSED BOOK, so the hint
+    # points to the real next action for the current state — no book, no proposal.
     if statements:
-        st.caption("Documents are analysed — switch to **Overview** (sidebar) to see the book, "
-                   "or adjust the parameters above and the other views will recompute.")
+        st.success("✅ **Next:** open **Proposal** in the sidebar to generate the deck — your "
+                   "inputs above are folded in. (Or review **Overview / Suitability** first; every "
+                   "view recomputes live as you adjust the parameters.)")
+    elif analyst_inputs_present():
+        st.info("⏳ **Next:** load the client's documents in the sidebar and press **Analyse ▸** — "
+                "the Proposal deck is built from the parsed statements. Your inputs above are saved "
+                "and will be folded in once a book is loaded.")
 
 # ---- Sample statements (view the raw inputs; no digested book required) ---- #
 elif view == "Sample statements":
