@@ -161,8 +161,12 @@ TAC_LABEL = {
     "question": "Open question", "needs_clarification": "Needs clarification",
     "other": "Other guidance",
 }
-TAC_COLS = ["keep", "type", "asset_class", "weight_pct", "instrument",
+TAC_COLS = ["keep", "type", "tier", "asset_class", "weight_pct", "instrument",
             "action", "threshold", "detail", "note"]
+
+# v8 — enforcement-tier badges shown in the review table and folded into the deck.
+TIER_BADGE = {"enforced": "🔒 enforced", "monitored": "📡 monitored",
+              "advisory": "📝 advisory"}
 
 
 def proposed_alloc(items: list[dict]) -> dict[str, float]:
@@ -237,7 +241,7 @@ TICKER_BY_ISIN = {"US78462F1030": "SPY", "US46090E1038": "QQQ"}
 # Default ON. Flip it off in production by setting DEMO_MODE=0 as an env var / secret.
 DEMO_MODE = os.environ.get("DEMO_MODE", "1").lower() not in ("0", "false", "no", "off")
 
-st.set_page_config(page_title="Meridian Family Office Copilot · v7", page_icon="🏛️",
+st.set_page_config(page_title="Meridian Family Office Copilot · v8", page_icon="🏛️",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -363,6 +367,71 @@ def rebalance(book: Book, target: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def _trigger_price(ticker: str, unit: str) -> dict:
+    """Live price for an enforced trigger, via the provenance-first datafeed. Cached
+    15 min. Returns {ok, value, cite} — ok=False (no guess) when the feed can't source
+    it, so the handler degrades to 'verify manually' rather than inventing a level."""
+    from datafeed import Feed
+    fig = Feed().last_close(ticker, unit)
+    return {"ok": bool(fig.ok), "value": (float(fig.value) if fig.ok else None),
+            "cite": fig.cite()}
+
+
+def enforce_price_triggers(reb_rows: list[list], items: list[dict]) -> list[dict]:
+    """v8 — the ENFORCEMENT DOOR. Confirmed 🔒 price-level triggers are the only
+    tactical items allowed to touch a computed number: each is checked against the
+    live price and ANNOTATES the matching rebalance row (a buy above a 'buy-below'
+    level is turned to HOLD). The figure is sourced with provenance, never invented,
+    so the never-invent-a-number guardrail still holds — the client's condition can
+    only gate/flag a trade, not fabricate one. Returns a list of rule outcomes for
+    the deck. reb_rows are mutated in place (row[0]=Class, row[4]=Direction, row[5]=Note)."""
+    results: list[dict] = []
+    for it in items or []:
+        if it.get("type") != "entry_trigger" or tactical_extract.tier_for(it) != "enforced":
+            continue
+        text = " ".join(str(it.get(k) or "") for k in
+                        ("instrument", "detail", "verbatim", "action"))
+        tk_unit = tactical_extract.priceable_ticker(text)
+        lvl = tactical_extract.absolute_level(it.get("threshold"))
+        if not tk_unit or lvl is None:
+            continue
+        ticker, unit = tk_unit
+        sleeve = tactical_extract._asset_of(text.lower())      # gold -> commodity, etc.
+        low = text.lower()
+        # "buy only below X" is the common shape (incl. "do not buy above X"); a bare
+        # "above/over/breaks" without a "not" is the buy-on-breakout shape.
+        under = ("below" in low or "under" in low or "dips" in low or "not " in low
+                 or "don't" in low or "no more" in low or not ("above" in low or "over" in low))
+        px = _trigger_price(ticker, unit)
+        label = (it.get("instrument") or sleeve or ticker).strip()
+        lvl_s = f"{lvl:,.0f} {unit}".strip()
+        if not px["ok"]:
+            verdict, mark, note = "unverified", "⚠", (
+                f"⚠ enforced: live {label} price unavailable — verify manually vs {lvl_s}")
+        else:
+            p = px["value"]
+            permitted = (p <= lvl) if under else (p >= lvl)
+            side = "below" if under else "above"
+            if permitted:
+                verdict, mark = "met", "✓"
+                note = f"✓ enforced: {label} {p:,.0f} {side} {lvl_s} — buy condition met"
+            else:
+                verdict, mark = "blocked", "⏸"
+                note = (f"⏸ HOLD (enforced): {label} {p:,.0f} not {side} {lvl_s} — "
+                        f"client buys only {side} {lvl_s}")
+        # annotate the matching rebalance row (if the sleeve is in the table)
+        for row in reb_rows:
+            if str(row[0]).lower().replace(" ", "_") == (sleeve or ""):
+                if verdict == "blocked" and str(row[4]).lower() == "buy":
+                    row[4] = "hold"
+                row[5] = f"{row[5]} · {note}" if row[5] and row[5] != "in band" else note
+                break
+        results.append({"label": label, "level": lvl_s, "verdict": verdict, "mark": mark,
+                        "sleeve": sleeve, "note": note, "cite": px["cite"]})
+    return results
+
+
 def proposal_model(book: Book, params: dict) -> dict:
     """Compute the proposal deck's content from the parsed book — every value
     from the deterministic engine (parser / suitability / rebalancer). Consumed
@@ -392,6 +461,10 @@ def proposal_model(book: Book, params: dict) -> dict:
     reb_rows = [[str(r["Class"]).title(), f'{r["Before"] * 100:.1f}%', f'{r["Target"] * 100:.1f}%',
                  f'{r["Trade (USD)"]:+,.0f}', str(r["Direction"]), str(r["Note"])]
                 for _, r in reb.iterrows()]
+    # v8 — enforced price-level triggers check the live price and annotate the
+    # rebalance rows (a buy above a 'buy-below' level becomes a HOLD). Done before the
+    # buy/sell tally so a held trade is not counted as a recommended buy.
+    enforced = enforce_price_triggers(reb_rows, params.get("tactical") or [])
     buys = reb.loc[reb["Trade (USD)"] > 1, "Trade (USD)"].sum()
     sells = -reb.loc[reb["Trade (USD)"] < -1, "Trade (USD)"].sum()
     net_trades = buys - sells
@@ -406,6 +479,10 @@ def proposal_model(book: Book, params: dict) -> dict:
              for k in ALLOC_KEYS if params["notes"].get(k)]
     if params.get("considerations"):
         notes.append(f"Additional considerations: {params['considerations']}")
+    # v8 — enforced trigger outcomes fold in as cited facts (they gated a trade row),
+    # so they appear in the deck even without an LLM call.
+    for e in enforced:
+        notes.append(f"🔒 Enforced check — {e['note']} (source: {e['cite']}).")
     # v6: confirmed tactical instructions (typed) fold in as analyst guidance —
     # intent/context for the commentary, never a source of computed figures.
     # needs_clarification items are held out of the proposal until resolved.
@@ -449,6 +526,7 @@ def proposal_model(book: Book, params: dict) -> dict:
                         "net": f"${net_trades:+,.0f}", "selffund": bool(abs(net_trades) < 1000)},
         "gate": worst_enforcement(book.suit), "suit_items": suit_items,
         "data_quality": dq, "analyst_notes": notes, "overlays": overlays,
+        "enforced_rules": enforced,   # v8 — 🔒 price-trigger outcomes (cited)
     }
 
 
@@ -564,7 +642,7 @@ statements = st.session_state["statements"]
 
 with st.sidebar:
     st.markdown("<div class='brand'>Meridian<br><b style='font-size:13px'>Family Office</b>"
-                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v7</span>"
+                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v8</span>"
                 "</div>", unsafe_allow_html=True)
     st.markdown("<div class='kicker'>AI Copilot · Confidential</div>", unsafe_allow_html=True)
     st.divider()
@@ -750,11 +828,17 @@ def render_tactical_summary(items: list[dict]):
     if triggers:
         st.markdown("**📡 Monitoring watchlist** — conditional entries to watch the book against:")
         st.dataframe(
-            pd.DataFrame([{"Instrument": it.get("instrument") or "—",
+            pd.DataFrame([{"Tier": TIER_BADGE.get(tactical_extract.tier_for(it), ""),
+                           "Instrument": it.get("instrument") or "—",
                            "Condition / level": it.get("threshold") or "—",
                            "Action": it.get("action") or "—",
                            "Instruction": it.get("detail", "")} for it in triggers]),
             use_container_width=True, hide_index=True)
+        if any(tactical_extract.tier_for(it) == "enforced" for it in triggers):
+            st.caption("🔒 **enforced** triggers are checked against the live price when you "
+                       "**Analyse**, and gate the matching rebalance row (a buy above a "
+                       "*buy-below* level becomes a HOLD). 📡 **monitored** triggers are watched "
+                       "but don't change the numbers.")
     for typ in ("allocation_target", "execution_style", "selection_criteria",
                 "question", "other"):
         group = [it for it in items if it.get("type") == typ]
@@ -804,7 +888,14 @@ def render_tactical_review():
                    "on these as written. Re-type them once resolved, or untick **Keep** to drop "
                    "them; they will not enter the proposal until resolved:\n\n"
                    + "\n".join(f"- {it.get('detail', '')}" for it in unclear))
+    st.caption("**Enforcement tier** (from each item's shape): 🔒 **enforced** binds a "
+               "number — a target weight, or a priceable absolute-level trigger like "
+               "*gold below $4,000*; 📡 **monitored** is watched but can't gate the math yet "
+               "(a relative move like *after a 15–20% pullback*); 📝 **advisory** shapes the "
+               "write-up only (execution style, selection, questions). The badge follows "
+               "the **type** you set — it refreshes when you confirm or re-sort.")
     df = pd.DataFrame(pending, columns=TAC_COLS)
+    df["tier"] = [TIER_BADGE.get(tactical_extract.tier_for(it), "") for it in pending]
     edited = st.data_editor(
         df, key="tac_editor", num_rows="dynamic", use_container_width=True,
         column_config={
@@ -812,6 +903,9 @@ def render_tactical_review():
                                                     help="Untick to ignore this item"),
             "type": st.column_config.SelectboxColumn(
                 "type", options=tactical_extract.ITEM_TYPES, required=True),
+            "tier": st.column_config.TextColumn(
+                "Tier", disabled=True, width="small",
+                help="Enforcement tier (from the item's type/level) — refreshes on Confirm"),
             "asset_class": st.column_config.SelectboxColumn(
                 "asset_class", options=ALLOC_KEYS,
                 help="Allocation targets only — the sleeve this weight applies to"),
@@ -825,6 +919,8 @@ def render_tactical_review():
     if bc[0].button("✓ Confirm items", type="primary", key="tac_conf"):
         rows = [r for r in edited.to_dict("records")
                 if r.get("keep", True) and (r.get("detail") or "").strip()]
+        for r in rows:                       # v8 — recompute tier from the final type/level
+            r["tier"] = tactical_extract.tier_for(r)
         resolved = [r for r in rows if r.get("type") != "needs_clarification"]
         unresolved = [r for r in rows if r.get("type") == "needs_clarification"]
         st.session_state["tactical_items"] = resolved
@@ -1096,6 +1192,23 @@ elif view == "Proposal":
                    "you can download as PowerPoint or PDF. Every figure is computed by the "
                    "deterministic engine from the client's holdings; nothing is invented.")
         model = proposal_model(book, params)
+
+        # ---- v8: enforced price-trigger outcomes (the only guidance that gated a
+        #          computed number) — surfaced explicitly, with provenance. --- #
+        _enf = model.get("enforced_rules") or []
+        if _enf:
+            blocked = [e for e in _enf if e["verdict"] == "blocked"]
+            unver = [e for e in _enf if e["verdict"] == "unverified"]
+            head = f"🔒 **{len(_enf)} enforced condition(s)** checked against live prices"
+            if blocked:
+                st.warning(head + f" — **{len(blocked)} gated a trade** (buy → hold):\n\n"
+                           + "\n".join(f"- {e['mark']} {e['note']}  \n  <sub>{e['cite']}</sub>"
+                                       for e in _enf), icon="🔒")
+            elif unver:
+                st.info(head + " — live price unavailable for some; verify manually:\n\n"
+                        + "\n".join(f"- {e['mark']} {e['note']}" for e in _enf))
+            else:
+                st.success(head + " — all conditions met; no trade gated.")
 
         # ---- v4: portable deck prompt + grounded CIO commentary ----------- #
         narr_key = resolve_key("ANTHROPIC_API_KEY") or resolve_key("API_KEY_260627")

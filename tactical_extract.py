@@ -43,6 +43,71 @@ ITEM_TYPES = ["allocation_target", "entry_trigger", "execution_style", "selectio
 # one of these, aggregated, and PROPOSED to the analyst — never auto-applied.
 SLEEVES = ["equity", "fixed_income", "commodity", "cash", "fx", "structured_products"]
 
+# v8 — the ENFORCEMENT TIER a typed item falls into, decided by its SHAPE, not its
+# wording. This is the honest answer to "there are infinitely many conditions": the
+# variety lives in the values, the structure clusters into three handling tiers.
+#   enforced  🔒  binds a computed number — a target weight (via Apply), or an
+#                 absolute price-level trigger on an instrument we can price today.
+#   monitored 📡  can't gate the math yet, but is watched / flagged (a relative or
+#                 unpriceable trigger — e.g. "after a 15-20% pullback").
+#   advisory  📝  shapes the narrative only (execution style, selection criteria,
+#                 open questions, free-text guidance) — never a number.
+# Only ENFORCED items reach the numeric engine; everything else behaves as before.
+ENFORCEMENT_TIERS = ("enforced", "monitored", "advisory")
+
+# Instruments datafeed can resolve to a live price today, so an ABSOLUTE-level
+# trigger on them is actually checkable (→ enforced). Narrow on purpose: this is the
+# real width of the "enforcement door". Everything else stays monitored.
+# (name substrings, yfinance ticker, unit)
+_PRICEABLE = [
+    (("gold", "bullion", "xau"), "GC=F", "USD/oz"),
+    (("silver", "xag"), "SI=F", "USD/oz"),
+    (("oil", "crude", "wti"), "CL=F", "USD/bbl"),
+    (("s&p", "sp500", "sp 500", "spx", "^gspc"), "^GSPC", "index"),
+    (("nasdaq", "ndx", "^ixic"), "^IXIC", "index"),
+]
+
+_ABS_PRICE_RE = re.compile(r"(?:USD|US\$|\$|€|£)\s?([\d,]+(?:\.\d+)?)", re.IGNORECASE)
+
+
+def priceable_ticker(text: str):
+    """(ticker, unit) if the text names an instrument datafeed can price today, else
+    None. Decides whether an absolute-level trigger is enforceable."""
+    low = (text or "").lower()
+    for names, tk, unit in _PRICEABLE:
+        if any(n in low for n in names):
+            return tk, unit
+    return None
+
+
+def absolute_level(threshold) -> float | None:
+    """The absolute price in a threshold string ('USD 4,000/oz' -> 4000.0), or None
+    when the level is RELATIVE (contains '%', e.g. a 15-20% pullback) or unstated —
+    a relative move needs a reference point we don't gate on, so it stays monitored."""
+    if not threshold:
+        return None
+    s = str(threshold)
+    if "%" in s:                      # relative move, not an absolute price level
+        return None
+    m = _ABS_PRICE_RE.search(s)
+    return float(m.group(1).replace(",", "")) if m else None
+
+
+def tier_for(item: dict) -> str:
+    """The enforcement tier an item falls into TODAY (see ENFORCEMENT_TIERS). Judged
+    from the item's shape and whether the data to check it exists — never from a
+    hand-written rule per condition."""
+    t = (item or {}).get("type")
+    if t == "allocation_target":
+        return "enforced"             # binds via Apply -> allocation targets
+    if t == "entry_trigger":
+        lvl = absolute_level(item.get("threshold"))
+        tk = priceable_ticker(" ".join(str(item.get(k) or "") for k in
+                                       ("instrument", "detail", "verbatim", "action")))
+        return "enforced" if (lvl is not None and tk) else "monitored"
+    # execution_style / selection_criteria / question / needs_clarification / other
+    return "advisory"
+
 INSTRUCTIONS = (
     "You are a private-banking portfolio analyst. You are given a client's or "
     "analyst's FREE-TEXT tactical instructions about how to invest a portfolio. "
@@ -128,7 +193,7 @@ def _clean(items: list) -> list[dict]:
             wp = float(wp) if wp is not None and str(wp).strip() != "" else None
         except (TypeError, ValueError):
             wp = None
-        out.append({
+        rec = {
             "type": t,
             "instrument": (it.get("instrument") or None),
             "asset_class": ac,         # allocation_target only (else None)
@@ -139,7 +204,9 @@ def _clean(items: list) -> list[dict]:
             "verbatim": (it.get("verbatim") or detail).strip(),
             "keep": True,    # analyst review-time fields (default on / empty)
             "note": "",
-        })
+        }
+        rec["tier"] = tier_for(rec)    # v8 — enforcement tier from the item's shape
+        out.append(rec)
     return out
 
 
