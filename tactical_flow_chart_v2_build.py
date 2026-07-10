@@ -5,7 +5,7 @@ the matrix-style tactical_swimlane.
 Emits TWO looks, same layout:
   * COLOR  — Meridian navy/gold, theme-aware  -> tactical_flow_chart_v2_note.html (+ .svg)
   * PRINT  — white background, black line-art, no fills, for printing & annotating with
-             a pen/pencil on paper           -> tactical_flow_chart_v2_print_note.html (+ .svg)
+             a pen/pencil on paper      -> tactical_flow_chart_v2_print_BW_note.html (+ .svg)
 
 Run:  python3 tactical_flow_chart_v2_build.py
 """
@@ -243,7 +243,7 @@ SVG_PRINT = build("print").replace('font-family="var(--sans)"',
 # standalone SVGs (for render verification)
 with open("tactical_flow_chart_v2.svg", "w") as f:
     f.write(literalize(SVG_COLOR))
-with open("tactical_flow_chart_v2_print.svg", "w") as f:
+with open("tactical_flow_chart_v2_print_BW.svg", "w") as f:
     f.write(SVG_PRINT)
 
 # ----- HTML artifacts ------------------------------------------------------ #
@@ -311,7 +311,7 @@ HTML_PRINT = f"""<style>
 
 <div class="wrap">
   <p class="eyebrow">Meridian Family Office Copilot · v8 — worksheet</p>
-  <h1>Tactical instructions — process flowchart (print &amp; annotate)</h1>
+  <h1>Tactical instructions — process flowchart (print &amp; annotate · B&amp;W)</h1>
   <p class="dek">White line-art of the same flow. Print it and mark it up by hand — trace a client's path, circle the decision points, note where a rule should be enforced.</p>
   <p class="hint">Tip: <b>File → Print</b> (landscape, “fit to page”, background graphics off) gives a clean A4/Letter sheet. Nothing is filled in, so pen and pencil read clearly.</p>
   <div class="legend">
@@ -327,6 +327,6 @@ HTML_PRINT = f"""<style>
 
 with open("tactical_flow_chart_v2_note.html", "w") as f:
     f.write(HTML_COLOR)
-with open("tactical_flow_chart_v2_print_note.html", "w") as f:
+with open("tactical_flow_chart_v2_print_BW_note.html", "w") as f:
     f.write(HTML_PRINT)
 print("wrote color + print .svg and _note.html")
