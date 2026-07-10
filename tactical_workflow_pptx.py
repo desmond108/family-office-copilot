@@ -154,7 +154,7 @@ tf = txt(s, 0.9, 4.7, 9.6, 1.0)
 para(tf, "What the copilot does the moment you confirm the sorted items — and the "
          "one rule that keeps every number trustworthy.", 15.5, CREAM, first=True, spacing=1.2)
 tf = txt(s, 0.9, 6.5, 11.5, 0.5)
-para(tf, "Meridian Family Office Copilot   ·   v7 · Tactical instructions   ·   "
+para(tf, "Meridian Family Office Copilot   ·   v8 · Tactical instructions   ·   "
          "For partner & client discussion", 11.5, RGBColor(0x7F, 0x8C, 0xBB), first=True)
 
 
@@ -325,29 +325,29 @@ for i, (ic, t, d, where, tcol, lcol, tri) in enumerate(dests):
 # =========================================================================== #
 s = slide()
 snum(s, 6)
-eyebrow(s, "Step 4 · the guardrail")
-title(s, "Guidance shapes the story — never the numbers")
+eyebrow(s, "Step 4 · the guardrail (v8: tiered)")
+title(s, "Guidance can gate a number — never invent one")
 
 gw = 5.68; gh = 2.45; gy = 2.5
 b = box(s, 0.86, gy, gw, gh, fill=GOLD_TINT, line=GOLD, line_w=1.5, radius=0.06)
 tf = b.text_frame
-para(tf, "GUIDANCE CAN SHAPE", 11, GOLD_DK, bold=True, first=True, ls=0.8)
-for i, li in enumerate(["The monitoring watchlist",
-                        "The written commentary & emphasis",
+para(tf, "GUIDANCE CAN SHAPE & GATE", 11, GOLD_DK, bold=True, first=True, ls=0.8)
+for i, li in enumerate(["The monitoring watchlist & the commentary",
+                        "🔒 Enforced trigger gates a rebalance buy (→ hold) vs a sourced live price",
                         "What the analyst is prompted to weigh"]):
-    para(tf, "•  " + li, 13, SOFT, before=(10 if i == 0 else 6), spacing=1.1)
+    para(tf, "•  " + li, 12.5, SOFT, before=(10 if i == 0 else 6), spacing=1.1)
 
 b = box(s, 0.86 + gw + 0.24, gy, gw, gh, fill=GREEN_TINT, line=GREEN, line_w=1.5, radius=0.06)
 tf = b.text_frame
-para(tf, "GUIDANCE NEVER CHANGES", 11, GREEN, bold=True, first=True, ls=0.8)
-for i, li in enumerate(["Allocation, drift & rebalancing figures",
-                        "Suitability checks",
-                        "Any dollar amount — all from real holdings"]):
-    para(tf, "•  " + li, 13, SOFT, before=(10 if i == 0 else 6), spacing=1.1)
+para(tf, "GUIDANCE NEVER INVENTS", 11, GREEN, bold=True, first=True, ls=0.8)
+for i, li in enumerate(["A figure from thin air — enforced checks use a price with provenance",
+                        "Suitability thresholds",
+                        "Holdings — every dollar from the real book"]):
+    para(tf, "•  " + li, 12.5, SOFT, before=(10 if i == 0 else 6), spacing=1.1)
 
 tf = txt(s, 0.86, gy + gh + 0.45, 11.6, 1.4)
-para(tf, "Ad-hoc words become things the copilot can act on and monitor — without ever "
-         "letting the model invent a number.", 19, NAVY, font=SERIF, italic=True, bold=True,
+para(tf, "Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. A client's condition can "
+         "gate or flag a trade — never fabricate one.", 18, NAVY, font=SERIF, italic=True, bold=True,
      first=True, spacing=1.15)
 
 

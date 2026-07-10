@@ -129,6 +129,20 @@
   .type-note { font-size: 13.5px; color: var(--ink-soft); margin-top: 6px; }
   .type-note b { color: var(--ink); }
 
+  /* enforcement tiers (v8) */
+  .tiers3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+  .tcard { border: 1px solid var(--line); border-top: 3px solid var(--line-strong); border-radius: 9px;
+    padding: 15px 16px; background: var(--paper); }
+  .tcard .badge { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
+  .tcard .sub { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 8px; }
+  .tcard p { margin: 0; font-size: 13px; color: var(--ink-soft); line-height: 1.48; }
+  .tcard .eg { margin-top: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); }
+  .tcard.enf { border-top-color: var(--green); } .tcard.enf .badge { color: var(--green); }
+  .tcard.mon { border-top-color: var(--gold); } .tcard.mon .badge { color: var(--gold); }
+  .tcard.adv { border-top-color: var(--ink-faint); } .tcard.adv .badge { color: var(--ink-soft); }
+  @media (max-width: 640px) { .tiers3 { grid-template-columns: 1fr; } }
+
   /* two-column contrast */
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
   .card {
@@ -241,7 +255,7 @@
     <h1>Turning ad-hoc client asks into things the copilot can act on</h1>
     <p class="dek">How we capture varied, in-passing client instructions — <em>“buy in tranches,” “gold below $4,000,” “low fees, good quality”</em> — without ever letting the model invent a number.</p>
     <div class="meta">
-      <span><b>Copilot v7</b> · Tactical instructions</span>
+      <span><b>Copilot v8</b> · Tactical instructions</span>
       <span class="dot"></span>
       <span>Shipped — live on Streamlit</span>
       <span class="dot"></span>
@@ -382,6 +396,33 @@
     </section>
 
     <section>
+      <h2>Enforcement tiers — what actually binds a number <span class="chip gold" style="vertical-align:3px">v8</span></h2>
+      <p>There are endlessly many <em>conditions</em> a client can state, but their <strong>shape</strong> clusters into three handling tiers. We classify the shape and are honest about what we can enforce today — rather than writing a rule per condition. Each confirmed item carries its tier as a badge in the review table and the watchlist.</p>
+      <div class="tiers3">
+        <div class="tcard enf">
+          <div class="badge">🔒 Enforced</div>
+          <div class="sub">Binds a computed number</div>
+          <p>Checked against real data and allowed to <b>gate a trade</b> — a target weight (via Apply), or an absolute price level on an instrument we can price.</p>
+          <div class="eg">“gold below $4,000/oz”</div>
+        </div>
+        <div class="tcard mon">
+          <div class="badge">📡 Monitored</div>
+          <div class="sub">Watched, not yet binding</div>
+          <p>On the watchlist and flagged when hit, but <b>can't gate the math</b> yet — a relative move that needs a defined reference point.</p>
+          <div class="eg">“after a 15–20% pullback”</div>
+        </div>
+        <div class="tcard adv">
+          <div class="badge">📝 Advisory</div>
+          <div class="sub">Shapes the write-up only</div>
+          <p>Folds into the narrative and deck notes — execution style, selection, questions. <b>Never touches a figure.</b></p>
+          <div class="eg">“buy in tranches”, “low fees”</div>
+        </div>
+      </div>
+      <p style="margin-top:16px">The <b>enforcement door</b> is narrow on purpose: a confirmed 🔒 absolute price trigger is checked against the live <span class="mono">datafeed</span> price when you press <b>Analyse</b>, and <b>annotates the matching rebalance row</b> — a buy above a <em>buy-below</em> level becomes a <b>HOLD</b>. The figure is sourced with provenance and degrades to <em>“verify manually”</em> if unavailable, so the <b>never-invent-a-number guardrail still holds</b>: a client condition can <b>gate or flag</b> a trade, never <b>fabricate</b> one.</p>
+      <p><b>The honest read:</b> through the door today, <b>one</b> of a typical client's conditions actually binds — the value of the tier layer is <b>transparency</b>: the deck stops silently implying the advisory items are enforced. We sell <em>what's binding</em>, not a promise to enforce everything. <a href="https://claude.ai/code/artifact/b4126d28-1b59-4d84-97ef-4a9bd65c57a3">See the full tier-by-tier mapping →</a></p>
+    </section>
+
+    <section>
       <h2>What's built, and what's next</h2>
       <div class="grid2">
         <div class="panel">
@@ -389,6 +430,7 @@
           <ul>
             <li>A <b>Tactical instructions</b> box → <b>Sort</b> → review table (<b>Keep · Note · type · level</b>, ⚠️ items held out) → <b>Confirm</b>.</li>
             <li><b>Propose → Apply / Ignore</b> allocation targets when the client stated weights.</li>
+            <li><b>Enforcement tiers (v8):</b> every item tagged 🔒 / 📡 / 📝; confirmed 🔒 price triggers gate the rebalance row at Analyse, with provenance.</li>
             <li>Works <b>with or without</b> an API key (a keyword pass runs the keyless demo).</li>
             <li>Verified on the client's message: allocations mapped per sleeve (=100%), triggers captured <b>with their levels</b>, the tranche/rate-hike ask split apart.</li>
           </ul>
@@ -396,8 +438,8 @@
         <div class="panel">
           <p class="kicker">Honest limits / next</p>
           <ul>
-            <li>The watchlist is <b>captured, not yet live-monitored</b> — wiring it to price alerts is the next step, and the highest-value one.</li>
-            <li>Selection criteria are captured as guidance, <b>not yet a live product screen</b>.</li>
+            <li><b>Monitored → enforced:</b> relative triggers (a <em>15–20% pullback</em>) become enforceable once we define their reference point (trailing 52-wk high).</li>
+            <li>Selection criteria (<em>low fees, liquidity</em>) stay 📝 advisory until an instrument fee/liquidity dataset is wired — the data, not the logic, is the blocker.</li>
             <li>The keyword pass is a first draft; that's exactly why a human confirms.</li>
           </ul>
         </div>
@@ -409,7 +451,7 @@
       <p>Yes to a free-text box — as the <strong>capture surface, not the format</strong>. Sorting ad-hoc guidance into typed, human-confirmed items turns it into things the copilot can act on and monitor — proposing allocations, watching triggers, flagging what's unclear — without ever letting the model invent a number.</p>
     </div>
 
-    <p class="foot">Meridian Family Office Copilot · v7 · Tactical instructions · confidential — for internal partner discussion.</p>
+    <p class="foot">Meridian Family Office Copilot · v8 · Tactical instructions · confidential — for internal partner discussion.</p>
 
   </div>
 </div>

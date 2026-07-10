@@ -108,7 +108,7 @@ def chevron(cx, cy):
 
 # ---- header --------------------------------------------------------------- #
 tf = txt(0.8, 0.5, 11.5, 0.4)
-para(tf, "MERIDIAN FAMILY OFFICE COPILOT · v7", 11.5, GOLD, bold=True, first=True, ls=1.6)
+para(tf, "MERIDIAN FAMILY OFFICE COPILOT · v8", 11.5, GOLD, bold=True, first=True, ls=1.6)
 tf = txt(0.8, 0.92, 11.7, 0.9)
 para(tf, "The tactical-instructions workflow, at a glance", 27, NAVY, font=SERIF,
      bold=True, first=True)
@@ -194,10 +194,11 @@ gy = 6.0
 b = box(0.8, gy, 11.73, 1.0, fill=NAVY_DEEP, line=None, radius=0.05)
 tf = b.text_frame
 tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tf, "THE GUARDRAIL", 11, GOLD, bold=True, first=True, ls=1.2)
-para(tf, "Guidance shapes the narrative and the watchlist — never a computed number. "
-         "Every figure stays derived from the client's real holdings.", 14.5, WHITE,
-     font=SERIF, italic=True, before=4, spacing=1.1)
+para(tf, "THE GUARDRAIL · v8 TIERED", 11, GOLD, bold=True, first=True, ls=1.2)
+para(tf, "Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. An enforced price trigger "
+         "can gate a rebalance buy (→ hold) against a sourced live price; everything else shapes "
+         "the narrative & watchlist. A client's condition can gate or flag a trade — never invent one.",
+     13, WHITE, font=SERIF, italic=True, before=4, spacing=1.08)
 
 OUT = "Tactical_Workflow_OnePager.pptx"
 prs.save(OUT)

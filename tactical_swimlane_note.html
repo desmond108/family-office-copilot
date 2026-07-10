@@ -113,9 +113,9 @@
 </style>
 
 <div class="wrap">
-  <p class="eyebrow">Meridian Family Office Copilot · v7</p>
+  <p class="eyebrow">Meridian Family Office Copilot · v8</p>
   <h1>Tactical instructions — who does what, and when</h1>
-  <p class="dek">The end-to-end process across three actors. The <b>You</b> lane is what the analyst does; the <b>Copilot</b> lane happens automatically.</p>
+  <p class="dek">The end-to-end process across three actors. The <b>You</b> lane is what the analyst does; the <b>Copilot</b> lane happens automatically. Each confirmed instruction now carries an <b>enforcement tier</b> — 🔒 enforced / 📡 monitored / 📝 advisory.</p>
 
   <div class="answer">
     <span class="q">?</span>
@@ -124,6 +124,7 @@
       <p><span class="no">By itself, no.</span> <b>Confirm items</b> commits the interpreted instructions — it produces a <b>monitoring watchlist</b> (triggers) and <b>guidance</b> folded into the proposal. It writes into <b>no field</b>.</p>
       <p><b>Allocations</b> are filled only by a <b>second, separate click</b>: if the instructions named target weights (“Gold ETF: 20%”), a <b>📥 Proposed allocation</b> panel appears with an <b>Apply to allocation targets</b> button (Step 6). You still verify and adjust. <b>Limits</b> (band tolerance, liquidity, FX, position caps) are <b>always manual</b> — never extracted.</p>
       <p><b>The order matters:</b> set the <b>mandate, risk and allocations first</b> (Steps 1–6), <b>then press Analyse</b> (Step 7). They're technically independent, but analysing before the policy is set computes against the default preset — which looks wrong until you fix it; doing the policy first means the <b>first analysis already reflects the client's policy</b>. Only the review &amp; proposal views (Steps 8–9) need the parsed book, and later tweaks recompute <b>live</b>.</p>
+      <p><b>One exception (v8):</b> a 🔒 <b>enforced</b> price trigger — a stated absolute level on a priceable instrument, e.g. <i>“buy gold below $4,000”</i> — <b>does</b> reach the numbers. When you Analyse, the copilot checks the live price and <b>gates the matching rebalance row</b> (a buy above the level becomes a HOLD), using a figure with provenance. Confirm still writes no field itself; the enforced check runs at Analyse, so confirm the trigger <b>before</b> Step 7. Everything else stays 📡 monitored or 📝 advisory and never touches a figure.</p>
     </div>
   </div>
 
@@ -184,12 +185,12 @@
       <div class="lane-label bot">Copilot<small>System</small></div>
       <div class="lane-cell bot"></div>
       <div class="lane-cell bot">
-        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask into a typed item</div><div class="d">Copies stated levels &amp; weights; flags unclear ones — invents nothing.</div></div>
+        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask + tags a tier</div><div class="d">Copies stated levels &amp; weights; assigns 🔒 / 📡 / 📝; flags unclear ones — invents nothing.</div></div>
         <div class="box bot"><span class="gear">⚙ ON CONFIRM</span><div class="t" style="margin-top:3px">Triggers → 📡 watchlist; all → guidance</div><div class="d">unclear items held out; builds a Proposed allocation.</div></div>
       </div>
       <div class="lane-cell bot">
         <div class="box bot"><span class="gear">⚙ ON ANALYSE</span><div class="t" style="margin-top:3px">Parses statements → builds the book</div></div>
-        <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation, drift &amp; suitability</div><div class="d">Against the policy you set above.</div></div>
+        <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation, drift &amp; suitability</div><div class="d">Against the policy set above; <b>applies 🔒 enforced triggers</b> → gates buys vs the live price.</div></div>
       </div>
       <div class="lane-cell bot">
         <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Generates PPTX / PDF</div><div class="d">Figures deterministic; guidance folded in as notes.</div></div>
@@ -197,5 +198,5 @@
     </div>
   </div>
 
-  <p class="foot"><b>Read it like this:</b> the numbers show the <b>recommended order</b> — set the policy (Steps 1–6) <b>first</b>, then press <b>Analyse</b> (Step 7), so the first analysis already reflects the client's policy. The dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> Confirm (5) fills no fields — the allocation sleeves are written only if you click Apply (6), and limits are always manual. · Confidential.</p>
+  <p class="foot"><b>Read it like this:</b> the numbers show the <b>recommended order</b> — set the policy (Steps 1–6) <b>first</b>, then press <b>Analyse</b> (Step 7), so the first analysis already reflects the client's policy. The dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> Confirm (5) fills no fields — the allocation sleeves are written only if you click Apply (6), and limits are always manual. <b>v8:</b> a 🔒 <b>enforced</b> price trigger is the one exception — it gates a rebalance buy at Analyse (against a sourced live price); 📡 monitored and 📝 advisory items never touch a figure. · Confidential.</p>
 </div>

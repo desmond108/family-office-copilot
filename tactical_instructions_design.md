@@ -58,21 +58,49 @@ When the instructions state target weights, the copilot aggregates them per slee
 Nothing is ever written silently — the client's stated weights drive the analysis only on an explicit
 click. Limits (band tolerance, liquidity, FX, position caps) stay fully manual.
 
+## Enforcement tiers (v8): what actually binds a number
+
+There are endlessly many *conditions* a client can state, but their **shape** clusters into three
+handling tiers — so we classify the shape and are honest about what we can enforce today, rather
+than writing a rule per condition:
+
+| Tier | Meaning | Example | Data it needs |
+|---|---|---|---|
+| 🔒 **Enforced** | Binds a computed number — gates a trade | a target weight (via Apply), or *"gold below $4,000"* | a live price for the instrument |
+| 📡 **Monitored** | Watched & flagged, can't gate the math yet | *"after a 15–20% pullback"* | a defined reference (trailing high) |
+| 📝 **Advisory** | Shapes the write-up only, never a figure | *"buy in tranches"*, *"low fees"*, *"rate hikes?"* | — (a preference or a viewpoint) |
+
+Each confirmed item carries its tier as a **🔒 / 📡 / 📝 badge** in the review table and the watchlist.
+The **enforcement door** is narrow on purpose: a confirmed 🔒 *absolute price trigger* on a priceable
+instrument is checked against the live [datafeed](datafeed.py) price when you press **Analyse**, and
+**annotates the matching rebalance row** — a buy above a *buy-below* level becomes a **HOLD**. The
+figure is sourced with provenance and degrades to *"verify manually"* if the feed can't source it, so
+the **never-invent-a-number guardrail still holds**: a client condition can *gate or flag* a trade, but
+never *fabricate* one. Everything else stays 📡/📝 and never touches a figure.
+
+The honest read: through the door **today, one** of a typical client's conditions (the gold trigger)
+actually binds; the value of the tier layer is **transparency** — the deck stops silently implying the
+advisory items are enforced. We sell *what's binding*, not a promise to enforce everything.
+
 ## What's built (shipped — live on Streamlit)
 
 - **Intake page:** a *Tactical instructions* box → **Sort into items** → an editable review table
   (**Keep / Note / type / level**, with ⚠️ items held out) → **Confirm**. Confirmed triggers show as a
   **📡 monitoring watchlist**; every item folds into the proposal as guidance (never into the figures).
 - **Propose → Apply / Ignore** allocation targets when the client stated weights.
+- **Enforcement tiers (v8):** every confirmed item is tagged 🔒 / 📡 / 📝; confirmed 🔒 absolute price
+  triggers are checked against the live price at **Analyse** and gate the matching rebalance row (buy → hold),
+  with provenance — surfaced in the Proposal view, the rebalance table, and the deck notes.
 - Works **with or without** an API key (a keyword fallback runs the keyless demo build).
 - Verified on the client's own message: allocations mapped per sleeve (=100%), both triggers captured
   *with their levels*, the tranche/rate-hike ask split apart — all figures still computed deterministically.
 
 ## Limits / next
 
-- The watchlist is **captured, not yet live-monitored** — wiring it to price checks is the natural
-  next step (and the highest-value one).
-- Selection criteria are captured as guidance, not yet a live product screen.
+- **Monitored → enforced:** relative triggers (a *15–20% pullback*) become enforceable once we define
+  their reference point (trailing 52-wk high) — the next increment of the door.
+- Selection criteria (*low fees, good liquidity*) stay 📝 advisory until an instrument fee/liquidity
+  dataset is wired — the data dependency, not the logic, is the blocker.
 
 **Bottom line:** yes to a free-text box — as the capture surface, not the format. Sorting into typed,
 human-confirmed items turns ad-hoc guidance into things the copilot can act on and monitor — proposing

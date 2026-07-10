@@ -1,5 +1,5 @@
 """tactical_swimlane_pptx.py — the tactical-instructions process as a native
-16:9 PowerPoint swimlane, matching tactical_swimlane_note.html (v7).
+16:9 PowerPoint swimlane, matching tactical_swimlane_note.html (v8).
 
 Two slides:
   1. The answer — does "Confirm items" fill Allocations & Limits? (the two-click
@@ -107,7 +107,7 @@ def one(tf, text, size, color, **kw):
 # Slide 1 — the two-click answer
 # =========================================================================== #
 s = slide()
-one(txt(s, 0.8, 0.5, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v7", 11.5, GOLD,
+one(txt(s, 0.8, 0.5, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v8", 11.5, GOLD,
     bold=True, first=True)
 one(txt(s, 0.8, 0.92, 11.7, 0.9),
     "Does “Confirm items” fill your Allocations & Limits?", 27, NAVY, font=SERIF,
@@ -134,20 +134,21 @@ for i, (title, kicker, tcol, body, fill, lcol, bodycol) in enumerate(cards):
               (f"   — {kicker}", 12, SOFT, False, SANS)], first=True)
     one(tf, body, 12.5, bodycol, before=5, spacing=1.08)
 
-b = rect(s, 0.8, 6.55, 11.73, 0.88, fill=NAVY_DEEP, radius=0.06)
+b = rect(s, 0.8, 6.5, 11.73, 0.95, fill=NAVY_DEEP, radius=0.06)
 tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tf, [("Order & Analyse:  ", 12, GOLD, True, SANS),
-          ("Set the mandate / risk / allocations first, then press Analyse — so the first analysis "
-           "already reflects the client's policy (analysing first computes against the default preset). "
-           "After Confirm the views update live; no re-Analyse.", 12, WHITE, False, SANS)],
-     first=True, spacing=1.06)
+para(tf, [("Order, Analyse & the v8 exception:  ", 11.5, GOLD, True, SANS),
+          ("Set the mandate / risk / allocations first, then Analyse — so the first read reflects the "
+           "policy. Confirm still fills no field; the one exception is a 🔒 enforced price trigger "
+           "(e.g. “gold below $4,000”), which gates a rebalance buy at Analyse using a sourced live "
+           "price — it can flag or hold a trade, never invent one.", 11.5, WHITE, False, SANS)],
+     first=True, spacing=1.04)
 
 
 # =========================================================================== #
 # Slide 2 — the swimlane
 # =========================================================================== #
 s = slide()
-one(txt(s, 0.5, 0.34, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v7 · PROCESS",
+one(txt(s, 0.5, 0.34, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v8 · PROCESS",
     11, GOLD, bold=True, first=True)
 one(txt(s, 0.5, 0.68, 12.4, 0.6), "Tactical instructions — who does what, and when",
     23, NAVY, font=SERIF, bold=True, first=True)
@@ -263,14 +264,14 @@ py, ph = CY["Copilot"]
 # B: classify + on-confirm
 cpw = (PW[1] - 0.2 - 0.14) / 2
 gear(PXS[1] + 0.1, py + 0.2, cpw, ph - 0.4, "⚙ AUTO",
-     "Classify each ask", "copies levels & weights")
+     "Classify + tag tier", "🔒 / 📡 / 📝 per item")
 gear(PXS[1] + 0.1 + cpw + 0.14, py + 0.2, cpw, ph - 0.4, "⚙ ON CONFIRM",
      "Watchlist + guidance", "+ builds Proposed allocation")
 # C: parse + compute (stacked, narrow lane)
 gear(PXS[2] + 0.12, py + 0.14, PW[2] - 0.24, 0.6, "⚙ ON ANALYSE",
      "Parse → build the book", None)
 gear(PXS[2] + 0.12, py + 0.8, PW[2] - 0.24, 0.6, "⚙ AUTO · LIVE",
-     "Compute allocation, drift", None)
+     "Compute + apply 🔒 triggers", "gates buys vs live price")
 # D: generate
 gear(PXS[3] + 0.12, py + 0.2, PW[3] - 0.24, ph - 0.4, "⚙ AUTO",
      "Generate PPTX / PDF", "figures deterministic")
@@ -278,7 +279,8 @@ gear(PXS[3] + 0.12, py + 0.2, PW[3] - 0.24, ph - 0.4, "⚙ AUTO",
 # footer key point
 one(txt(s, 0.5, 7.16, 12.5, 0.3),
     "Recommended order: set the policy (1–6) first, then Analyse (7). Confirm (5) fills no fields; "
-    "allocations only via Apply (6); limits always manual.", 10, SOFT, bold=True, first=True)
+    "allocations only via Apply (6); limits manual. v8: a 🔒 enforced price trigger gates a buy at "
+    "Analyse (vs a sourced live price); 📡/📝 items never touch a figure.", 10, SOFT, bold=True, first=True)
 
 OUT = "Tactical_Swimlane.pptx"
 prs.save(OUT)
