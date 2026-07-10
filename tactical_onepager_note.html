@@ -62,6 +62,8 @@
   .out { }
   .out.a { background: var(--gold-tint); border-color: color-mix(in srgb, var(--gold-br) 55%, var(--line)); border-width: 1.5px; }
   .out.b { background: var(--slate-tint); border-color: var(--line-strong); }
+  .out.c { background: var(--green-tint); border-color: color-mix(in srgb, var(--green) 42%, var(--line)); }
+  .out.c .badge { color: var(--green); }
   .out .top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .out .ttl { font-size: clamp(13px, 1.6vw, 15px); font-weight: 800; color: var(--ink); }
   .out .badge { font-size: 9.5px; letter-spacing: .05em; text-transform: uppercase; font-weight: 800; color: var(--ink-faint); white-space: nowrap; }
@@ -89,7 +91,7 @@
 
 <div class="wrap">
   <div class="slide">
-    <p class="eyebrow">Meridian Family Office Copilot · v6</p>
+    <p class="eyebrow">Meridian Family Office Copilot · v7</p>
     <h1>The tactical-instructions workflow, at a glance</h1>
     <p class="lede">What the copilot does the moment you confirm the sorted items — read left to right.</p>
 
@@ -97,6 +99,7 @@
       <div class="card words">
         <div class="lab">1 · Client's words</div>
         <div class="sm">In plain language</div>
+        <div class="q">“Gold ETF: 20% · S&amp;P 500: 30%”</div>
         <div class="q">“gold below USD 4,000/oz”</div>
         <div class="q">“add Nasdaq after a 15–20% pullback”</div>
         <div class="q">“buy the bond fund in tranches”</div>
@@ -108,7 +111,7 @@
 
       <div class="card confirm">
         <div class="lab">2 · Sort + Confirm</div>
-        <div class="sm">The copilot types each ask; the analyst reviews and confirms in a table.</div>
+        <div class="sm">The copilot types each ask; the analyst keeps / edits / flags unclear ones, then confirms.</div>
         <div class="ok">✓ typed &amp; confirmed</div>
       </div>
 
@@ -124,6 +127,11 @@
           <div class="top"><span class="ttl">🧭 Analyst guidance</span><span class="badge">Proposal deck · CIO commentary</span></div>
           <p class="desc">Intent that shapes the written advice — never the figures.</p>
           <div class="data" style="color:var(--ink-soft)">Execution style · selection criteria · open questions</div>
+        </div>
+        <div class="card out c">
+          <div class="top"><span class="ttl">📥 Proposed allocation</span><span class="badge">You Apply / Ignore</span></div>
+          <p class="desc">If the client stated weights → offered to fill the sleeves.</p>
+          <div class="data" style="color:var(--ink-soft)">Nasdaq 20% + S&amp;P 30% → equity 50%</div>
         </div>
       </div>
     </div>

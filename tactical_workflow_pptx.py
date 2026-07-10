@@ -154,7 +154,7 @@ tf = txt(s, 0.9, 4.7, 9.6, 1.0)
 para(tf, "What the copilot does the moment you confirm the sorted items — and the "
          "one rule that keeps every number trustworthy.", 15.5, CREAM, first=True, spacing=1.2)
 tf = txt(s, 0.9, 6.5, 11.5, 0.5)
-para(tf, "Meridian Family Office Copilot   ·   v6 · Tactical instructions   ·   "
+para(tf, "Meridian Family Office Copilot   ·   v7 · Tactical instructions   ·   "
          "For partner & client discussion", 11.5, RGBColor(0x7F, 0x8C, 0xBB), first=True)
 
 
@@ -164,17 +164,18 @@ para(tf, "Meridian Family Office Copilot   ·   v6 · Tactical instructions   ·
 s = slide()
 snum(s, 2)
 eyebrow(s, "At a glance")
-title(s, "Four steps in, two outputs out")
+title(s, "Four steps in, three outputs out")
 sub(s, "The first four steps are what the analyst does. Confirm is where this walkthrough "
        "begins — everything to its right is automatic.")
 
 nodes = [
     ("01", "Paste", "Client's asks, plain language", SLATE_TINT, INK, LINE),
     ("02", "Sort", "Copilot types each ask", SLATE_TINT, INK, LINE),
-    ("03", "Review", "Analyst edits in a table", SLATE_TINT, INK, LINE),
+    ("03", "Review", "Keep · edit · flag unclear", SLATE_TINT, INK, LINE),
     ("04", "Confirm", "You are here", GREEN_TINT, GREEN, GREEN),
     ("→", "Watchlist", "Levels to monitor", GOLD_TINT, GOLD_DK, GOLD),
     ("→", "Guidance", "Shapes the proposal", GOLD_TINT, GOLD_DK, GOLD),
+    ("→", "Allocation", "If weights → Apply", GOLD_TINT, GOLD_DK, GOLD),
 ]
 n = len(nodes); gap = 0.22; x0 = 0.86; total = 11.6
 w = (total - gap * (n - 1)) / n
@@ -273,6 +274,13 @@ for i, line in enumerate(['Execution style · "buy in tranches"',
                           'Selection criteria · "low fees, good liquidity"',
                           'Open question · "impact of rate hikes?"']):
     para(tfi, line, 11, SOFT, font=MONO, first=(i == 0), before=(0 if i == 0 else 3), spacing=1.1)
+
+# note bar — clarification hold-out + allocation proposal
+nb = box(s, 0.86, 6.1, 11.6, 0.75, fill=SLATE_TINT, line=LINE, line_w=1.0, radius=0.06)
+tf = nb.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+para(tf, "⚠️  Anything ambiguous is typed needs-clarification and held out of the "
+         "proposal until resolved. If the client stated target weights, Confirm surfaces a "
+         "Proposed allocation to Apply.", 12, SOFT, first=True, spacing=1.12)
 
 
 # =========================================================================== #

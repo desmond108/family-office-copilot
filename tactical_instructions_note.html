@@ -241,9 +241,9 @@
     <h1>Turning ad-hoc client asks into things the copilot can act on</h1>
     <p class="dek">How we capture varied, in-passing client instructions — <em>“buy in tranches,” “gold below $4,000,” “low fees, good quality”</em> — without ever letting the model invent a number.</p>
     <div class="meta">
-      <span><b>Copilot v6</b> · Tactical instructions</span>
+      <span><b>Copilot v7</b> · Tactical instructions</span>
       <span class="dot"></span>
-      <span>Prototype built &amp; tested</span>
+      <span>Shipped — live on Streamlit</span>
       <span class="dot"></span>
       <span>For partner review</span>
     </div>
@@ -258,8 +258,13 @@
 
     <section>
       <h2>Varied isn't the same as unstructured</h2>
-      <p>Every ad-hoc line in the client's message lands in one of <strong>four recognisable types</strong>. Once you see the buckets, the design decides itself.</p>
+      <p>Every ad-hoc line in the client's message lands in one of a few <strong>recognisable types</strong>. Once you see the buckets, the design decides itself.</p>
       <div class="types">
+        <div class="type-row hero">
+          <div class="said"><span>“Gold ETF: 20%”</span><span>“S&amp;P 500 ETF: 30%”</span></div>
+          <div class="arrow">→</div>
+          <div class="to"><span class="chip gold">Target allocation</span><div class="type-note"><b>Proposed</b> to the sleeves — you Apply or Ignore.</div></div>
+        </div>
         <div class="type-row hero">
           <div class="said"><span>“add Nasdaq only after a 15–20% pullback”</span><span>“gold below USD 4,000/oz”</span></div>
           <div class="arrow">→</div>
@@ -279,6 +284,11 @@
           <div class="said"><span>“what's the impact of rate-hike expectations?”</span></div>
           <div class="arrow">→</div>
           <div class="to"><span class="chip">Open question</span><div class="type-note">To <b>answer</b>, not to encode.</div></div>
+        </div>
+        <div class="type-row">
+          <div class="said"><span>anything ambiguous, contradictory or unclear</span></div>
+          <div class="arrow">→</div>
+          <div class="to"><span class="chip">Needs clarification</span><div class="type-note"><b>Held out</b> of the proposal until you resolve it.</div></div>
         </div>
       </div>
     </section>
@@ -321,10 +331,14 @@
       <div class="flow">
         <div class="step"><h4>Free text</h4><p>Client's asks, typed in plain language.</p></div>
         <div class="step"><h4>Sort into types</h4><p>The model classifies each ask — copying levels, inventing none.</p></div>
-        <div class="step"><h4>Review &amp; edit</h4><p>Analyst fixes any type or wording in a table.</p></div>
-        <div class="step"><h4>Confirm</h4><p>Only confirmed items count.</p></div>
+        <div class="step"><h4>Review &amp; edit</h4><p>Keep / ignore, fix the type or level, add a note.</p></div>
+        <div class="step"><h4>Confirm</h4><p>Only kept, resolved items count.</p></div>
       </div>
       <p class="flow-out">→ drives the proposal as guidance, and triggers become a <b>monitoring watchlist</b></p>
+      <div class="rule" style="margin-top:22px">
+        <span class="mark">✓</span>
+        <p><b>In the review table, the analyst is in control of every row.</b> <b>Keep</b> (a checkbox) ignores an item without deleting it; <b>Note</b> records what to raise with the client; and anything the model couldn't act on is typed <b>Needs clarification</b> — shown in a ⚠️ callout and <em>held out of the proposal</em> until it's re-typed or removed. Unclear input never reaches the deck.</p>
+      </div>
     </section>
 
     <section>
@@ -346,14 +360,37 @@
     </section>
 
     <section>
+      <h2>Target allocations: propose, don't auto-fill</h2>
+      <p>When the instructions state target weights, the copilot aggregates them per sleeve — <span class="mono">Nasdaq 20% + S&amp;P 30% → equity 50%</span> — and shows a <b>📥 Proposed allocation</b> panel. Nothing is written silently:</p>
+      <div class="cols">
+        <div class="card good">
+          <h3><span class="tag yes">Apply</span> Fill the sleeves</h3>
+          <ul>
+            <li>Writes the proposed weights into the allocation targets.</li>
+            <li>Still fully adjustable afterward.</li>
+          </ul>
+        </div>
+        <div class="card weak">
+          <h3><span class="tag no">Ignore</span> Keep your own</h3>
+          <ul>
+            <li>Dismisses the panel and the nudge.</li>
+            <li>A <em>different</em> later set of client weights re-surfaces it.</li>
+          </ul>
+        </div>
+      </div>
+      <p style="margin-top:14px">The client's stated weights drive the analysis <b>only on an explicit click</b>. Limits (band tolerance, liquidity, FX, position caps) stay fully manual.</p>
+    </section>
+
+    <section>
       <h2>What's built, and what's next</h2>
       <div class="grid2">
         <div class="panel">
-          <p class="kicker">Working prototype</p>
+          <p class="kicker">Shipped — live on Streamlit</p>
           <ul>
-            <li>A <b>Tactical instructions</b> box on the intake page → <b>Sort into items</b> → editable review table → <b>Confirm</b>.</li>
-            <li>Works <b>with or without</b> an API key (a keyword pass runs the demo build).</li>
-            <li>Tested on the client's real message: both triggers captured <b>with their levels</b>; the tranche instruction and the rate-hike question split apart.</li>
+            <li>A <b>Tactical instructions</b> box → <b>Sort</b> → review table (<b>Keep · Note · type · level</b>, ⚠️ items held out) → <b>Confirm</b>.</li>
+            <li><b>Propose → Apply / Ignore</b> allocation targets when the client stated weights.</li>
+            <li>Works <b>with or without</b> an API key (a keyword pass runs the keyless demo).</li>
+            <li>Verified on the client's message: allocations mapped per sleeve (=100%), triggers captured <b>with their levels</b>, the tranche/rate-hike ask split apart.</li>
           </ul>
         </div>
         <div class="panel">
@@ -369,10 +406,10 @@
 
     <div class="bottom">
       <p class="kicker">Bottom line</p>
-      <p>Yes to a free-text box — as the <strong>capture surface, not the format</strong>. Sorting ad-hoc guidance into four typed, human-confirmed items turns it into things the copilot can act on and monitor — without ever letting the model invent a number.</p>
+      <p>Yes to a free-text box — as the <strong>capture surface, not the format</strong>. Sorting ad-hoc guidance into typed, human-confirmed items turns it into things the copilot can act on and monitor — proposing allocations, watching triggers, flagging what's unclear — without ever letting the model invent a number.</p>
     </div>
 
-    <p class="foot">Meridian Family Office Copilot · v6 · Tactical instructions · confidential — for internal partner discussion.</p>
+    <p class="foot">Meridian Family Office Copilot · v7 · Tactical instructions · confidential — for internal partner discussion.</p>
 
   </div>
 </div>

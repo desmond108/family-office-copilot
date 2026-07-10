@@ -167,9 +167,9 @@
 <div class="deck">
 
   <div class="intro">
-    <p class="eyebrow">Meridian Family Office Copilot · v6</p>
+    <p class="eyebrow">Meridian Family Office Copilot · v7</p>
     <h1>What happens after you confirm the tactical items</h1>
-    <p>A six-slide walkthrough — deck-ready (16:9). The analyst pastes the client's plain-language instructions, the copilot sorts them into typed items, and the analyst confirms. Here's the journey from that click to a working proposal.</p>
+    <p>A six-slide walkthrough — deck-ready (16:9). The analyst pastes the client's plain-language instructions, the copilot sorts them into typed items, and the analyst reviews (keep / edit / flag) and confirms. Here's the journey from that click to a working proposal.</p>
   </div>
 
   <!-- Slide 1 — title -->
@@ -179,23 +179,24 @@
     <p class="eyebrow">The tactical-instructions workflow</p>
     <h1>From the client's words to a working proposal</h1>
     <p class="lede">What the copilot does the moment you confirm the sorted items — and the one rule that keeps every number trustworthy.</p>
-    <div class="foot"><span>Meridian Family Office Copilot</span><span class="dot"></span><span>v6 · Tactical instructions</span><span class="dot"></span><span>For partner &amp; client discussion</span></div>
+    <div class="foot"><span>Meridian Family Office Copilot</span><span class="dot"></span><span>v7 · Tactical instructions</span><span class="dot"></span><span>For partner &amp; client discussion</span></div>
   </div>
 
   <!-- Slide 2 — pipeline at a glance -->
   <div class="slide">
     <span class="snum">02 / 06</span>
     <p class="eyebrow">At a glance</p>
-    <h2>Four steps in, two outputs out</h2>
+    <h2>Four steps in, three outputs out</h2>
     <p class="sub">The first four steps are what the analyst does. <b>Confirm</b> is where this walkthrough begins — everything to its right is automatic.</p>
     <div class="body">
       <div class="pipe">
         <div class="pnode"><span class="pk">01</span><span class="pt">Paste</span><span class="pd">Client's asks, in plain language</span></div>
         <div class="pnode"><span class="pk">02</span><span class="pt">Sort</span><span class="pd">Copilot types each ask</span></div>
-        <div class="pnode"><span class="pk">03</span><span class="pt">Review</span><span class="pd">Analyst edits in a table</span></div>
+        <div class="pnode"><span class="pk">03</span><span class="pt">Review</span><span class="pd">Keep · edit · flag unclear</span></div>
         <div class="pnode done"><span class="pk">04</span><span class="pt">✓ Confirm</span><span class="pd">You are here</span></div>
         <div class="pnode out"><span class="pk">→</span><span class="pt">Watchlist</span><span class="pd">Levels to monitor</span></div>
         <div class="pnode out"><span class="pk">→</span><span class="pt">Guidance</span><span class="pd">Shapes the proposal</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">Allocation</span><span class="pd">If weights → Apply</span></div>
       </div>
       <p class="pcap"><b>The rest of this deck follows what leaves the Confirm step.</b></p>
     </div>
@@ -223,8 +224,8 @@
     <span class="snum">04 / 06</span>
     <p class="eyebrow">Step 2 · the split</p>
     <h2>The items split by what they're for</h2>
-    <div class="body" style="flex:1; min-height:0">
-      <div class="split">
+    <div class="body" style="flex:1; min-height:0; display:flex; flex-direction:column; gap:12px">
+      <div class="split" style="flex:1; min-height:0">
         <div class="stream a">
           <div class="sh"><span class="ic">📡</span><span class="st">Entry triggers → Monitoring watchlist</span></div>
           <div class="sd">Conditional, level-based asks become a live list the portfolio is watched against — the retention hook.</div>
@@ -236,6 +237,7 @@
           <div class="ex">Execution style · "buy in tranches"<br>Selection criteria · "low fees, good liquidity"<br>Open question · "impact of rate hikes?"</div>
         </div>
       </div>
+      <div style="flex:none; font-size:12.5px; color:var(--ink-soft); background:var(--slate-tint); border:1px solid var(--line); border-radius:8px; padding:10px 14px">⚠️ Anything ambiguous or contradictory is typed <b>needs-clarification</b> — held out of the proposal until you resolve it. And if the client stated target weights, Confirm surfaces a <b>Proposed allocation</b> to Apply.</div>
     </div>
   </div>
 
