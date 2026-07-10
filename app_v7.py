@@ -988,9 +988,21 @@ if view == "Intake":
         st.caption("Free-text notes, overlay sleeves and attached documents — folded into the "
                    "proposal as human context. Figures are never invented from them.")
         render_analyst_inputs()
-    # Next-step hand-off. The proposal deck is built from the PARSED BOOK, so the hint
-    # points to the real next action for the current state — no book, no proposal.
-    if statements:
+    # Next-step hand-off (state-aware). Priority: if the client's instructions stated
+    # target weights that aren't in the sleeves yet, apply those FIRST (they drive the
+    # analysis) — then point to the book / Proposal. The deck needs a parsed book, so
+    # a missing book routes to Analyse rather than to an empty Proposal view.
+    _prop = proposed_alloc(st.session_state.get("tactical_items", []))
+    _pending_alloc = bool(_prop) and any(
+        round(st.session_state[f"t_{k}"], 2) != round(v, 2) for k, v in _prop.items())
+    _then = ("open **Proposal** in the sidebar to generate the deck."
+             if statements else
+             "load the client's documents in the sidebar and press **Analyse ▸**.")
+    if _pending_alloc:
+        st.info("📥 **Next:** the client stated target weights that aren't in the sleeves yet — "
+                "click **↧ Apply to allocation targets** in the Allocation & limits panel to set "
+                "them (you can still adjust). Then " + _then)
+    elif statements:
         st.success("✅ **Next:** open **Proposal** in the sidebar to generate the deck — your "
                    "inputs above are folded in. (Or review **Overview / Suitability** first; every "
                    "view recomputes live as you adjust the parameters.)")
