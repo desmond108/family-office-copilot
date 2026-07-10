@@ -137,9 +137,10 @@ for i, (title, kicker, tcol, body, fill, lcol, bodycol) in enumerate(cards):
 b = rect(s, 0.8, 6.55, 11.73, 0.88, fill=NAVY_DEEP, radius=0.06)
 tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tf, [("Order & Analyse:  ", 12, GOLD, True, SANS),
-          ("Loading the statements and setting the mandate / risk / allocations are independent — "
-           "do them in any order. Analyse processes the statements; after Confirm the views update "
-           "live (no re-Analyse).", 12, WHITE, False, SANS)], first=True, spacing=1.06)
+          ("Set the mandate / risk / allocations first, then press Analyse — so the first analysis "
+           "already reflects the client's policy (analysing first computes against the default preset). "
+           "After Confirm the views update live; no re-Analyse.", 12, WHITE, False, SANS)],
+     first=True, spacing=1.06)
 
 
 # =========================================================================== #
@@ -156,8 +157,8 @@ LX, LW = 0.4, 0.95
 GX = LX + LW                      # 1.35
 GR = 13.0
 PH_Y, PH_H = 1.5, 0.38
-# phase widths (C widest — most action): A, B, C, D
-PW = [2.02, 2.5, 4.66, 2.47]
+# phase widths (B widest — most action): A, B, C, D
+PW = [2.5, 4.66, 2.02, 2.47]
 PXS = [GX]
 for w in PW:
     PXS.append(PXS[-1] + w)      # PXS[i]..PXS[i+1] is phase i
@@ -167,8 +168,8 @@ LANES = [("Client", "Source", CLIENT_TINT, 1.92, 1.18),
          ("Copilot", "System", SLATE_TINT, 5.68, 1.5)]
 
 # phase headers
-phase_titles = [("A", "Ingest"), ("B", "Mandate & policy"),
-                ("C", "Capture tactical instructions"), ("D", "Review & generate")]
+phase_titles = [("A", "Set profile & policy"), ("B", "Capture tactical instructions"),
+                ("C", "Analyse the statements"), ("D", "Review & generate")]
 rect(s, LX, PH_Y, LW, PH_H, fill=NAVY_DEEP, radius=0.04)
 for i, (pn, pt) in enumerate(phase_titles):
     b = rect(s, PXS[i], PH_Y, PW[i], PH_H, fill=NAVY_DEEP, radius=0.04)
@@ -218,38 +219,40 @@ def gear(px, y, w, h, tag, title, desc):
 
 # ---- CLIENT lane ---- #
 cy, ch = CY["Client"]
-abox(PXS[0] + 0.12, cy + 0.2, PW[0] - 0.24, ch - 0.4, "cli", None,
-     "Hands over statements", "INPUT", tsize=10.5, dsize=8)
-abox(PXS[2] + 0.12, cy + 0.2, PW[2] * 0.62, ch - 0.4, "cli", None,
-     "Gives instructions (plain language)", "“gold below $4,000”, “buy in tranches”…",
+# B: gives instructions
+abox(PXS[1] + 0.12, cy + 0.2, PW[1] * 0.6, ch - 0.4, "cli", None,
+     "Gives instructions (plain language)", "“gold below $4,000”, “Gold ETF: 20%”…",
      tsize=10.5, dsize=8)
+# C: hands over statements
+abox(PXS[2] + 0.12, cy + 0.2, PW[2] - 0.24, ch - 0.4, "cli", None,
+     "Hands over statements", "INPUT", tsize=10.5, dsize=8)
 
 # ---- YOU lane ---- #
 yy, yh = CY["You"]
-# Phase A: box 1
-abox(PXS[0] + 0.12, yy + 0.75, PW[0] - 0.24, 0.95, "you", "1",
-     "Upload → Analyse ▸", "any time · independent of 2–3")
-# Phase B: boxes 2 (top) + 3 (bottom)
-bx, bw = PXS[1] + 0.12, PW[1] - 0.24
-abox(bx, yy + 0.24, bw, 1.02, "you", "2", "Set mandate, risk & ability", None)
-abox(bx, yy + 1.34, bw, 1.02, "you", "3", "Set allocation targets & limits",
-     "limits manual · sleeves can be pre-filled by 7")
-# Phase C: 2x2 grid + decision strip
-cx0 = PXS[2] + 0.1; cW = PW[2] - 0.2
+# Phase A: boxes 1 (top) + 2 (bottom) — set the policy first
+ax, aw = PXS[0] + 0.12, PW[0] - 0.24
+abox(ax, yy + 0.24, aw, 1.02, "you", "1", "Set mandate, risk & ability", None)
+abox(ax, yy + 1.34, aw, 1.02, "you", "2", "Set allocation targets & limits",
+     "limits manual · sleeves can be pre-filled by 6")
+# Phase B: 2x2 grid + decision strip
+cx0 = PXS[1] + 0.1; cW = PW[1] - 0.2
 colw = (cW - 0.16) / 2
 c1, c2 = cx0, cx0 + colw + 0.16
-abox(c1, yy + 0.12, colw, 0.72, "you", "4", "Paste → Sort into items", None, tsize=9.5)
-abox(c2, yy + 0.12, colw, 0.72, "you", "5", "Review: Keep · edit · notes", None, tsize=9.5)
+abox(c1, yy + 0.12, colw, 0.72, "you", "3", "Paste → Sort into items", None, tsize=9.5)
+abox(c2, yy + 0.12, colw, 0.72, "you", "4", "Review: Keep · edit · notes", None, tsize=9.5)
 # decision strip full width
 db = rect(s, cx0, yy + 0.9, cW, 0.5, fill=AMBER_TINT, line=AMBER, line_w=1.25, radius=0.12)
 tf = db.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tf, [("◇ needs-clarification?  ", 9.5, AMBER, True, SANS),
           ("Yes → ask client ⟲   ·   No ↓", 9, SOFT, False, SANS)], first=True,
      align=PP_ALIGN.CENTER)
-abox(c1, yy + 1.48, colw, 0.86, "you", "6", "Confirm items",
+abox(c1, yy + 1.48, colw, 0.86, "you", "5", "Confirm items",
      "commits guidance + watchlist · fills NO fields", tsize=9.5, dsize=7.8)
-b7 = abox(c2, yy + 1.48, colw, 0.86, "you", "7", "Apply to allocation targets",
-          "only action that fills sleeves · optional · ⤶ fills 3", tsize=9.5, dsize=7.8)
+abox(c2, yy + 1.48, colw, 0.86, "you", "6", "Apply to allocation targets",
+     "only action that fills sleeves · optional · ⤶ fills 2", tsize=9.5, dsize=7.8)
+# Phase C: box 7 — Analyse, after the policy is set
+abox(PXS[2] + 0.12, yy + 0.75, PW[2] - 0.24, 0.95, "you", "7",
+     "Upload → Analyse ▸", "after policy above is set · then live")
 # Phase D: boxes 8 + 9
 dx, dw = PXS[3] + 0.12, PW[3] - 0.24
 abox(dx, yy + 0.24, dw, 1.02, "you", "8", "Review Overview / Suitability", None)
@@ -257,22 +260,25 @@ abox(dx, yy + 1.34, dw, 1.02, "you", "9", "Open Proposal → Generate deck", "PP
 
 # ---- COPILOT lane ---- #
 py, ph = CY["Copilot"]
-gear(PXS[0] + 0.12, py + 0.2, PW[0] - 0.24, ph - 0.4, "⚙ AUTO",
+# B: classify + on-confirm
+cpw = (PW[1] - 0.2 - 0.14) / 2
+gear(PXS[1] + 0.1, py + 0.2, cpw, ph - 0.4, "⚙ AUTO",
+     "Classify each ask", "copies levels & weights")
+gear(PXS[1] + 0.1 + cpw + 0.14, py + 0.2, cpw, ph - 0.4, "⚙ ON CONFIRM",
+     "Watchlist + guidance", "+ builds Proposed allocation")
+# C: parse + compute (stacked, narrow lane)
+gear(PXS[2] + 0.12, py + 0.14, PW[2] - 0.24, 0.6, "⚙ ON ANALYSE",
      "Parse → build the book", None)
-gear(PXS[1] + 0.12, py + 0.2, PW[1] - 0.24, ph - 0.4, "⚙ AUTO · LIVE",
-     "Compute allocation, drift, suitability", None)
-cpw = (PW[2] - 0.2 - 0.14) / 2
-gear(PXS[2] + 0.1, py + 0.2, cpw, ph - 0.4, "⚙ ON CONFIRM",
-     "Watchlist + guidance", "unclear items held out")
-gear(PXS[2] + 0.1 + cpw + 0.14, py + 0.2, cpw, ph - 0.4, "⚙ IF WEIGHTS GIVEN",
-     "Builds Proposed allocation", "you Apply it in 7")
+gear(PXS[2] + 0.12, py + 0.8, PW[2] - 0.24, 0.6, "⚙ AUTO · LIVE",
+     "Compute allocation, drift", None)
+# D: generate
 gear(PXS[3] + 0.12, py + 0.2, PW[3] - 0.24, ph - 0.4, "⚙ AUTO",
      "Generate PPTX / PDF", "figures deterministic")
 
 # footer key point
 one(txt(s, 0.5, 7.16, 12.5, 0.3),
-    "Key point: setup (1–7) is any-order; Confirm (6) fills no fields; allocations only via "
-    "Apply (7); limits always manual.", 10, SOFT, bold=True, first=True)
+    "Recommended order: set the policy (1–6) first, then Analyse (7). Confirm (5) fills no fields; "
+    "allocations only via Apply (6); limits always manual.", 10, SOFT, bold=True, first=True)
 
 OUT = "Tactical_Swimlane.pptx"
 prs.save(OUT)

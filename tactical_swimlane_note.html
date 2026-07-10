@@ -122,8 +122,8 @@
     <div>
       <h2>Does “Confirm items” fill my Allocations &amp; Limits?</h2>
       <p><span class="no">By itself, no.</span> <b>Confirm items</b> commits the interpreted instructions — it produces a <b>monitoring watchlist</b> (triggers) and <b>guidance</b> folded into the proposal. It writes into <b>no field</b>.</p>
-      <p><b>Allocations</b> are filled only by a <b>second, separate click</b>: if the instructions named target weights (“Gold ETF: 20%”), a <b>📥 Proposed allocation</b> panel appears with an <b>Apply to allocation targets</b> button (Step 7). You still verify and adjust. <b>Limits</b> (band tolerance, liquidity, FX, position caps) are <b>always manual</b> — never extracted.</p>
-      <p><b>And the order?</b> Loading the statements (Step 1) is <b>independent</b> of setting the mandate, risk and allocations (Steps 2–3) — do them in <b>any order</b>. The lanes read left-to-right for clarity, not as a required sequence; only the review &amp; proposal views (Steps 8–9) need a parsed book. Analyse processes the <b>statements</b>, and after Confirm the views update <b>live</b> — you don’t press Analyse again.</p>
+      <p><b>Allocations</b> are filled only by a <b>second, separate click</b>: if the instructions named target weights (“Gold ETF: 20%”), a <b>📥 Proposed allocation</b> panel appears with an <b>Apply to allocation targets</b> button (Step 6). You still verify and adjust. <b>Limits</b> (band tolerance, liquidity, FX, position caps) are <b>always manual</b> — never extracted.</p>
+      <p><b>The order matters:</b> set the <b>mandate, risk and allocations first</b> (Steps 1–6), <b>then press Analyse</b> (Step 7). They're technically independent, but analysing before the policy is set computes against the default preset — which looks wrong until you fix it; doing the policy first means the <b>first analysis already reflects the client's policy</b>. Only the review &amp; proposal views (Steps 8–9) need the parsed book, and later tweaks recompute <b>live</b>.</p>
     </div>
   </div>
 
@@ -138,20 +138,20 @@
     <div class="swim">
       <!-- header row -->
       <div class="phdr corner">Actor ↓ / Phase →</div>
-      <div class="phdr"><span class="pn">A</span>Ingest statements</div>
-      <div class="phdr"><span class="pn">B</span>Set mandate &amp; policy</div>
-      <div class="phdr"><span class="pn">C</span>Capture tactical instructions</div>
+      <div class="phdr"><span class="pn">A</span>Set profile &amp; policy</div>
+      <div class="phdr"><span class="pn">B</span>Capture tactical instructions</div>
+      <div class="phdr"><span class="pn">C</span>Analyse the statements</div>
       <div class="phdr"><span class="pn">D</span>Review &amp; generate</div>
 
       <!-- CLIENT lane -->
       <div class="lane-label cli">Client<small>Source</small></div>
-      <div class="lane-cell cli">
-        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Hands over bank / custodian statements</div></div>
-        <div class="down">↓</div>
-      </div>
       <div class="lane-cell cli"></div>
       <div class="lane-cell cli">
-        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Gives tactical instructions in plain language</div><div class="d">“gold below $4,000”, “buy in tranches”, “low fees”…</div></div>
+        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Gives tactical instructions in plain language</div><div class="d">“gold below $4,000”, “buy in tranches”, “Gold ETF: 20%”…</div></div>
+        <div class="down">↓</div>
+      </div>
+      <div class="lane-cell cli">
+        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Hands over bank / custodian statements</div></div>
         <div class="down">↓</div>
       </div>
       <div class="lane-cell cli"></div>
@@ -159,21 +159,21 @@
       <!-- YOU lane -->
       <div class="lane-label you">You<small>Analyst</small></div>
       <div class="lane-cell you">
-        <div class="box you"><span class="n">1</span><span class="t">Upload statements</span><div class="d">press <span class="btn">Analyse ▸</span> in the sidebar — <b>any time</b> (independent of 2–3)</div></div>
+        <div class="box you"><span class="n">1</span><span class="t">Set mandate, risk &amp; ability</span></div>
+        <div class="box you"><span class="n">2</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">Limits are always manual. Allocation sleeves can be <b>pre-filled</b> by Step 6 — you still verify.</div></div>
       </div>
       <div class="lane-cell you">
-        <div class="box you"><span class="n">2</span><span class="t">Set mandate, risk &amp; ability</span></div>
-        <div class="box you"><span class="n">3</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">Limits are always manual. Allocation sleeves can be <b>pre-filled</b> by Step 7 — you still verify.</div></div>
-      </div>
-      <div class="lane-cell you">
-        <div class="box you"><span class="n">4</span><span class="t">Paste instructions →</span> <span class="btn">Sort into items</span></div>
+        <div class="box you"><span class="n">3</span><span class="t">Paste instructions →</span> <span class="btn">Sort into items</span></div>
         <div class="hand">↓ copilot sorts · ↑ you review</div>
-        <div class="box you"><span class="n">5</span><span class="t">Review the sorted list</span><div class="d">Edit type / level · untick <b>Keep</b> to ignore · add <b>Notes</b></div></div>
+        <div class="box you"><span class="n">4</span><span class="t">Review the sorted list</span><div class="d">Edit type / level · untick <b>Keep</b> to ignore · add <b>Notes</b></div></div>
         <div class="decision"><div class="t">◇ Any ⚠️ needs-clarification items?</div>
-          <div class="br"><b>Yes</b> → resolve or ask the client <span class="loop">⟲ back to Step 5</span></div>
+          <div class="br"><b>Yes</b> → resolve or ask the client <span class="loop">⟲ back to Step 4</span></div>
           <div class="br"><b>No</b> ↓</div></div>
-        <div class="box you"><span class="n">6</span><span class="t">Press</span> <span class="btn">Confirm items</span><div class="d">Commits guidance + watchlist. <b>Fills no fields.</b> No re-Analyse — views update live.</div></div>
-        <div class="box you"><span class="n">7</span><span class="t">If weights were stated:</span> <span class="btn">Apply to allocation targets</span><div class="d">The <b>only</b> action that fills the allocation sleeves (Step 3). Optional; limits stay manual. <span class="loop">⤶ fills Step 3</span></div></div>
+        <div class="box you"><span class="n">5</span><span class="t">Press</span> <span class="btn">Confirm items</span><div class="d">Commits guidance + watchlist. <b>Fills no fields.</b></div></div>
+        <div class="box you"><span class="n">6</span><span class="t">If weights were stated:</span> <span class="btn">Apply to allocation targets</span><div class="d">The <b>only</b> action that fills the allocation sleeves (Step 2). Optional; limits stay manual. <span class="loop">⤶ fills Step 2</span></div></div>
+      </div>
+      <div class="lane-cell you">
+        <div class="box you"><span class="n">7</span><span class="t">Upload →</span> <span class="btn">Analyse ▸</span><div class="d"><b>After</b> the policy above is set — so the first analysis reflects it. Later tweaks recompute live.</div></div>
       </div>
       <div class="lane-cell you">
         <div class="box you"><span class="n">8</span><span class="t">Review Overview / Suitability</span><div class="d">Check the watchlist &amp; the folded-in guidance.</div></div>
@@ -182,16 +182,14 @@
 
       <!-- COPILOT lane -->
       <div class="lane-label bot">Copilot<small>System</small></div>
-      <div class="lane-cell bot">
-        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Parses statements → builds the consolidated book</div></div>
-      </div>
-      <div class="lane-cell bot">
-        <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation vs target, drift &amp; suitability</div><div class="d">Recomputes on every change to Steps 2–3.</div></div>
-      </div>
+      <div class="lane-cell bot"></div>
       <div class="lane-cell bot">
         <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask into a typed item</div><div class="d">Copies stated levels &amp; weights; flags unclear ones — invents nothing.</div></div>
-        <div class="box bot"><span class="gear">⚙ ON CONFIRM</span><div class="t" style="margin-top:3px">Triggers → 📡 watchlist; all → guidance</div><div class="d">needs-clarification items are held out until resolved.</div></div>
-        <div class="box bot"><span class="gear">⚙ IF WEIGHTS GIVEN</span><div class="t" style="margin-top:3px">Builds a Proposed allocation (per sleeve)</div><div class="d">Offered for you to Apply in Step 7 — never applied on its own.</div></div>
+        <div class="box bot"><span class="gear">⚙ ON CONFIRM</span><div class="t" style="margin-top:3px">Triggers → 📡 watchlist; all → guidance</div><div class="d">unclear items held out; builds a Proposed allocation.</div></div>
+      </div>
+      <div class="lane-cell bot">
+        <div class="box bot"><span class="gear">⚙ ON ANALYSE</span><div class="t" style="margin-top:3px">Parses statements → builds the book</div></div>
+        <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation, drift &amp; suitability</div><div class="d">Against the policy you set above.</div></div>
       </div>
       <div class="lane-cell bot">
         <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Generates PPTX / PDF</div><div class="d">Figures deterministic; guidance folded in as notes.</div></div>
@@ -199,5 +197,5 @@
     </div>
   </div>
 
-  <p class="foot"><b>Read it like this:</b> the numbers label the boxes for reference, not a rigid order — <b>setup (Steps 1–7) can be done in any order</b> (the statements and the policy are independent). The dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> Confirm (6) fills no fields — the allocation sleeves are written only if you click Apply (7), and limits are always manual. · Confidential.</p>
+  <p class="foot"><b>Read it like this:</b> the numbers show the <b>recommended order</b> — set the policy (Steps 1–6) <b>first</b>, then press <b>Analyse</b> (Step 7), so the first analysis already reflects the client's policy. The dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> Confirm (5) fills no fields — the allocation sleeves are written only if you click Apply (6), and limits are always manual. · Confidential.</p>
 </div>
