@@ -186,6 +186,18 @@ def apply_proposed_alloc(mapping: dict[str, float]):
     for k, w in mapping.items():
         st.session_state[f"t_{k}"] = float(w)
     st.session_state["alloc_applied"] = mapping
+    st.session_state.pop("alloc_dismissed", None)   # applying supersedes any dismissal
+
+
+def dismiss_proposed_alloc(mapping: dict[str, float]):
+    """on_click callback: ignore this proposal. Keyed to the exact mapping, so a
+    later, DIFFERENT set of client weights re-surfaces the panel and the hint."""
+    st.session_state["alloc_dismissed"] = dict(mapping)
+
+
+def restore_proposed_alloc():
+    """on_click callback: un-ignore (bring the proposal back)."""
+    st.session_state.pop("alloc_dismissed", None)
 
 
 def banded_keys(target_all: dict) -> list[str]:
@@ -914,7 +926,10 @@ if view == "Intake":
             st.success("Applied the proposed weights to the sleeves above — verify and adjust "
                        "as needed before analysing.")
         prop = proposed_alloc(st.session_state.get("tactical_items", []))
-        if prop:
+        _dismissed = bool(prop) and st.session_state.get("alloc_dismissed") == prop
+        _matches = bool(prop) and all(
+            round(st.session_state[f"t_{k}"], 2) == round(v, 2) for k, v in prop.items())
+        if prop and not _dismissed and not _matches:
             with st.container(border=True):
                 st.markdown("**📥 Proposed allocation — from the client's instructions**")
                 rows = [{"Sleeve": LABEL_BY_KEY.get(k, k),
@@ -923,10 +938,18 @@ if view == "Intake":
                 st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
                 ptot = sum(prop.values())
                 st.caption(f"Proposed total **{ptot:.1f}%** · sleeves not listed are left "
-                           "unchanged. Extracted from the tactical instructions — review, then "
-                           "apply; you can still adjust the numbers above.")
-                st.button("↧ Apply to allocation targets", key="apply_alloc",
-                          on_click=apply_proposed_alloc, args=(prop,))
+                           "unchanged. Review, then apply — or ignore to keep your own numbers.")
+                ac = st.columns(2)
+                ac[0].button("↧ Apply to allocation targets", key="apply_alloc", type="primary",
+                             on_click=apply_proposed_alloc, args=(prop,))
+                ac[1].button("✕ Ignore proposal", key="ignore_alloc",
+                             on_click=dismiss_proposed_alloc, args=(prop,))
+        elif prop and _dismissed:
+            di = st.columns([3, 1])
+            di[0].caption("📥 Proposed allocation from the client's instructions — ignored.")
+            di[1].button("Show", key="unignore_alloc", on_click=restore_proposed_alloc)
+        elif prop and _matches:
+            st.caption("✓ The client's proposed allocation is applied to the sleeves above.")
 
         st.text_area("Additional considerations for the analysis", key="alloc_notes",
                      placeholder="Anything else the copilot should weigh — constraints, client "
@@ -993,7 +1016,8 @@ if view == "Intake":
     # analysis) — then point to the book / Proposal. The deck needs a parsed book, so
     # a missing book routes to Analyse rather than to an empty Proposal view.
     _prop = proposed_alloc(st.session_state.get("tactical_items", []))
-    _pending_alloc = bool(_prop) and any(
+    _prop_dismissed = bool(_prop) and st.session_state.get("alloc_dismissed") == _prop
+    _pending_alloc = bool(_prop) and not _prop_dismissed and any(
         round(st.session_state[f"t_{k}"], 2) != round(v, 2) for k, v in _prop.items())
     _then = ("open **Proposal** in the sidebar to generate the deck."
              if statements else
