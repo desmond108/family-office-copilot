@@ -1,28 +1,9 @@
 <style>
-  :root {
-  --paper:#ffffff; --ink:#16203c; --ink-soft:#47517a; --ink-faint:#838cad;
-  --navy:#1e2a56; --navy-deep:#131d3d; --gold:#9c7422; --gold-br:#b0872a;
-  --gold-lane:#fbf6e9; --amber:#b06a17; --amber-strong:#8a4f11; --amber-tint:#fbe6d2;
-  --line:#dfe2ee; --line-strong:#c8cddd; --slate-tint:#eef0f6; --client-tint:#eef2fb;
-  --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-    --ground:#eef0f6; --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  :root { --paper:#ffffff;--ink:#16203c;--ink-soft:#47517a;--ink-faint:#838cad;--navy:#1e2a56;--navy-deep:#131d3d;--gold:#9c7422;--gold-br:#b0872a;--gold-lane:#fbf6e9;--amber:#b06a17;--amber-strong:#8a4f11;--amber-tint:#fbe6d2;--line:#dfe2ee;--line-strong:#c8cddd;--slate-tint:#eef0f6;--client-tint:#eef2fb;--sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --ground:#eef0f6; --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
     --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace; }
-  @media (prefers-color-scheme: dark) { :root {
-  --paper:#0f1830; --ink:#e8ebf6; --ink-soft:#aab3d1; --ink-faint:#7883a6;
-  --navy:#dbe2f6; --navy-deep:#0a1430; --gold:#d3a94f; --gold-br:#d3a94f;
-  --gold-lane:#171f0f; --amber:#e0954a; --amber-strong:#e9a860; --amber-tint:#2c1c0c;
-  --line:#22305a; --line-strong:#33477b; --slate-tint:#14203f; --client-tint:#141d3a; --ground:#05091a; } }
-  :root[data-theme="light"] {
-  --paper:#ffffff; --ink:#16203c; --ink-soft:#47517a; --ink-faint:#838cad;
-  --navy:#1e2a56; --navy-deep:#131d3d; --gold:#9c7422; --gold-br:#b0872a;
-  --gold-lane:#fbf6e9; --amber:#b06a17; --amber-strong:#8a4f11; --amber-tint:#fbe6d2;
-  --line:#dfe2ee; --line-strong:#c8cddd; --slate-tint:#eef0f6; --client-tint:#eef2fb;
-  --sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --ground:#eef0f6; }
-  :root[data-theme="dark"] {
-  --paper:#0f1830; --ink:#e8ebf6; --ink-soft:#aab3d1; --ink-faint:#7883a6;
-  --navy:#dbe2f6; --navy-deep:#0a1430; --gold:#d3a94f; --gold-br:#d3a94f;
-  --gold-lane:#171f0f; --amber:#e0954a; --amber-strong:#e9a860; --amber-tint:#2c1c0c;
-  --line:#22305a; --line-strong:#33477b; --slate-tint:#14203f; --client-tint:#141d3a; --ground:#05091a; }
+  @media (prefers-color-scheme: dark) { :root { --paper:#0f1830;--ink:#e8ebf6;--ink-soft:#aab3d1;--ink-faint:#7883a6;--navy:#dbe2f6;--navy-deep:#0a1430;--gold:#d3a94f;--gold-br:#d3a94f;--gold-lane:#171f0f;--amber:#e0954a;--amber-strong:#e9a860;--amber-tint:#2c1c0c;--line:#22305a;--line-strong:#33477b;--slate-tint:#14203f;--client-tint:#141d3a; --ground:#05091a; } }
+  :root[data-theme="light"] { --paper:#ffffff;--ink:#16203c;--ink-soft:#47517a;--ink-faint:#838cad;--navy:#1e2a56;--navy-deep:#131d3d;--gold:#9c7422;--gold-br:#b0872a;--gold-lane:#fbf6e9;--amber:#b06a17;--amber-strong:#8a4f11;--amber-tint:#fbe6d2;--line:#dfe2ee;--line-strong:#c8cddd;--slate-tint:#eef0f6;--client-tint:#eef2fb;--sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --ground:#eef0f6; }
+  :root[data-theme="dark"] { --paper:#0f1830;--ink:#e8ebf6;--ink-soft:#aab3d1;--ink-faint:#7883a6;--navy:#dbe2f6;--navy-deep:#0a1430;--gold:#d3a94f;--gold-br:#d3a94f;--gold-lane:#171f0f;--amber:#e0954a;--amber-strong:#e9a860;--amber-tint:#2c1c0c;--line:#22305a;--line-strong:#33477b;--slate-tint:#14203f;--client-tint:#141d3a; --ground:#05091a; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--ground); color:var(--ink); font-family:var(--sans); line-height:1.5; -webkit-font-smoothing:antialiased; }
   .wrap { max-width:1240px; margin:0 auto; padding:clamp(18px,4vw,44px) clamp(14px,3vw,30px); }
@@ -52,8 +33,7 @@
     <span><span class="k bot"></span> Copilot (automatic)</span>
     <span><span class="k dec"></span> Decision</span>
   </div>
-  <div class="scroll">
-    <svg viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" class="flow">
+  <div class="scroll"><svg viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" class="flow">
 <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-soft)"/></marker><marker id="af" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-faint)"/></marker></defs>
 <rect x="0.5" y="0.5" width="1199" height="659" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1"/>
 <rect x="0.5" y="0.5" width="1199" height="40" fill="var(--navy-deep)"/>
@@ -79,35 +59,35 @@
 <text x="26" y="563" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink-soft)" transform="rotate(-90 26 563)">Copilot</text>
 <text x="44" y="563" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="1" fill="var(--ink-faint)" transform="rotate(-90 44 563)">SYSTEM</text>
 <rect x="92" y="152" width="128" height="46" rx="23" fill="var(--navy-deep)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="156" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="#eef1fb" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="156" dy="0.0">Client gives</tspan><tspan x="156" dy="13.9">instructions</tspan></text>
+<text x="156" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="#eef1fb"><tspan x="156" dy="0.0">Client gives</tspan><tspan x="156" dy="13.9">instructions</tspan></text>
 <rect x="364" y="150" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="430" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="430" dy="0.0">Ask the client</tspan><tspan x="430" dy="13.9">(clarify)</tspan></text>
+<text x="430" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="430" dy="0.0">Ask the client</tspan><tspan x="430" dy="13.9">(clarify)</tspan></text>
 <rect x="755" y="150" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="821" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="821" dy="0.0">Hands over</tspan><tspan x="821" dy="13.9">statements</tspan></text>
+<text x="821" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="821" dy="0.0">Hands over</tspan><tspan x="821" dy="13.9">statements</tspan></text>
 <rect x="90" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="156" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="156" dy="0.0">Paste →</tspan><tspan x="156" dy="13.9">Sort into items</tspan></text>
+<text x="156" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="156" dy="0.0">Paste →</tspan><tspan x="156" dy="13.9">Sort into items</tspan></text>
 <rect x="250" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="316" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="316" dy="0.0">Review the</tspan><tspan x="316" dy="13.9">sorted list</tspan></text>
-<polygon points="468,333 534,369 468,405 402,369" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.7"/>
-<text x="468" y="362.3" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--amber-strong)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="468" dy="0.0">Needs</tspan><tspan x="468" dy="13.3">clarification?</tspan></text>
+<text x="316" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="316" dy="0.0">Review the</tspan><tspan x="316" dy="13.9">sorted list</tspan></text>
+<polygon points="468,333 532,369 468,405 404,369" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.7"/>
+<text x="468" y="362.3" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--amber-strong)"><tspan x="468" dy="0.0">Needs</tspan><tspan x="468" dy="13.3">clarification?</tspan></text>
 <rect x="544" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="610" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="610" dy="0.0">Confirm</tspan><tspan x="610" dy="13.9">items</tspan></text>
+<text x="610" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="610" dy="0.0">Confirm</tspan><tspan x="610" dy="13.9">items</tspan></text>
 <rect x="755" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="821" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="821" dy="0.0">Set policy →</tspan><tspan x="821" dy="13.9">Analyse</tspan></text>
+<text x="821" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="821" dy="0.0">Set policy →</tspan><tspan x="821" dy="13.9">Analyse</tspan></text>
 <rect x="1017" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="1083" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="1083" dy="0.0">Review &amp;</tspan><tspan x="1083" dy="13.9">generate deck</tspan></text>
+<text x="1083" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="1083" dy="0.0">Review &amp;</tspan><tspan x="1083" dy="13.9">generate deck</tspan></text>
 <rect x="250" y="538" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1.3" stroke-dasharray="5 4"/>
-<text x="316" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="316" dy="0.0">Classify +</tspan><tspan x="316" dy="13.9">tag tier  🔒 📡 📝</tspan></text>
+<text x="316" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)"><tspan x="316" dy="0.0">Classify +</tspan><tspan x="316" dy="13.9">tag tier  🔒 📡 📝</tspan></text>
 <rect x="544" y="538" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1.3" stroke-dasharray="5 4"/>
-<text x="610" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="610" dy="0.0">Watchlist, guidance</tspan><tspan x="610" dy="13.9">+ proposed alloc</tspan></text>
+<text x="610" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)"><tspan x="610" dy="0.0">Watchlist, guidance</tspan><tspan x="610" dy="13.9">+ proposed alloc</tspan></text>
 <rect x="680" y="538" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1.3" stroke-dasharray="5 4"/>
-<text x="746" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="746" dy="0.0">Parse book;</tspan><tspan x="746" dy="13.9">compute drift</tspan></text>
-<polygon points="892,527 958,563 892,599 826,563" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.7"/>
-<text x="892" y="556.3" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--amber-strong)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="892" dy="0.0">🔒 trigger</tspan><tspan x="892" dy="13.3">met?</tspan></text>
+<text x="746" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)"><tspan x="746" dy="0.0">Parse book;</tspan><tspan x="746" dy="13.9">compute drift</tspan></text>
+<polygon points="892,527 956,563 892,599 828,563" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.7"/>
+<text x="892" y="556.3" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--amber-strong)"><tspan x="892" dy="0.0">🔒 trigger</tspan><tspan x="892" dy="13.3">met?</tspan></text>
 <rect x="1019" y="497" width="128" height="46" rx="23" fill="var(--navy-deep)" stroke="var(--gold-br)" stroke-width="1.6"/>
-<text x="1083" y="513.0" text-anchor="middle" font-size="12" font-weight="700" fill="#eef1fb" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="1083" dy="0.0">Proposal deck</tspan><tspan x="1083" dy="13.9">(PPTX / PDF)</tspan></text>
+<text x="1083" y="513.0" text-anchor="middle" font-size="12" font-weight="700" fill="#eef1fb"><tspan x="1083" dy="0.0">Proposal deck</tspan><tspan x="1083" dy="13.9">(PPTX / PDF)</tspan></text>
 <rect x="958" y="594" width="104" height="32" rx="16" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.4"/>
-<text x="1010" y="610.0" text-anchor="middle" font-size="11" font-weight="800" fill="var(--amber-strong)" class="" style="paint-order:stroke;stroke:var(--paper);stroke-width:0;"><tspan x="1010" dy="0.0">buy → HOLD</tspan></text>
+<text x="1010" y="610.0" text-anchor="middle" font-size="11" font-weight="800" fill="var(--amber-strong)"><tspan x="1010" dy="0.0">buy → HOLD</tspan></text>
 <path d="M156,198 V344" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
 <path d="M156,394 V563 H250" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
 <rect x="184.6" y="545" width="31" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
@@ -151,7 +131,6 @@
 <path d="M610,588 V636 H1083 V543" fill="none" stroke="var(--ink-faint)" stroke-width="1.6" marker-end="url(#af)" stroke-dasharray="5 4"/>
 <rect x="766.2" y="619" width="168" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
 <text x="850" y="630" text-anchor="middle" font-size="10.5" font-style="italic" font-weight="600" fill="var(--ink-faint)">guidance folds into the deck</text>
-</svg>
-  </div>
-  <p class="foot"><b>Read with:</b> the swimlane matrix (who does what, in which phase) answers “my role at a glance”; this flowchart answers “what’s the decision path.” <b>v8:</b> the 🔒 decision gates a rebalance buy against a sourced live price — it can hold a trade, never invent one. · Confidential.</p>
+</svg></div>
+  <p class="foot"><b>Read with:</b> the swimlane matrix answers “my role at a glance”; this flowchart answers “what’s the decision path.” A <b>white / print</b> version (for pen-and-paper annotation) is the companion document. · Confidential.</p>
 </div>
