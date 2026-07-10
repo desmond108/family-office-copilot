@@ -92,6 +92,7 @@ import generate_proposal
 import narrative
 import vision_extract
 import tactical_extract
+import doc_extract
 
 
 def copy_button(text: str, label: str = "📋 Copy to clipboard",
@@ -241,7 +242,7 @@ TICKER_BY_ISIN = {"US78462F1030": "SPY", "US46090E1038": "QQQ"}
 # Default ON. Flip it off in production by setting DEMO_MODE=0 as an env var / secret.
 DEMO_MODE = os.environ.get("DEMO_MODE", "1").lower() not in ("0", "false", "no", "off")
 
-st.set_page_config(page_title="Meridian Family Office Copilot · v8", page_icon="🏛️",
+st.set_page_config(page_title="Meridian Family Office Copilot · v9", page_icon="🏛️",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -503,6 +504,16 @@ def proposal_model(book: Book, params: dict) -> dict:
         note = (it.get("note") or "").strip()
         note_s = f" — note: {note}" if note else ""
         notes.append(f"{label}: {line}{thr}{note_s}")
+    # v9: research / other document TEXT folds in as advisory context — clearly
+    # labelled "context only, not portfolio figures" so the LLM shapes the narrative
+    # with it but never quotes a doc's number as a computed portfolio figure.
+    for d in params.get("reference_docs") or []:
+        excerpt = (d.get("text") or "").strip().replace("\n", " ")
+        if not excerpt:
+            continue
+        excerpt = excerpt[:800] + (" …" if len(excerpt) > 800 else "")
+        notes.append(f"Reference document “{d.get('name', 'document')}” "
+                     f"(context only, NOT a source of portfolio figures): {excerpt}")
     # FX / structured products now drive the engine and appear in the allocation &
     # rebalance tables directly, so they are no longer surfaced as separate overlays.
     overlays: list[str] = []
@@ -635,6 +646,38 @@ def policy_is_default() -> bool:
                for k in ALLOC_KEYS)
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def _extract_doc_cached(name: str, data: bytes) -> dict:
+    """v9 — cached text extraction (keyed on the file bytes, so a PDF is parsed once)."""
+    return doc_extract.extract_text(data, name)
+
+
+def _read_doc(f) -> dict:
+    """Research/Other upload -> {name,size,text,chars,ok,note,...}. Text is read
+    deterministically (no API) and folded into the commentary as advisory context."""
+    d = dict(_extract_doc_cached(f.name, f.getvalue()))
+    d["size"] = f.size
+    return d
+
+
+def _render_doc_status(docs: list[dict]):
+    """Show what was extracted from each doc — transparency before it reaches the LLM."""
+    for d in docs:
+        if d.get("ok"):
+            st.markdown(f"<div class='prov'>✅ <b>{d['name']}</b> "
+                        f"({d['size'] / 1024:,.0f} KB · {d['chars']:,} chars read"
+                        + (" · truncated" if d.get("truncated") else "") + ")</div>",
+                        unsafe_allow_html=True)
+            with st.expander(f"Text folded in — {d['name']}", expanded=False):
+                st.text((d.get("text") or "")[:2000]
+                        + (" …" if len(d.get("text") or "") > 2000 else ""))
+        else:
+            st.markdown(f"<div class='prov'>⚠️ <b>{d['name']}</b> "
+                        f"({d['size'] / 1024:,.0f} KB) — not read: {d.get('note', '')}. "
+                        "Name recorded; content not sent to the copilot.</div>",
+                        unsafe_allow_html=True)
+
+
 # --------------------------------------------------------------------------- #
 # Sidebar — brand + live status (nav is the tabs)
 # --------------------------------------------------------------------------- #
@@ -642,7 +685,7 @@ statements = st.session_state["statements"]
 
 with st.sidebar:
     st.markdown("<div class='brand'>Meridian<br><b style='font-size:13px'>Family Office</b>"
-                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v8</span>"
+                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v9</span>"
                 "</div>", unsafe_allow_html=True)
     st.markdown("<div class='kicker'>AI Copilot · Confidential</div>", unsafe_allow_html=True)
     st.divider()
@@ -732,35 +775,26 @@ with st.sidebar:
     st.divider()
     st.markdown("##### 2 · Research documents")
     st.caption("Formal research — house or third-party investment research, factsheets, "
-               "strategy and market reports that inform the analysis.")
+               "strategy and market reports. v9: their **text is read and folded into the "
+               "commentary as advisory context** — never as a source of figures.")
     research = st.file_uploader(
         "Upload research reports, factsheets (.pdf / .docx / .txt / .md / .html)",
         type=["pdf", "docx", "doc", "txt", "md", "html", "rtf"],
         accept_multiple_files=True, key="research_uploader")
-    st.session_state["research_docs"] = [{"name": f.name, "size": f.size} for f in (research or [])]
-    if st.session_state["research_docs"]:
-        st.markdown(
-            "<div class='prov'>Attached: "
-            + " · ".join(f"{d['name']} ({d['size'] / 1024:,.0f} KB)"
-                         for d in st.session_state["research_docs"])
-            + "</div>", unsafe_allow_html=True)
+    st.session_state["research_docs"] = [_read_doc(f) for f in (research or [])]
+    _render_doc_status(st.session_state["research_docs"])
 
     # --- Other documents (v2): emails, notes — informal context ------------- #
     st.divider()
     st.markdown("##### 3 · Other documents")
-    st.caption("Informal context — emails, meeting notes and other correspondence for "
-               "the copilot alongside the statements.")
+    st.caption("Informal context — emails, meeting notes and correspondence. v9: text is "
+               "read and folded in as advisory context alongside the statements.")
     other = st.file_uploader(
         "Upload emails, notes (.pdf / .docx / .txt / .md / .eml / .msg)",
         type=["pdf", "docx", "doc", "txt", "md", "eml", "msg", "rtf", "html", "png", "jpg"],
         accept_multiple_files=True, key="other_uploader")
-    st.session_state["other_docs"] = [{"name": f.name, "size": f.size} for f in (other or [])]
-    if st.session_state["other_docs"]:
-        st.markdown(
-            "<div class='prov'>Attached: "
-            + " · ".join(f"{d['name']} ({d['size'] / 1024:,.0f} KB)"
-                         for d in st.session_state["other_docs"])
-            + "</div>", unsafe_allow_html=True)
+    st.session_state["other_docs"] = [_read_doc(f) for f in (other or [])]
+    _render_doc_status(st.session_state["other_docs"])
 
     st.divider()
     st.markdown("##### Navigate")
@@ -784,6 +818,8 @@ params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk
           "notes": {k: st.session_state[f"note_{k}"].strip() for k in ALLOC_KEYS},
           "considerations": st.session_state["alloc_notes"].strip(),
           "tactical": st.session_state.get("tactical_items", []),
+          "reference_docs": [d for d in (st.session_state.get("research_docs", [])
+                                         + st.session_state.get("other_docs", [])) if d.get("ok")],
           "excl": {c: st.session_state[f"excl_{c}"]
                    for c in ("alternatives", "real_estate", "commodity")}}
 book = build_book(statements, build_profile(params)) if statements else None
@@ -805,12 +841,14 @@ def render_analyst_inputs():
     notes = {LABEL_BY_KEY[k]: v for k, v in params["notes"].items() if v}
     research = st.session_state.get("research_docs", [])
     docs = st.session_state.get("other_docs", [])
+
+    def _docline(d):
+        return (f"{d['name']} — *folded in as context ({d['chars']:,} chars)*" if d.get("ok")
+                else f"{d['name']} — *name only; content not read*")
     if research:
-        st.markdown("**Research documents:** "
-                    + " · ".join(d["name"] for d in research))
+        st.markdown("**Research documents:** " + " · ".join(_docline(d) for d in research))
     if docs:
-        st.markdown("**Other documents:** "
-                    + " · ".join(d["name"] for d in docs))
+        st.markdown("**Other documents:** " + " · ".join(_docline(d) for d in docs))
     for label, text in notes.items():
         st.markdown(f"- **{label} note:** {text}")
     if params.get("considerations"):

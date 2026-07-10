@@ -4,6 +4,8 @@ streamlit>=1.40
 pandas>=2.0
 python-pptx>=1.0   # generate the Proposal deck as PowerPoint
 reportlab>=4.0     # generate the Proposal deck as PDF
+pypdf>=4.0         # v9: read text from research/other PDF uploads (pure-python)
+python-docx>=1.1   # v9: read text from research/other .docx uploads (pure-python)
 
 # Optional — required ONLY when DEMO_MODE=0 (enables live data + Claude phrasing).
 # Uncomment these and add the keys (see .streamlit/secrets.toml.example) to turn them on:
