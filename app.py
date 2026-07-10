@@ -545,6 +545,18 @@ def init_state():
 init_state()
 
 
+def policy_is_default() -> bool:
+    """True while the mandate, risk and allocation targets are still untouched
+    (the out-of-the-box Balanced preset). Used to nudge the analyst to set the
+    policy BEFORE pressing Analyse — analysing against the default preset first
+    computes drift/suitability the analyst must then redo. See tactical_swimlane_note.html."""
+    if st.session_state["mandate"] != "advisory" or st.session_state["risk"] != "Balanced":
+        return False
+    base = dict(PRESETS["Balanced"], fx=0.0, structured_products=0.0)
+    return all(abs(float(st.session_state[f"t_{k}"]) - float(base.get(k, 0.0))) < 1e-6
+               for k in ALLOC_KEYS)
+
+
 # --------------------------------------------------------------------------- #
 # Sidebar — brand + live status (nav is the tabs)
 # --------------------------------------------------------------------------- #
@@ -611,6 +623,11 @@ with st.sidebar:
         st.session_state["live"] = False
         st.session_state["view"] = "Intake"
         st.rerun()
+
+    if not statements and policy_is_default():
+        st.caption("💡 Set the **mandate, risk & allocation targets** on the Intake "
+                   "tab first — then Analyse, so the first read already reflects the "
+                   "client's policy (not the default Balanced preset).")
 
     if statements:
         st.success(f"Loaded: {st.session_state['source']}")
