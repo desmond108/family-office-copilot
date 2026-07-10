@@ -134,11 +134,12 @@ for i, (title, kicker, tcol, body, fill, lcol, bodycol) in enumerate(cards):
               (f"   — {kicker}", 12, SOFT, False, SANS)], first=True)
     one(tf, body, 12.5, bodycol, before=5, spacing=1.08)
 
-b = rect(s, 0.8, cy + 3 * (ch + gap), 11.73, 0.72, fill=NAVY_DEEP, radius=0.06)
+b = rect(s, 0.8, 6.55, 11.73, 0.88, fill=NAVY_DEEP, radius=0.06)
 tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tf, [("And Analyse?  ", 12.5, GOLD, True, SANS),
-          ("It processes the client’s statements. After Confirm, every view updates "
-           "live — you don’t press Analyse again.", 12.5, WHITE, False, SANS)], first=True)
+para(tf, [("Order & Analyse:  ", 12, GOLD, True, SANS),
+          ("Loading the statements and setting the mandate / risk / allocations are independent — "
+           "do them in any order. Analyse processes the statements; after Confirm the views update "
+           "live (no re-Analyse).", 12, WHITE, False, SANS)], first=True, spacing=1.06)
 
 
 # =========================================================================== #
@@ -227,7 +228,7 @@ abox(PXS[2] + 0.12, cy + 0.2, PW[2] * 0.62, ch - 0.4, "cli", None,
 yy, yh = CY["You"]
 # Phase A: box 1
 abox(PXS[0] + 0.12, yy + 0.75, PW[0] - 0.24, 0.95, "you", "1",
-     "Upload → Analyse ▸", "ingest the statements")
+     "Upload → Analyse ▸", "any time · independent of 2–3")
 # Phase B: boxes 2 (top) + 3 (bottom)
 bx, bw = PXS[1] + 0.12, PW[1] - 0.24
 abox(bx, yy + 0.24, bw, 1.02, "you", "2", "Set mandate, risk & ability", None)
@@ -270,8 +271,8 @@ gear(PXS[3] + 0.12, py + 0.2, PW[3] - 0.24, ph - 0.4, "⚙ AUTO",
 
 # footer key point
 one(txt(s, 0.5, 7.16, 12.5, 0.3),
-    "Key point: Confirm (6) fills no fields — allocation sleeves are written only via "
-    "Apply (7); limits are always manual.", 10, SOFT, bold=True, first=True)
+    "Key point: setup (1–7) is any-order; Confirm (6) fills no fields; allocations only via "
+    "Apply (7); limits always manual.", 10, SOFT, bold=True, first=True)
 
 OUT = "Tactical_Swimlane.pptx"
 prs.save(OUT)
