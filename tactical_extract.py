@@ -35,7 +35,8 @@ import re
 
 TACTICAL_MODEL = "claude-opus-4-8"
 
-ITEM_TYPES = ["entry_trigger", "execution_style", "selection_criteria", "question", "other"]
+ITEM_TYPES = ["entry_trigger", "execution_style", "selection_criteria", "question",
+              "needs_clarification", "other"]
 
 INSTRUCTIONS = (
     "You are a private-banking portfolio analyst. You are given a client's or "
@@ -49,8 +50,11 @@ INSTRUCTIONS = (
     "level is not stated, use null for `threshold`.\n"
     "2. Preserve every level exactly as written ('15%-20%', 'USD 4,000/oz').\n"
     "3. `verbatim` must quote the source phrase the item came from.\n"
-    "4. Cover every instruction; put anything that does not fit the first four "
-    "types into type 'other'.\n\n"
+    "4. Cover every instruction. If it is CLEAR but doesn't fit the first four "
+    "types, use 'other'. If it is ambiguous, self-contradictory, missing a level it "
+    "seems to require, or you genuinely cannot understand it, use "
+    "'needs_clarification' and put the SPECIFIC question / what is unclear in "
+    "`detail` — do NOT guess its meaning or silently file it under 'other'.\n\n"
     "The item types:\n"
     "  entry_trigger    — a conditional rule keyed to a price or valuation level "
     "(e.g. 'buy below $4,000', 'add after a 15-20% pullback'). Monitorable.\n"
@@ -59,7 +63,10 @@ INSTRUCTIONS = (
     "  selection_criteria — preferences for choosing the actual product "
     "(low fees, high liquidity, quality, physical replication, duration…).\n"
     "  question         — an open question to answer, not an instruction to encode.\n"
-    "  other            — anything else worth keeping as context.\n\n"
+    "  needs_clarification — ambiguous, contradictory, or unintelligible as written; "
+    "put the clarifying question in `detail` (e.g. \"'be aggressive but protect "
+    "capital' — which takes priority?\").\n"
+    "  other            — clear, but doesn't fit the four actionable types above.\n\n"
     "Return ONLY a JSON object (no prose, no markdown fences) with this shape:\n"
     "{\n"
     '  "items": [\n'
@@ -108,6 +115,8 @@ def _clean(items: list) -> list[dict]:
             "threshold": (it.get("threshold") or None),
             "detail": detail,
             "verbatim": (it.get("verbatim") or detail).strip(),
+            "keep": True,    # analyst review-time fields (default on / empty)
+            "note": "",
         })
     return out
 
@@ -159,6 +168,10 @@ _CRIT_KW = ("low fee", "low-fee", "low cost", "low-cost", "cheap", "expense rati
             "ter", "liquid", "liquidity", "good quality", "high quality", "quality",
             "physical", "replication", "tracking error", "reputable", "large aum",
             "tight spread", "duration", "short duration", "medium duration")
+# Conservative cues that an instruction is ambiguous / can't be acted on as written.
+# (The LLM path does the real ambiguity detection; this only catches obvious cases.)
+_UNCLEAR_KW = ("not sure", "unsure", "maybe", "somehow", "i think", "tbc",
+               "to be confirmed", "to be discussed", "figure out", "??", "etc etc")
 
 
 def _split(text: str) -> list[str]:
@@ -174,7 +187,9 @@ def _split(text: str) -> list[str]:
 
 
 def _classify(phrase: str) -> str:
-    low = phrase.lower()
+    low = phrase.lower().strip()
+    if low in ("?", "??", "...", "") or any(k in low for k in _UNCLEAR_KW):
+        return "needs_clarification"
     if phrase.strip().endswith("?") or low.startswith(("what", "how", "why", "will ",
                                                         "should", "is ", "impact of")):
         return "question"

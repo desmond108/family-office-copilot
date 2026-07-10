@@ -146,9 +146,9 @@ ILLIQ = {"alternatives", "real_estate"}
 TAC_LABEL = {
     "entry_trigger": "Entry trigger", "execution_style": "Execution style",
     "selection_criteria": "Selection criteria", "question": "Open question",
-    "other": "Other guidance",
+    "needs_clarification": "Needs clarification", "other": "Other guidance",
 }
-TAC_COLS = ["type", "instrument", "action", "threshold", "detail"]
+TAC_COLS = ["keep", "type", "instrument", "action", "threshold", "detail", "note"]
 
 
 def banded_keys(target_all: dict) -> list[str]:
@@ -359,13 +359,18 @@ def proposal_model(book: Book, params: dict) -> dict:
         notes.append(f"Additional considerations: {params['considerations']}")
     # v6: confirmed tactical instructions (typed) fold in as analyst guidance —
     # intent/context for the commentary, never a source of computed figures.
+    # needs_clarification items are held out of the proposal until resolved.
     for it in params.get("tactical") or []:
+        if it.get("type") == "needs_clarification":
+            continue
         label = TAC_LABEL.get(it.get("type"), "Guidance")
         line = (it.get("detail") or it.get("verbatim") or "").strip()
         if not line:
             continue
         thr = f" [{it['threshold']}]" if it.get("threshold") else ""
-        notes.append(f"{label}: {line}{thr}")
+        note = (it.get("note") or "").strip()
+        note_s = f" — note: {note}" if note else ""
+        notes.append(f"{label}: {line}{thr}{note_s}")
     # FX / structured products now drive the engine and appear in the allocation &
     # rebalance tables directly, so they are no longer surfaced as separate overlays.
     overlays: list[str] = []
@@ -684,6 +689,13 @@ def render_tactical_summary(items: list[dict]):
             continue
         st.markdown(f"**{TAC_LABEL[typ]}:**")
         for it in group:
+            note = (it.get("note") or "").strip()
+            extra = f" &nbsp;·&nbsp; *note: {note}*" if note else ""
+            st.markdown(f"- {it.get('detail', '')}{extra}", unsafe_allow_html=True)
+    unclear = [it for it in items if it.get("type") == "needs_clarification"]
+    if unclear:
+        st.markdown("**⚠️ Needs clarification — held out of the proposal:**")
+        for it in unclear:
             st.markdown(f"- {it.get('detail', '')}")
 
 
@@ -692,27 +704,53 @@ def render_tactical_review():
 
     The classifier (LLM, or the keyword fallback in DEMO / keyless builds) only
     sorted the client's own words into types and copied any stated level — it
-    invented nothing. The analyst edits the type / wording / level here, then
-    confirms; only confirmed items fold into the proposal as guidance."""
+    invented nothing. Here the analyst edits the type / wording / level, unticks
+    **Keep** to ignore an item (or deletes the row), and records a **Note** to
+    raise with the client. Items typed **needs_clarification** are held out of the
+    proposal until they are re-typed or dropped, so unclear input never flows into
+    the deck. Only kept, resolved items fold into the proposal as guidance."""
     pending = st.session_state.get("tactical_pending", [])
     if not pending:
         return
     src = st.session_state.get("tactical_src", "heuristic")
     engine = "LLM" if src == "llm" else "keyword"
-    st.markdown(f"**Review {len(pending)} sorted item(s)** — a {engine} first pass. "
-                "Fix the type, wording or level, then confirm.")
+    st.markdown(f"**Review {len(pending)} sorted item(s)** — a {engine} first pass.")
+    st.caption("Tick **Keep** to include an item, untick to ignore it (or delete the row). "
+               "Edit the type, wording or level; use **Note** to record what to raise with the "
+               "client. Items typed **needs_clarification** are held out of the proposal until "
+               "you re-type or remove them.")
+    unclear = [it for it in pending if it.get("type") == "needs_clarification"]
+    if unclear:
+        st.warning(f"⚠️ **{len(unclear)} item(s) need clarification** — the copilot couldn't act "
+                   "on these as written. Re-type them once resolved, or untick **Keep** to drop "
+                   "them; they will not enter the proposal until resolved:\n\n"
+                   + "\n".join(f"- {it.get('detail', '')}" for it in unclear))
     df = pd.DataFrame(pending, columns=TAC_COLS)
     edited = st.data_editor(
         df, key="tac_editor", num_rows="dynamic", use_container_width=True,
-        column_config={"type": st.column_config.SelectboxColumn(
-            "type", options=tactical_extract.ITEM_TYPES, required=True)})
+        column_config={
+            "keep": st.column_config.CheckboxColumn("Keep", default=True, width="small",
+                                                    help="Untick to ignore this item"),
+            "type": st.column_config.SelectboxColumn(
+                "type", options=tactical_extract.ITEM_TYPES, required=True),
+            "note": st.column_config.TextColumn("Note to client / analyst",
+                                                help="What to confirm or raise; travels with the item"),
+        })
     bc = st.columns(2)
     if bc[0].button("✓ Confirm items", type="primary", key="tac_conf"):
-        recs = [r for r in edited.to_dict("records") if (r.get("detail") or "").strip()]
-        st.session_state["tactical_items"] = recs
-        st.session_state["tactical_pending"] = []
+        rows = [r for r in edited.to_dict("records")
+                if r.get("keep", True) and (r.get("detail") or "").strip()]
+        resolved = [r for r in rows if r.get("type") != "needs_clarification"]
+        unresolved = [r for r in rows if r.get("type") == "needs_clarification"]
+        st.session_state["tactical_items"] = resolved
+        st.session_state["tactical_pending"] = unresolved  # held back for clarification
+        note = f"✓ Confirmed {len(resolved)} item(s)."
+        if unresolved:
+            note += (f" {len(unresolved)} still need clarification and are held out of the "
+                     "proposal — resolve or remove them above.")
+        st.session_state["tactical_notice"] = note
         st.rerun()
-    if bc[1].button("✕ Discard", key="tac_disc"):
+    if bc[1].button("✕ Discard all", key="tac_disc"):
         st.session_state["tactical_pending"] = []
         st.rerun()
 
@@ -863,6 +901,8 @@ if view == "Intake":
     st.caption("✅ LLM classification enabled." if tac_llm else
                "🔒 Keyless demo uses a keyword classifier; set DEMO_MODE=0 with an API key "
                "for the LLM pass. Either way you review every item before it counts.")
+    if st.session_state.get("tactical_notice"):
+        st.success(st.session_state.pop("tactical_notice"))
     render_tactical_review()
 
     if analyst_inputs_present():
