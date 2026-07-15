@@ -252,10 +252,10 @@
   <div class="sheet">
 
     <p class="eyebrow">Product Design Note · Meridian Family Office</p>
-    <h1>Turning ad-hoc client asks into things the copilot can act on</h1>
-    <p class="dek">How we capture varied, in-passing client instructions — <em>“buy in tranches,” “gold below $4,000,” “low fees, good quality”</em> — without ever letting the model invent a number.</p>
+    <h1>Turning ad-hoc client asks into a proposal the AI can write</h1>
+    <p class="dek">How we capture varied, in-passing client instructions — <em>“buy in tranches,” “gold below $4,000,” “low fees, good quality”</em> — and pass them straight to the AI Model, without ever letting it invent a number.</p>
     <div class="meta">
-      <span><b>Copilot v8</b> · Tactical instructions</span>
+      <span><b>Copilot v10</b> · Tactical instructions</span>
       <span class="dot"></span>
       <span>Shipped — live on Streamlit</span>
       <span class="dot"></span>
@@ -267,180 +267,104 @@
       <p class="quote">“How do we put these asks into the UI — ‘buying in tranches,’ ‘interest-rate expectations,’ ‘low fees, good quality’? Just another free-text box? They can be very ad-hoc and very varied.”
         <span class="quote-src">— the question we're answering</span>
       </p>
-      <p class="lede" style="margin-top:20px">Short answer: <strong>keep a free-text box — but treat it as the way in, not the way it's stored.</strong> A single box is the weakest option for this product, and the fix is small because it reuses what we already built.</p>
+      <p class="lede" style="margin-top:20px">Short answer (v10): <strong>yes — a free-text box, and we pass the client's words verbatim to the AI Model,</strong> together with everything else the copilot knows, in one self-contained prompt. The AI analyses that material and writes the proposal.</p>
     </section>
 
     <section>
-      <h2>Varied isn't the same as unstructured</h2>
-      <p>Every ad-hoc line in the client's message lands in one of a few <strong>recognisable types</strong>. Once you see the buckets, the design decides itself.</p>
+      <h2>The v10 shift: pass-through, not pre-digest</h2>
+      <p><b>This supersedes v6–v8.</b> Earlier versions sorted the free text into typed items (<em>Sort → review → confirm</em>), tagged an enforcement tier, and let a price trigger gate a trade. v10 removes that pipeline: modern AI models read the variety directly, so the copilot hands them the raw inputs and makes the <strong>prompt itself the product surface</strong>. What the copilot assembles into one prompt:</p>
       <div class="types">
         <div class="type-row hero">
-          <div class="said"><span>“Gold ETF: 20%”</span><span>“S&amp;P 500 ETF: 30%”</span></div>
+          <div class="said"><span>Role + grounding rules</span></div>
           <div class="arrow">→</div>
-          <div class="to"><span class="chip gold">Target allocation</span><div class="type-note"><b>Proposed</b> to the sleeves — you Apply or Ignore.</div></div>
+          <div class="to"><span class="chip">Instruction</span><div class="type-note">analyst persona · “FACTS is the only source of numbers”.</div></div>
         </div>
         <div class="type-row hero">
-          <div class="said"><span>“add Nasdaq only after a 15–20% pullback”</span><span>“gold below USD 4,000/oz”</span></div>
+          <div class="said"><span>Intake parameters &amp; FACTS (JSON)</span></div>
           <div class="arrow">→</div>
-          <div class="to"><span class="chip gold">Entry trigger</span><div class="type-note">A level to <b>watch</b> — becomes a monitored rule.</div></div>
+          <div class="to"><span class="chip gold">The only numbers</span><div class="type-note">mandate · risk · limits · targets, and the <b>engine-computed</b> figures.</div></div>
         </div>
         <div class="type-row">
-          <div class="said"><span>“buy the bond fund in tranches”</span><span>“an initial 5%, park the rest”</span></div>
+          <div class="said"><span>Holdings + raw statement source</span></div>
           <div class="arrow">→</div>
-          <div class="to"><span class="chip">Execution style</span><div class="type-note"><b>How</b> to build the position.</div></div>
+          <div class="to"><span class="chip">Ground truth</span><div class="type-note">parsed positions and the source text.</div></div>
         </div>
         <div class="type-row">
-          <div class="said"><span>“low fees, good liquidity, good quality”</span></div>
+          <div class="said"><span>Research / other documents</span></div>
           <div class="arrow">→</div>
-          <div class="to"><span class="chip">Selection criteria</span><div class="type-note"><b>Screens</b> the products chosen.</div></div>
+          <div class="to"><span class="chip">Context</span><div class="type-note">full text, as advisory context.</div></div>
         </div>
-        <div class="type-row">
-          <div class="said"><span>“what's the impact of rate-hike expectations?”</span></div>
+        <div class="type-row hero">
+          <div class="said"><span>“gold below $4,000” · “buy in tranches” · “low fees”</span></div>
           <div class="arrow">→</div>
-          <div class="to"><span class="chip">Open question</span><div class="type-note">To <b>answer</b>, not to encode.</div></div>
-        </div>
-        <div class="type-row">
-          <div class="said"><span>anything ambiguous, contradictory or unclear</span></div>
-          <div class="arrow">→</div>
-          <div class="to"><span class="chip">Needs clarification</span><div class="type-note"><b>Held out</b> of the proposal until you resolve it.</div></div>
+          <div class="to"><span class="chip gold">Tactical instructions</span><div class="type-note">the client's words, <b>verbatim</b> — intent, never figures.</div></div>
         </div>
       </div>
     </section>
 
     <section>
-      <h2>Why not just one free-text box</h2>
+      <h2>Why the prompt, not a review table</h2>
       <div class="cols">
-        <div class="card weak">
-          <h3><span class="tag no">One box</span> Loses what matters</h3>
+        <div class="card good">
+          <h3><span class="tag yes">The prompt is the product</span> Transparent</h3>
           <ul>
-            <li>Everything becomes prose the model paraphrases.</li>
-            <li>“Gold below $4,000” is never <em>watched</em> — just restated.</li>
-            <li>Fused asks stay fused (see below).</li>
+            <li>Shown on the Proposal page — editable, copyable, downloadable.</li>
+            <li>Paste it into <em>any</em> AI model to reproduce &amp; compare.</li>
+            <li>The client reads exactly what the system asks the AI to do.</li>
           </ul>
         </div>
         <div class="card good">
-          <h3><span class="tag yes">Typed slots</span> Keeps it actionable</h3>
+          <h3><span class="tag yes">Numbers stay deterministic</span> Trustworthy</h3>
           <ul>
-            <li>Each ask lands where it can be acted on.</li>
-            <li>Levels are <em>copied</em> from the client, never invented.</li>
-            <li>A human confirms before anything counts.</li>
+            <li>Every figure comes from the engine (the FACTS block).</li>
+            <li>The AI writes <em>prose only</em> — quoting, never altering.</li>
+            <li>Qualitative claims from docs are context, not verified.</li>
           </ul>
         </div>
       </div>
 
       <div class="split">
         <span class="said">“buy the bond fund in tranches — but what about rate hikes?”</span>
-        <div class="split-to">one line, two asks →&nbsp; <span class="chip">Execution style</span> <span style="color:var(--ink-faint)">+</span> <span class="chip">Open question</span></div>
+        <div class="split-to">no slots to force apart →&nbsp; <span class="chip">the AI Model handles fused asks directly</span></div>
       </div>
 
       <div class="rule">
         <span class="mark">§</span>
-        <p><b>The rule that shapes everything.</b> The system never invents a number. The model only <em>sorts</em> the client's words and <em>copies</em> the levels they actually stated — if a level isn't given, the field stays empty. That's the difference between a note and a monitorable rule.</p>
+        <p><b>The rule that shapes everything.</b> The system never invents a number. The AI may quote the FACTS figures but is instructed never to compute, estimate, re-round or fabricate one. Because the model now reads the client's documents and instructions directly, the deck's commentary note discloses that <em>qualitative</em> statements are supplied as context and <b>not independently verified</b>.</p>
       </div>
     </section>
 
     <section>
-      <h2>The pattern — reused from statement ingestion</h2>
-      <p>The same <strong>capture → sort → review → confirm</strong> gate we built for reading PDF statements in v5. It fits the discipline instead of fighting it.</p>
+      <h2>The flow, end to end</h2>
+      <p>Four phases — the analyst sets the policy and pastes the inputs; the copilot computes the numbers and assembles the prompt; the AI Model writes the narrative.</p>
       <div class="flow">
-        <div class="step"><h4>Free text</h4><p>Client's asks, typed in plain language.</p></div>
-        <div class="step"><h4>Sort into types</h4><p>The model classifies each ask — copying levels, inventing none.</p></div>
-        <div class="step"><h4>Review &amp; edit</h4><p>Keep / ignore, fix the type or level, add a note.</p></div>
-        <div class="step"><h4>Confirm</h4><p>Only kept, resolved items count.</p></div>
+        <div class="step"><h4>Capture</h4><p>Paste tactical text (verbatim) + upload documents; set the policy.</p></div>
+        <div class="step"><h4>Compute</h4><p>The engine parses the book and computes the deterministic FACTS.</p></div>
+        <div class="step"><h4>Assemble</h4><p>The copilot builds one self-contained prompt — visible &amp; editable.</p></div>
+        <div class="step"><h4>Generate</h4><p>The AI Model writes the narrative — in-app, or copy into any model.</p></div>
       </div>
-      <p class="flow-out">→ drives the proposal as guidance, and triggers become a <b>monitoring watchlist</b></p>
-      <div class="rule" style="margin-top:22px">
-        <span class="mark">✓</span>
-        <p><b>In the review table, the analyst is in control of every row.</b> <b>Keep</b> (a checkbox) ignores an item without deleting it; <b>Note</b> records what to raise with the client; and anything the model couldn't act on is typed <b>Needs clarification</b> — shown in a ⚠️ callout and <em>held out of the proposal</em> until it's re-typed or removed. Unclear input never reaches the deck.</p>
-      </div>
+      <p class="flow-out">→ a proposal deck (PPTX / PDF): AI prose around <b>deterministic tables</b></p>
     </section>
 
     <section>
-      <h2>Where it pays off: the watchlist</h2>
-      <p>Confirmed entry triggers become a live list the book can be watched against — the retention hook. Here's the client's own message, sorted:</p>
-      <div class="watch">
-        <div class="watch-head">📡 Monitoring watchlist <span class="live">Watching</span></div>
-        <div class="tblwrap">
-          <table>
-            <thead><tr><th>Instrument</th><th>Condition</th><th>Action</th></tr></thead>
-            <tbody>
-              <tr><td class="inst">S&amp;P 500 ETF</td><td><span class="lvl">−15% to −20%</span> from recent high</td><td>Consider buying</td></tr>
-              <tr><td class="inst">Gold ETF</td><td>below <span class="lvl">USD 4,000 / oz</span></td><td>Buy</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="watch-cap">Levels copied verbatim from the client — the copilot computes nothing here.</div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Target allocations: propose, don't auto-fill</h2>
-      <p>When the instructions state target weights, the copilot aggregates them per sleeve — <span class="mono">Nasdaq 20% + S&amp;P 30% → equity 50%</span> — and shows a <b>📥 Proposed allocation</b> panel. Nothing is written silently:</p>
-      <div class="cols">
-        <div class="card good">
-          <h3><span class="tag yes">Apply</span> Fill the sleeves</h3>
-          <ul>
-            <li>Writes the proposed weights into the allocation targets.</li>
-            <li>Still fully adjustable afterward.</li>
-          </ul>
-        </div>
-        <div class="card weak">
-          <h3><span class="tag no">Ignore</span> Keep your own</h3>
-          <ul>
-            <li>Dismisses the panel and the nudge.</li>
-            <li>A <em>different</em> later set of client weights re-surfaces it.</li>
-          </ul>
-        </div>
-      </div>
-      <p style="margin-top:14px">The client's stated weights drive the analysis <b>only on an explicit click</b>. Limits (band tolerance, liquidity, FX, position caps) stay fully manual.</p>
-    </section>
-
-    <section>
-      <h2>Enforcement tiers — what actually binds a number <span class="chip gold" style="vertical-align:3px">v8</span></h2>
-      <p>There are endlessly many <em>conditions</em> a client can state, but their <strong>shape</strong> clusters into three handling tiers. We classify the shape and are honest about what we can enforce today — rather than writing a rule per condition. Each confirmed item carries its tier as a badge in the review table and the watchlist.</p>
-      <div class="tiers3">
-        <div class="tcard enf">
-          <div class="badge">🔒 Enforced</div>
-          <div class="sub">Binds a computed number</div>
-          <p>Checked against real data and allowed to <b>gate a trade</b> — a target weight (via Apply), or an absolute price level on an instrument we can price.</p>
-          <div class="eg">“gold below $4,000/oz”</div>
-        </div>
-        <div class="tcard mon">
-          <div class="badge">📡 Monitored</div>
-          <div class="sub">Watched, not yet binding</div>
-          <p>On the watchlist and flagged when hit, but <b>can't gate the math</b> yet — a relative move that needs a defined reference point.</p>
-          <div class="eg">“after a 15–20% pullback”</div>
-        </div>
-        <div class="tcard adv">
-          <div class="badge">📝 Advisory</div>
-          <div class="sub">Shapes the write-up only</div>
-          <p>Folds into the narrative and deck notes — execution style, selection, questions. <b>Never touches a figure.</b></p>
-          <div class="eg">“buy in tranches”, “low fees”</div>
-        </div>
-      </div>
-      <p style="margin-top:16px">The <b>enforcement door</b> is narrow on purpose: a confirmed 🔒 absolute price trigger is checked against the live <span class="mono">datafeed</span> price when you press <b>Analyse</b>, and <b>annotates the matching rebalance row</b> — a buy above a <em>buy-below</em> level becomes a <b>HOLD</b>. The figure is sourced with provenance and degrades to <em>“verify manually”</em> if unavailable, so the <b>never-invent-a-number guardrail still holds</b>: a client condition can <b>gate or flag</b> a trade, never <b>fabricate</b> one.</p>
-      <p><b>The honest read:</b> through the door today, <b>one</b> of a typical client's conditions actually binds — the value of the tier layer is <b>transparency</b>: the deck stops silently implying the advisory items are enforced. We sell <em>what's binding</em>, not a promise to enforce everything. <a href="https://claude.ai/code/artifact/b4126d28-1b59-4d84-97ef-4a9bd65c57a3">See the full tier-by-tier mapping →</a></p>
-    </section>
-
-    <section>
-      <h2>What's built, and what's next</h2>
+      <h2>What's built, and the trade-offs</h2>
       <div class="grid2">
         <div class="panel">
           <p class="kicker">Shipped — live on Streamlit</p>
           <ul>
-            <li>A <b>Tactical instructions</b> box → <b>Sort</b> → review table (<b>Keep · Note · type · level</b>, ⚠️ items held out) → <b>Confirm</b>.</li>
-            <li><b>Propose → Apply / Ignore</b> allocation targets when the client stated weights.</li>
-            <li><b>Enforcement tiers (v8):</b> every item tagged 🔒 / 📡 / 📝; confirmed 🔒 price triggers gate the rebalance row at Analyse, with provenance.</li>
-            <li>Works <b>with or without</b> an API key (a keyword pass runs the keyless demo).</li>
-            <li>Verified on the client's message: allocations mapped per sleeve (=100%), triggers captured <b>with their levels</b>, the tranche/rate-hike ask split apart.</li>
+            <li>A <b>Tactical instructions</b> free-text box — no sorting, no review table, no enforcement tiers.</li>
+            <li>The full self-contained <b>prompt</b> on the Proposal page: editable, copyable, downloadable.</li>
+            <li><b>Generate with the AI Model</b> (live API when a key is set), or copy the prompt into any AI model.</li>
+            <li>Allocation, drift, rebalance &amp; suitability stay <b>computed by the engine</b> and unchanged by the model.</li>
+            <li>Model-agnostic UI — every label reads <b>“AI Model”</b>. Works with or without an API key.</li>
           </ul>
         </div>
         <div class="panel">
-          <p class="kicker">Honest limits / next</p>
+          <p class="kicker">Trade-offs vs. v6–v8</p>
           <ul>
-            <li><b>Monitored → enforced:</b> relative triggers (a <em>15–20% pullback</em>) become enforceable once we define their reference point (trailing 52-wk high).</li>
-            <li>Selection criteria (<em>low fees, liquidity</em>) stay 📝 advisory until an instrument fee/liquidity dataset is wired — the data, not the logic, is the blocker.</li>
-            <li>The keyword pass is a first draft; that's exactly why a human confirms.</li>
+            <li><b>Lost:</b> the monitoring watchlist, the per-item review/confirm gate, and the one enforced price trigger that could gate a trade.</li>
+            <li>If a <em>binding</em> conditional rule is needed again, it returns as a deterministic check in the engine — never as model output.</li>
+            <li><b>Gained:</b> a single, legible, portable prompt the client can inspect and test across models; far less UI friction; fused/ambiguous asks handled directly.</li>
           </ul>
         </div>
       </div>
@@ -448,10 +372,10 @@
 
     <div class="bottom">
       <p class="kicker">Bottom line</p>
-      <p>Yes to a free-text box — as the <strong>capture surface, not the format</strong>. Sorting ad-hoc guidance into typed, human-confirmed items turns it into things the copilot can act on and monitor — proposing allocations, watching triggers, flagging what's unclear — without ever letting the model invent a number.</p>
+      <p>The free-text box stays as the <strong>capture surface</strong>. v10 stops pre-digesting the client's words and instead shows — in one transparent, model-agnostic prompt — exactly what the AI is asked to do, while every number remains computed deterministically by the engine.</p>
     </div>
 
-    <p class="foot">Meridian Family Office Copilot · v8 · Tactical instructions · confidential — for internal partner discussion.</p>
+    <p class="foot">Meridian Family Office Copilot · v10 · Tactical instructions · confidential — for internal partner discussion.</p>
 
   </div>
 </div>
