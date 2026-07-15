@@ -6,7 +6,7 @@ live-model path (`narrative.generate_claude`, `portfolio_qa.ask_ai`) is delibera
 fallback, which is the product's source of truth.
 
 ```bash
-python3 -m pytest            # whole suite (~11s, 65 tests)
+python3 -m pytest            # whole suite (65 tests)
 python3 -m pytest tests/test_suitability.py -v
 ```
 
