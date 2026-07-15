@@ -7,12 +7,15 @@ reportlab>=4.0     # generate the Proposal deck as PDF
 pypdf>=4.0         # v9: read text from research/other PDF uploads (pure-python)
 python-docx>=1.1   # v9: read text from research/other .docx uploads (pure-python)
 
-# Optional — required ONLY when DEMO_MODE=0 (enables live data + the live model).
-# Uncomment these and add the keys (see .streamlit/secrets.toml.example) to turn them on:
+# v10: the Proposal page's "Generate with Claude" button (narrative.py) runs the
+# portable prompt against the live Claude API; also powers the grounded phrasing in
+# "Ask the book". Installed always so the live path works once DEMO_MODE=0 and an
+# ANTHROPIC_API_KEY are set; it is simply unused in the default keyless demo
+# (DEMO_MODE=1), where both degrade to a deterministic grounded summary — no model
+# call. (The copy-and-paste prompt on the Proposal page works in any LLM regardless.)
+anthropic>=0.40
+
+# Optional — required ONLY for the live MARKET DATA feature (Holdings page, DEMO_MODE=0).
+# Uncomment and add the keys (see .streamlit/secrets.toml.example) to turn them on:
 # yfinance>=0.2.40   # live prices + fund fields
 # certifi>=2024.0    # TLS roots for the FRED HTTPS call in datafeed.py
-# anthropic>=0.40    # v10: the Proposal page's "Generate with Claude" button (narrative.py)
-#                    # runs the portable prompt against the live Claude API; also powers the
-#                    # grounded phrasing in "Ask the book". Without it / in DEMO_MODE both
-#                    # degrade to a deterministic grounded summary — no model call. (The
-#                    # copy-and-paste prompt on the Proposal page works in any LLM regardless.)
