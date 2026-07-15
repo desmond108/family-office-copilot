@@ -85,7 +85,9 @@ def render_html(m: dict) -> str:
             + '<p class="note" style="color:#9AA4C4"><b>Note:</b> This commentary is '
             'generated prose grounded strictly in the deterministic figures shown in the '
             'following slides; it quotes those figures but does not compute or alter any of '
-            'them. For discussion only; not investment advice.</p>'))
+            'them. Any qualitative statements draw on the client\'s documents and '
+            'instructions supplied to the model as context and have not been independently '
+            'verified. For discussion only; not investment advice.</p>'))
 
     stats = "".join(_stat(l, v) for l, v in m["metrics"])
     s2 = _slide(2 + off, "Position", "Current Consolidated Position", (
@@ -286,7 +288,9 @@ def render_pptx(m: dict) -> bytes:
         tf = textbox(s, Inches(0.6), Inches(6.5), Inches(12.1), Inches(0.7))
         para(tf, "Generated prose grounded strictly in the deterministic figures in the "
                  "following slides — it quotes those figures but does not compute or alter "
-                 "them. For discussion only; not investment advice.", 10, rgb("#9AA4C4"),
+                 "them. Any qualitative statements draw on the client's documents and "
+                 "instructions supplied to the model as context and are not independently "
+                 "verified. For discussion only; not investment advice.", 10, rgb("#9AA4C4"),
              first=True)
         footer(s, 2)
 
@@ -481,7 +485,9 @@ def render_pdf(m: dict) -> bytes:
                             color=NAVY_C, leading=17) - 12
         wrapped("Generated prose grounded strictly in the deterministic figures in the "
                 "following pages — it quotes those figures but does not compute or alter "
-                "them. For discussion only; not investment advice.", MARGIN, y - 6,
+                "them. Any qualitative statements draw on the client's documents and "
+                "instructions supplied to the model as context and are not independently "
+                "verified. For discussion only; not investment advice.", MARGIN, y - 6,
                 PW - 2 * MARGIN, size=9, color=HexColor("#9AA4C4"), leading=12)
         footer(2); c.showPage()
 

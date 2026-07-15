@@ -5,6 +5,15 @@ client's *tuned* bank statements (holdings with PII removed), check them against
 risk mandate, and generate a rebalancing proposal — with the discipline that **every
 number is computed deterministically and carries provenance; nothing is invented.**
 
+**v10** — the copilot no longer sorts the client's tactical instructions into typed items.
+It assembles ONE self-contained prompt — the intake parameters, the deterministic FACTS (the
+only source of numbers), the parsed holdings + raw statement source, the research / other
+documents in full, and the client's tactical instructions **verbatim** — and hands it to the
+AI to write the proposal. The engine still computes every figure; the LLM narrates around it.
+The prompt is shown on the **Proposal** page — editable, copyable, downloadable — so the
+client can read it and **test it with alternative LLMs**. With `DEMO_MODE=0` and an
+`ANTHROPIC_API_KEY`, the **Generate with Claude** button runs it against the live Claude API.
+
 The Streamlit app (`app.py`) is driven by the real engines:
 
 | Module | Role |

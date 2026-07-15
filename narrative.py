@@ -1,16 +1,22 @@
-"""narrative.py — the v4 LLM layer: a self-contained, portable deck-generation prompt.
+"""narrative.py — the LLM layer: a self-contained, portable proposal prompt.
 
 Everything else in the app is deterministic; this is the one place an LLM writes
 prose. It is kept honest by construction:
 
   * `build_prompt` assembles a SELF-CONTAINED prompt: it inlines the full role +
     grounding rules, the exact 7-section deck specification (matching
-    generate_proposal), a FACTS block (every figure from proposal_model) and an
-    ANALYST GUIDANCE block (the free-text sleeve notes and "additional
-    considerations"). Because nothing is hidden in a separate system message, the
-    prompt can be COPIED VERBATIM into any LLM chat to regenerate the same
-    proposal deck as a PPTX and a PDF. The LLM may quote the FACTS figures but is
-    instructed never to invent, alter, or add a number that is not in FACTS.
+    generate_proposal), a FACTS block (every figure from proposal_model) and the
+    raw material the analyst gave the copilot. Because nothing is hidden in a
+    separate system message, the prompt can be COPIED VERBATIM into any LLM chat
+    to regenerate the same proposal — this is what lets the client test it with
+    alternative LLMs. The LLM may quote the FACTS figures but is instructed never
+    to invent, alter, or add a number that is not in FACTS.
+  * v10 — the prompt no longer relies on a pre-classified list of tactical items.
+    It carries the RAW inputs directly, so an external LLM sees exactly what the
+    copilot saw: the INTAKE PARAMETERS, the parsed CLIENT HOLDINGS plus the raw
+    CLIENT STATEMENT SOURCE, the RESEARCH and OTHER DOCUMENTS in full, and the
+    CLIENT TACTICAL INSTRUCTIONS verbatim. The engine still computes every NUMBER
+    (FACTS); the LLM analyses that material and writes the proposal around it.
   * The assembled prompt is returned so the app can show it to the user, let them
     edit it, and copy it — full transparency.
   * With no API key / in DEMO_MODE, `deterministic_summary()` produces a grounded
@@ -102,9 +108,12 @@ statement(s) across {FACTS.entities} entit(y/ies) · {FACTS.positions} positions
 computed from the client's own holdings — nothing is invented." Bottom stamp: "As of {FACTS.as_of}".
 2. INVESTMENT COMMENTARY. Eyebrow "Investment Commentary", title "Chief Investment Office — \
 Commentary". Write a 150-220 word CIO commentary in 2-3 short paragraphs (no headings, no bullets), \
-measured and professional, grounded strictly in FACTS and shaped by the ANALYST GUIDANCE (guidance \
-is intent/context, not a source of numbers). End with a small note: this is generated prose that \
-quotes but does not alter the figures — for discussion only, not investment advice.
+measured and professional, grounded strictly in FACTS and shaped by the INTAKE PARAMETERS, the \
+CLIENT TACTICAL INSTRUCTIONS, the RESEARCH / OTHER DOCUMENTS and the ANALYST GUIDANCE (all of these \
+are intent/context, not a source of numbers). End with a small note: this is generated prose that \
+quotes but does not alter the figures; any qualitative statements draw on the client's documents \
+and instructions supplied as context and are not independently verified — for discussion only, \
+not investment advice.
 3. CURRENT CONSOLIDATED POSITION. Eyebrow "Position". Show each FACTS.headline_metrics entry as a \
 metric card (label above value). Below the cards: "Mandate {FACTS.mandate} · Risk appetite \
 {FACTS.risk_appetite} · Ability to take risk {FACTS.ability_to_take_risk}."; then "Consolidated \
@@ -125,24 +134,95 @@ Target, Trade (USD), Action, Note] — one row per FACTS.rebalancing.trades entr
 state the book is within all defined suitability bands.
 7. DATA QUALITY, ANALYST NOTES & PROVENANCE. Eyebrow "Data & Method". Left column: list every \
 FACTS.data_quality_flags item (or "No data-quality issues detected." if empty). Right column: the \
-ANALYST GUIDANCE items, folded into the proposal. Close with the FACTS.provenance line and "For \
-discussion only; not investment advice."
+ANALYST GUIDANCE, a brief note of how the CLIENT TACTICAL INSTRUCTIONS and the RESEARCH / OTHER \
+DOCUMENTS informed the view — folded into the proposal (intent/context, no new figures). Close with \
+the FACTS.provenance line and "For discussion only; not investment advice."
 
 If your environment cannot create files, instead output the full slide-by-slide content in the \
 exact order above so it can be pasted into slides."""
 
 
+def params_block(intake: dict | None) -> str:
+    """The full mandate / policy the analyst set on the Intake page — the context
+    the LLM analyses the book against. Context, not a source of numbers."""
+    if not intake:
+        return "(none provided)"
+    alloc = intake.get("target_all") or {}
+    alloc_s = ", ".join(f"{k.replace('_', ' ')} {v:g}%"
+                        for k, v in alloc.items() if v) or "none set"
+    excl = [k.replace("_", " ") for k, v in (intake.get("excl") or {}).items() if v]
+    rows = [
+        ("Mandate", intake.get("mandate")),
+        ("Risk appetite (willingness)", intake.get("risk")),
+        ("Ability to take risk (capacity)", intake.get("ability")),
+        ("Objective", intake.get("objective")),
+        ("Time horizon", f"{intake.get('horizon')} years"),
+        ("Base currency", intake.get("baseccy")),
+        ("Complex products allowed", intake.get("complex")),
+        ("US person (tax)", intake.get("usperson")),
+        ("Target allocation", alloc_s),
+        ("Band tolerance (±)", f"{intake.get('tol')}%"),
+        ("Minimum liquidity", f"{intake.get('minliq')}%"),
+        ("Max unhedged FX", f"{intake.get('maxfx')}%"),
+        ("Max single position", f"{intake.get('maxpos')}%"),
+        ("Exclusions (won't hold)", ", ".join(excl) if excl else "none"),
+    ]
+    return "\n".join(f"- {k}: {v}" for k, v in rows)
+
+
+def holdings_block(holdings: list | None) -> str:
+    """The parsed positions — the ground-truth figures, one line each. These agree
+    with FACTS (same engine); included so a portable prompt carries the raw book."""
+    if not holdings:
+        return "(no parsed holdings)"
+    lines = []
+    for h in holdings:
+        cust = f"  · {h['custodian']}" if h.get("custodian") else ""
+        lines.append(f"- {h.get('name', '?')} | {h.get('asset_class', '?')} | "
+                     f"{h.get('currency', '?')} | ${h.get('mv_base', 0):,.0f}{cust}")
+    return "\n".join(lines)
+
+
+def _docs_block(docs: list | None, empty: str = "(none uploaded)") -> str:
+    """Render a list of {name, text} documents in full — the raw context the LLM
+    reads. Used for the statement source text and the research / other documents."""
+    kept = [d for d in (docs or []) if (d.get("text") or "").strip()]
+    if not kept:
+        return empty
+    return "\n\n".join(f"[{d.get('name', 'document')}]\n{d['text'].strip()}" for d in kept)
+
+
 def build_prompt(model: dict) -> str:
-    """Assemble the self-contained, portable deck-generation prompt shown to the
-    user. Copied verbatim into any LLM chat it regenerates this proposal as a PPTX
-    and a PDF, using only the FACTS figures."""
+    """Assemble the self-contained, portable proposal prompt shown to the user.
+    Copied verbatim into any LLM chat it regenerates this proposal, using only the
+    FACTS figures for numbers and the raw material below for the analysis and prose.
+
+    v10 — carries the RAW inputs (parameters, holdings + statement source,
+    research / other documents, and the client's verbatim tactical instructions)
+    so an alternative LLM sees exactly what the copilot saw."""
     facts = json.dumps(facts_block(model), indent=2)
     guidance = guidance_block(model)
     g = "\n".join(f"- {line}" for line in guidance) if guidance else "- (none supplied)"
+    tactical = (model.get("tactical_text") or "").strip() or "(none supplied)"
     return (
         f"{DECK_SPEC}\n\n"
+        "Everything you need is below. FACTS is the ONLY source of NUMBERS; the intake "
+        "parameters, documents and tactical instructions are context that shapes the "
+        "analysis and the write-up — never a source of figures.\n\n"
+        f"PORTFOLIO POLICY & INTAKE PARAMETERS (set by the analyst on the Intake page):\n"
+        f"{params_block(model.get('intake'))}\n\n"
         f"FACTS (JSON — the only figures you may use):\n{facts}\n\n"
-        f"ANALYST GUIDANCE (intent and context — NOT a source of numbers):\n{g}"
+        f"CLIENT HOLDINGS (parsed from the statements — the ground-truth positions):\n"
+        f"{holdings_block(model.get('holdings'))}\n\n"
+        f"CLIENT STATEMENT SOURCE (raw, as read from the uploaded documents):\n"
+        f"{_docs_block(model.get('statement_sources'), '(source text not retained; see CLIENT HOLDINGS above)')}\n\n"
+        f"RESEARCH DOCUMENTS (formal research — advisory context, NOT figures):\n"
+        f"{_docs_block(model.get('research_docs'))}\n\n"
+        f"OTHER DOCUMENTS (informal context — emails, notes):\n"
+        f"{_docs_block(model.get('other_docs'))}\n\n"
+        "CLIENT TACTICAL INSTRUCTIONS (the client's own ad-hoc guidance, verbatim — "
+        f"intent/context, never a source of computed figures):\n{tactical}\n\n"
+        f"ANALYST GUIDANCE (sleeve notes and additional considerations):\n{g}"
     )
 
 
@@ -196,7 +276,7 @@ def generate_claude(user_prompt: str, api_key: str, system: str = SYSTEM):
     import anthropic  # lazy — keeps the dep optional for the keyless demo build
     client = anthropic.Anthropic(api_key=api_key)
     msg = client.messages.create(
-        model=NARR_MODEL, max_tokens=1024,
+        model=NARR_MODEL, max_tokens=2048,
         thinking={"type": "adaptive"},
         system=system,
         messages=[{"role": "user", "content": user_prompt}],

@@ -1,19 +1,4 @@
-"""app.py — the Family Office Copilot (Version 10), driven by the REAL engines.
-
-Version 10 changes, over v9 (snapshot preserved as app_v9.py): the copilot no
-longer SORTS the client's tactical instructions into typed items to review and
-update the allocation with. Instead it passes them straight through. Tactical
-instructions are now a plain free-text box; their verbatim text — together with
-the intake parameters, the parsed client holdings + raw statement source, and the
-research / other documents in full — is assembled into ONE self-contained prompt
-(narrative.build_prompt) and handed to the AI, which analyses that material and
-writes the proposal. The engine still computes every NUMBER deterministically
-(FACTS: allocation, rebalance, suitability); the LLM narrates around it, so the
-never-invent-a-number discipline holds. The prompt is surfaced on the Proposal
-page — visible, editable and copyable — so the client can read it and test it with
-alternative LLMs (a live Claude API drives the in-app "Generate" button when
-DEMO_MODE=0). This drops v6–v8's classify → review → confirm tactical pipeline and
-the v7 propose-allocation panel and v8 enforced price-trigger gating.
+"""app.py — the Family Office Copilot (Version 7), driven by the REAL engines.
 
 Version 7 adds, over v6 (snapshot preserved as app_v6.py): propose-allocations-
 from-instructions. When the client's tactical instructions state target weights
@@ -106,6 +91,7 @@ from datafeed import resolve_key
 import generate_proposal
 import narrative
 import vision_extract
+import tactical_extract
 import doc_extract
 
 
@@ -168,6 +154,57 @@ ALLOC_KEYS = [k for k, _ in ALLOC_OPTIONS]
 EXTRA_ALLOC = ["fx", "structured_products"]  # engine-driven only when weighted
 ILLIQ = {"alternatives", "real_estate"}
 
+# v6: free-text tactical instructions are classified into these typed items
+# (tactical_extract.ITEM_TYPES). Labels used in the UI and folded into the deck.
+TAC_LABEL = {
+    "allocation_target": "Target allocation", "entry_trigger": "Entry trigger",
+    "execution_style": "Execution style", "selection_criteria": "Selection criteria",
+    "question": "Open question", "needs_clarification": "Needs clarification",
+    "other": "Other guidance",
+}
+TAC_COLS = ["keep", "type", "tier", "asset_class", "weight_pct", "instrument",
+            "action", "threshold", "detail", "note"]
+
+# v8 — enforcement-tier badges shown in the review table and folded into the deck.
+TIER_BADGE = {"enforced": "🔒 enforced", "monitored": "📡 monitored",
+              "advisory": "📝 advisory"}
+
+
+def proposed_alloc(items: list[dict]) -> dict[str, float]:
+    """Aggregate confirmed allocation_target items into {sleeve: weight%} — the
+    target the copilot PROPOSES from the client's instructions (v7). Summed per
+    sleeve (e.g. Nasdaq 20% + S&P 30% → equity 50%). Applied only on approval."""
+    out: dict[str, float] = {}
+    for it in items or []:
+        if it.get("type") != "allocation_target":
+            continue
+        k, w = it.get("asset_class"), it.get("weight_pct")
+        if k in ALLOC_KEYS and isinstance(w, (int, float)):
+            out[k] = round(out.get(k, 0.0) + float(w), 2)
+    return out
+
+
+def apply_proposed_alloc(mapping: dict[str, float]):
+    """on_click callback: write the proposed weights into the sleeve inputs. Run as
+    a callback so it fires BEFORE the number_input widgets are instantiated this
+    run — setting a widget key after instantiation raises StreamlitAPIException."""
+    for k, w in mapping.items():
+        st.session_state[f"t_{k}"] = float(w)
+    st.session_state["alloc_applied"] = mapping
+    st.session_state.pop("alloc_dismissed", None)   # applying supersedes any dismissal
+
+
+def dismiss_proposed_alloc(mapping: dict[str, float]):
+    """on_click callback: ignore this proposal. Keyed to the exact mapping, so a
+    later, DIFFERENT set of client weights re-surfaces the panel and the hint."""
+    st.session_state["alloc_dismissed"] = dict(mapping)
+
+
+def restore_proposed_alloc():
+    """on_click callback: un-ignore (bring the proposal back)."""
+    st.session_state.pop("alloc_dismissed", None)
+
+
 def banded_keys(target_all: dict) -> list[str]:
     """Asset classes the engine bands: the core four always, plus FX / structured
     products only when the analyst has given them a target weight. Keeps the deck
@@ -205,7 +242,7 @@ TICKER_BY_ISIN = {"US78462F1030": "SPY", "US46090E1038": "QQQ"}
 # Default ON. Flip it off in production by setting DEMO_MODE=0 as an env var / secret.
 DEMO_MODE = os.environ.get("DEMO_MODE", "1").lower() not in ("0", "false", "no", "off")
 
-st.set_page_config(page_title="Meridian Family Office Copilot · v10", page_icon="🏛️",
+st.set_page_config(page_title="Meridian Family Office Copilot · v9", page_icon="🏛️",
                    layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
@@ -331,6 +368,71 @@ def rebalance(book: Book, target: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+@st.cache_data(ttl=900, show_spinner=False)
+def _trigger_price(ticker: str, unit: str) -> dict:
+    """Live price for an enforced trigger, via the provenance-first datafeed. Cached
+    15 min. Returns {ok, value, cite} — ok=False (no guess) when the feed can't source
+    it, so the handler degrades to 'verify manually' rather than inventing a level."""
+    from datafeed import Feed
+    fig = Feed().last_close(ticker, unit)
+    return {"ok": bool(fig.ok), "value": (float(fig.value) if fig.ok else None),
+            "cite": fig.cite()}
+
+
+def enforce_price_triggers(reb_rows: list[list], items: list[dict]) -> list[dict]:
+    """v8 — the ENFORCEMENT DOOR. Confirmed 🔒 price-level triggers are the only
+    tactical items allowed to touch a computed number: each is checked against the
+    live price and ANNOTATES the matching rebalance row (a buy above a 'buy-below'
+    level is turned to HOLD). The figure is sourced with provenance, never invented,
+    so the never-invent-a-number guardrail still holds — the client's condition can
+    only gate/flag a trade, not fabricate one. Returns a list of rule outcomes for
+    the deck. reb_rows are mutated in place (row[0]=Class, row[4]=Direction, row[5]=Note)."""
+    results: list[dict] = []
+    for it in items or []:
+        if it.get("type") != "entry_trigger" or tactical_extract.tier_for(it) != "enforced":
+            continue
+        text = " ".join(str(it.get(k) or "") for k in
+                        ("instrument", "detail", "verbatim", "action"))
+        tk_unit = tactical_extract.priceable_ticker(text)
+        lvl = tactical_extract.absolute_level(it.get("threshold"))
+        if not tk_unit or lvl is None:
+            continue
+        ticker, unit = tk_unit
+        sleeve = tactical_extract._asset_of(text.lower())      # gold -> commodity, etc.
+        low = text.lower()
+        # "buy only below X" is the common shape (incl. "do not buy above X"); a bare
+        # "above/over/breaks" without a "not" is the buy-on-breakout shape.
+        under = ("below" in low or "under" in low or "dips" in low or "not " in low
+                 or "don't" in low or "no more" in low or not ("above" in low or "over" in low))
+        px = _trigger_price(ticker, unit)
+        label = (it.get("instrument") or sleeve or ticker).strip()
+        lvl_s = f"{lvl:,.0f} {unit}".strip()
+        if not px["ok"]:
+            verdict, mark, note = "unverified", "⚠", (
+                f"⚠ enforced: live {label} price unavailable — verify manually vs {lvl_s}")
+        else:
+            p = px["value"]
+            permitted = (p <= lvl) if under else (p >= lvl)
+            side = "below" if under else "above"
+            if permitted:
+                verdict, mark = "met", "✓"
+                note = f"✓ enforced: {label} {p:,.0f} {side} {lvl_s} — buy condition met"
+            else:
+                verdict, mark = "blocked", "⏸"
+                note = (f"⏸ HOLD (enforced): {label} {p:,.0f} not {side} {lvl_s} — "
+                        f"client buys only {side} {lvl_s}")
+        # annotate the matching rebalance row (if the sleeve is in the table)
+        for row in reb_rows:
+            if str(row[0]).lower().replace(" ", "_") == (sleeve or ""):
+                if verdict == "blocked" and str(row[4]).lower() == "buy":
+                    row[4] = "hold"
+                row[5] = f"{row[5]} · {note}" if row[5] and row[5] != "in band" else note
+                break
+        results.append({"label": label, "level": lvl_s, "verdict": verdict, "mark": mark,
+                        "sleeve": sleeve, "note": note, "cite": px["cite"]})
+    return results
+
+
 def proposal_model(book: Book, params: dict) -> dict:
     """Compute the proposal deck's content from the parsed book — every value
     from the deterministic engine (parser / suitability / rebalancer). Consumed
@@ -360,6 +462,10 @@ def proposal_model(book: Book, params: dict) -> dict:
     reb_rows = [[str(r["Class"]).title(), f'{r["Before"] * 100:.1f}%', f'{r["Target"] * 100:.1f}%',
                  f'{r["Trade (USD)"]:+,.0f}', str(r["Direction"]), str(r["Note"])]
                 for _, r in reb.iterrows()]
+    # v8 — enforced price-level triggers check the live price and annotate the
+    # rebalance rows (a buy above a 'buy-below' level becomes a HOLD). Done before the
+    # buy/sell tally so a held trade is not counted as a recommended buy.
+    enforced = enforce_price_triggers(reb_rows, params.get("tactical") or [])
     buys = reb.loc[reb["Trade (USD)"] > 1, "Trade (USD)"].sum()
     sells = -reb.loc[reb["Trade (USD)"] < -1, "Trade (USD)"].sum()
     net_trades = buys - sells
@@ -370,28 +476,44 @@ def proposal_model(book: Book, params: dict) -> dict:
           for c, ok, d in book.recon if not ok]
     dq += [("Data flag", f"{q.name}: {fl}") for q in positions for fl in q.flags]
 
-    # Analyst notes for the deterministic deck's section 7 + the LLM's ANALYST
-    # GUIDANCE block: sleeve notes + considerations, plus a SHORT pointer to the
-    # client's tactical instructions and each document (their FULL text rides in
-    # the dedicated prompt blocks below — see the model keys). Kept short here so
-    # the deterministic deck stays readable and the doc text isn't duplicated.
     notes = [f"{LABEL_BY_KEY[k]}: {params['notes'][k]}"
              for k in ALLOC_KEYS if params["notes"].get(k)]
     if params.get("considerations"):
         notes.append(f"Additional considerations: {params['considerations']}")
-    # v10: tactical instructions pass through as raw text (no classification). A
-    # trimmed pointer here; the verbatim text is carried in the prompt block.
-    tactical_text = (params.get("tactical_text") or "").strip()
-    if tactical_text:
-        short = tactical_text.replace("\n", " ")
-        short = short[:400] + (" …" if len(short) > 400 else "")
-        notes.append(f"Client tactical instructions (verbatim, folded in as guidance, "
-                     f"NOT a source of figures): {short}")
-    # v9/v10: research / other documents fold in as advisory context — named here
-    # (their full text is in the RESEARCH / OTHER DOCUMENTS prompt blocks).
+    # v8 — enforced trigger outcomes fold in as cited facts (they gated a trade row),
+    # so they appear in the deck even without an LLM call.
+    for e in enforced:
+        notes.append(f"🔒 Enforced check — {e['note']} (source: {e['cite']}).")
+    # v6: confirmed tactical instructions (typed) fold in as analyst guidance —
+    # intent/context for the commentary, never a source of computed figures.
+    # needs_clarification items are held out of the proposal until resolved.
+    for it in params.get("tactical") or []:
+        typ = it.get("type")
+        if typ == "needs_clarification":
+            continue
+        label = TAC_LABEL.get(typ, "Guidance")
+        if typ == "allocation_target" and it.get("weight_pct") is not None:
+            sleeve = LABEL_BY_KEY.get(it.get("asset_class"), it.get("asset_class") or "?")
+            line = f"{sleeve} {it['weight_pct']:g}%"
+            thr = ""
+        else:
+            line = (it.get("detail") or it.get("verbatim") or "").strip()
+            thr = f" [{it['threshold']}]" if it.get("threshold") else ""
+        if not line:
+            continue
+        note = (it.get("note") or "").strip()
+        note_s = f" — note: {note}" if note else ""
+        notes.append(f"{label}: {line}{thr}{note_s}")
+    # v9: research / other document TEXT folds in as advisory context — clearly
+    # labelled "context only, not portfolio figures" so the LLM shapes the narrative
+    # with it but never quotes a doc's number as a computed portfolio figure.
     for d in params.get("reference_docs") or []:
-        notes.append(f"Document “{d.get('name', 'document')}” read and folded in as "
-                     f"advisory context ({d.get('chars', 0):,} chars; NOT a source of figures).")
+        excerpt = (d.get("text") or "").strip().replace("\n", " ")
+        if not excerpt:
+            continue
+        excerpt = excerpt[:800] + (" …" if len(excerpt) > 800 else "")
+        notes.append(f"Reference document “{d.get('name', 'document')}” "
+                     f"(context only, NOT a source of portfolio figures): {excerpt}")
     # FX / structured products now drive the engine and appear in the allocation &
     # rebalance tables directly, so they are no longer surfaced as separate overlays.
     overlays: list[str] = []
@@ -415,20 +537,7 @@ def proposal_model(book: Book, params: dict) -> dict:
                         "net": f"${net_trades:+,.0f}", "selffund": bool(abs(net_trades) < 1000)},
         "gate": worst_enforcement(book.suit), "suit_items": suit_items,
         "data_quality": dq, "analyst_notes": notes, "overlays": overlays,
-        # v10 — RAW material carried into the portable prompt (narrative.build_prompt):
-        "intake": {  # the full mandate / policy the analyst set on the Intake page
-            "mandate": params["mandate"], "risk": params["risk"], "ability": params["ability"],
-            "objective": params.get("objective"), "horizon": params.get("horizon"),
-            "baseccy": params.get("baseccy"), "complex": params["complex"],
-            "usperson": params.get("usperson"), "target_all": params["target_all"],
-            "tol": params["tol"], "minliq": params["minliq"], "maxfx": params["maxfx"],
-            "maxpos": params["maxpos"], "excl": params["excl"]},
-        "holdings": [{"name": q.name, "asset_class": q.asset_class, "currency": q.currency,
-                      "mv_base": q.mv_base, "custodian": q.custodian} for q in positions],
-        "statement_sources": params.get("statement_sources") or [],
-        "research_docs": [d for d in (params.get("research_docs") or []) if d.get("ok")],
-        "other_docs": [d for d in (params.get("other_docs") or []) if d.get("ok")],
-        "tactical_text": tactical_text,
+        "enforced_rules": enforced,   # v8 — 🔒 price-trigger outcomes (cited)
     }
 
 
@@ -510,10 +619,10 @@ def init_state():
                 "excl_alternatives": False, "excl_real_estate": False, "excl_commodity": False,
                 "statements": [], "source": "", "live": False, "view": "Intake",
                 "other_docs": [], "research_docs": [], "extracted": [],
-                "statement_sources": [],
                 "t_fx": 0.0, "t_structured_products": 0.0,
                 "alloc_notes": "",
-                "tactical_text": ""}
+                "tactical_text": "", "tactical_pending": [], "tactical_items": [],
+                "tactical_src": ""}
     for k, v in defaults.items():
         st.session_state.setdefault(k, v)
     for c, v in PRESETS["Balanced"].items():
@@ -576,7 +685,7 @@ statements = st.session_state["statements"]
 
 with st.sidebar:
     st.markdown("<div class='brand'>Meridian<br><b style='font-size:13px'>Family Office</b>"
-                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v10</span>"
+                "<span style='font-size:11px;color:#9a3a00;font-weight:700;margin-left:6px'>v9</span>"
                 "</div>", unsafe_allow_html=True)
     st.markdown("<div class='kicker'>AI Copilot · Confidential</div>", unsafe_allow_html=True)
     st.divider()
@@ -595,15 +704,13 @@ with st.sidebar:
                      selection_mode="multi") or []
     b1, b2 = st.columns(2)
     if b1.button("Analyse ▸", type="primary", use_container_width=True):
-        sts, labels, pending, sources = [], [], [], []
+        sts, labels, pending = [], [], []
         for f in (up or []):
             ext = f.name.rsplit(".", 1)[-1].lower() if "." in f.name else ""
             if ext in ("csv", "json"):
                 try:
-                    raw = f.getvalue().decode("utf-8", "replace")
-                    sts.append(parse_text(raw, f.name))
+                    sts.append(parse_text(f.getvalue().decode("utf-8", "replace"), f.name))
                     labels.append(f.name)
-                    sources.append({"name": f.name, "text": raw})  # v10: raw source for the prompt
                 except Exception as e:  # noqa: BLE001
                     st.error(f"{f.name}: {type(e).__name__} — {e}")
             elif not extract_on:
@@ -616,15 +723,12 @@ with st.sidebar:
                 except Exception as e:  # noqa: BLE001
                     st.error(f"{f.name}: extraction failed — {type(e).__name__}: {e}")
         for label in picks:
-            fname = SAMPLES[label]
-            sts.append(load_sample(fname))
-            labels.append(fname)
-            sources.append({"name": fname, "text": (STMT_DIR / fname).read_text()})
+            sts.append(load_sample(SAMPLES[label]))
+            labels.append(SAMPLES[label])
         st.session_state["extracted"] = pending
         if sts:
             st.session_state["statements"] = sts
             st.session_state["source"] = ", ".join(labels)
-            st.session_state["statement_sources"] = sources
             st.session_state["live"] = False
             # Stay on Intake to review any transcribed PDF/image statements first.
             st.session_state["view"] = "Intake" if pending else "Overview"
@@ -637,7 +741,6 @@ with st.sidebar:
     if b2.button("Clear", use_container_width=True):
         st.session_state["statements"] = []
         st.session_state["extracted"] = []
-        st.session_state["statement_sources"] = []
         st.session_state["live"] = False
         st.session_state["view"] = "Intake"
         st.rerun()
@@ -672,8 +775,8 @@ with st.sidebar:
     st.divider()
     st.markdown("##### 2 · Research documents")
     st.caption("Formal research — house or third-party investment research, factsheets, "
-               "strategy and market reports. Their **full text is read and passed to the AI "
-               "as advisory context** in the prompt — never as a source of figures.")
+               "strategy and market reports. v9: their **text is read and folded into the "
+               "commentary as advisory context** — never as a source of figures.")
     research = st.file_uploader(
         "Upload research reports, factsheets (.pdf / .docx / .txt / .md / .html)",
         type=["pdf", "docx", "doc", "txt", "md", "html", "rtf"],
@@ -684,8 +787,8 @@ with st.sidebar:
     # --- Other documents (v2): emails, notes — informal context ------------- #
     st.divider()
     st.markdown("##### 3 · Other documents")
-    st.caption("Informal context — emails, meeting notes and correspondence. Text is read and "
-               "passed to the AI as advisory context in the prompt, alongside the statements.")
+    st.caption("Informal context — emails, meeting notes and correspondence. v9: text is "
+               "read and folded in as advisory context alongside the statements.")
     other = st.file_uploader(
         "Upload emails, notes (.pdf / .docx / .txt / .md / .eml / .msg)",
         type=["pdf", "docx", "doc", "txt", "md", "eml", "msg", "rtf", "html", "png", "jpg"],
@@ -707,8 +810,6 @@ st.title("Family Office Copilot")
 
 params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk"],
           "ability": st.session_state["ability"],
-          "objective": st.session_state["objective"], "horizon": st.session_state["horizon"],
-          "baseccy": st.session_state["baseccy"], "usperson": st.session_state["usperson"],
           "complex": st.session_state["complex"], "tol": st.session_state["tol"],
           "minliq": st.session_state["minliq"], "maxfx": st.session_state["maxfx"],
           "maxpos": st.session_state["maxpos"],
@@ -716,11 +817,7 @@ params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk
           "target_all": {k: st.session_state[f"t_{k}"] for k in ALLOC_KEYS},
           "notes": {k: st.session_state[f"note_{k}"].strip() for k in ALLOC_KEYS},
           "considerations": st.session_state["alloc_notes"].strip(),
-          # v10 — tactical instructions pass through as RAW text (no classification)
-          "tactical_text": st.session_state.get("tactical_text", "").strip(),
-          "statement_sources": st.session_state.get("statement_sources", []),
-          "research_docs": st.session_state.get("research_docs", []),
-          "other_docs": st.session_state.get("other_docs", []),
+          "tactical": st.session_state.get("tactical_items", []),
           "reference_docs": [d for d in (st.session_state.get("research_docs", [])
                                          + st.session_state.get("other_docs", [])) if d.get("ok")],
           "excl": {c: st.session_state[f"excl_{c}"]
@@ -730,17 +827,17 @@ view = st.session_state["view"]
 
 
 def analyst_inputs_present() -> bool:
-    """Any of the free-text notes / tactical instructions / research / other-docs?"""
+    """Any of the free-text notes / research / other-docs supplied by the analyst?"""
     return (any(params["notes"].values())
             or bool(params.get("considerations"))
-            or bool(params.get("tactical_text"))
+            or bool(params.get("tactical"))
             or bool(st.session_state.get("research_docs"))
             or bool(st.session_state.get("other_docs")))
 
 
 def render_analyst_inputs():
-    """Surface the captured notes, tactical instructions and attachments — the human
-    context the copilot passes to the AI (never invented into figures)."""
+    """Surface the captured notes, overlay sleeves and attachments — the human
+    context the copilot folds into the proposal (never invented into figures)."""
     notes = {LABEL_BY_KEY[k]: v for k, v in params["notes"].items() if v}
     research = st.session_state.get("research_docs", [])
     docs = st.session_state.get("other_docs", [])
@@ -756,10 +853,125 @@ def render_analyst_inputs():
         st.markdown(f"- **{label} note:** {text}")
     if params.get("considerations"):
         st.markdown(f"**Additional considerations:** {params['considerations']}")
-    if params.get("tactical_text"):
-        st.markdown("**📝 Client tactical instructions** — passed to the AI verbatim as "
-                    "context (never a source of figures):")
-        st.markdown(f"> {params['tactical_text'].replace(chr(10), chr(10) + '> ')}")
+    render_tactical_summary(params.get("tactical") or [])
+
+
+def render_tactical_summary(items: list[dict]):
+    """Show confirmed tactical items: a monitoring watchlist for the conditional
+    entry triggers (cf. the sibling repo's alerts.py) + the rest grouped by type.
+    Shown wherever analyst inputs surface (Intake + Proposal). Intent, not figures."""
+    if not items:
+        return
+    triggers = [it for it in items if it.get("type") == "entry_trigger"]
+    if triggers:
+        st.markdown("**📡 Monitoring watchlist** — conditional entries to watch the book against:")
+        st.dataframe(
+            pd.DataFrame([{"Tier": TIER_BADGE.get(tactical_extract.tier_for(it), ""),
+                           "Instrument": it.get("instrument") or "—",
+                           "Condition / level": it.get("threshold") or "—",
+                           "Action": it.get("action") or "—",
+                           "Instruction": it.get("detail", "")} for it in triggers]),
+            use_container_width=True, hide_index=True)
+        if any(tactical_extract.tier_for(it) == "enforced" for it in triggers):
+            st.caption("🔒 **enforced** triggers are checked against the live price when you "
+                       "**Analyse**, and gate the matching rebalance row (a buy above a "
+                       "*buy-below* level becomes a HOLD). 📡 **monitored** triggers are watched "
+                       "but don't change the numbers.")
+    for typ in ("allocation_target", "execution_style", "selection_criteria",
+                "question", "other"):
+        group = [it for it in items if it.get("type") == typ]
+        if not group:
+            continue
+        st.markdown(f"**{TAC_LABEL[typ]}:**")
+        for it in group:
+            note = (it.get("note") or "").strip()
+            extra = f" &nbsp;·&nbsp; *note: {note}*" if note else ""
+            if typ == "allocation_target" and it.get("weight_pct") is not None:
+                sleeve = LABEL_BY_KEY.get(it.get("asset_class"), it.get("asset_class") or "?")
+                st.markdown(f"- {sleeve} → **{it['weight_pct']:g}%** "
+                            f"<span style='color:#888'>({it.get('detail','')})</span>{extra}",
+                            unsafe_allow_html=True)
+            else:
+                st.markdown(f"- {it.get('detail', '')}{extra}", unsafe_allow_html=True)
+    unclear = [it for it in items if it.get("type") == "needs_clarification"]
+    if unclear:
+        st.markdown("**⚠️ Needs clarification — held out of the proposal:**")
+        for it in unclear:
+            st.markdown(f"- {it.get('detail', '')}")
+
+
+def render_tactical_review():
+    """v6: review + confirm the tactical items the classifier sorted from free text.
+
+    The classifier (LLM, or the keyword fallback in DEMO / keyless builds) only
+    sorted the client's own words into types and copied any stated level — it
+    invented nothing. Here the analyst edits the type / wording / level, unticks
+    **Keep** to ignore an item (or deletes the row), and records a **Note** to
+    raise with the client. Items typed **needs_clarification** are held out of the
+    proposal until they are re-typed or dropped, so unclear input never flows into
+    the deck. Only kept, resolved items fold into the proposal as guidance."""
+    pending = st.session_state.get("tactical_pending", [])
+    if not pending:
+        return
+    src = st.session_state.get("tactical_src", "heuristic")
+    engine = "LLM" if src == "llm" else "keyword"
+    st.markdown(f"**Review {len(pending)} sorted item(s)** — a {engine} first pass.")
+    st.caption("Tick **Keep** to include an item, untick to ignore it (or delete the row). "
+               "Edit the type, wording or level; use **Note** to record what to raise with the "
+               "client. Items typed **needs_clarification** are held out of the proposal until "
+               "you re-type or remove them.")
+    unclear = [it for it in pending if it.get("type") == "needs_clarification"]
+    if unclear:
+        st.warning(f"⚠️ **{len(unclear)} item(s) need clarification** — the copilot couldn't act "
+                   "on these as written. Re-type them once resolved, or untick **Keep** to drop "
+                   "them; they will not enter the proposal until resolved:\n\n"
+                   + "\n".join(f"- {it.get('detail', '')}" for it in unclear))
+    st.caption("**Enforcement tier** (from each item's shape): 🔒 **enforced** binds a "
+               "number — a target weight, or a priceable absolute-level trigger like "
+               "*gold below $4,000*; 📡 **monitored** is watched but can't gate the math yet "
+               "(a relative move like *after a 15–20% pullback*); 📝 **advisory** shapes the "
+               "write-up only (execution style, selection, questions). The badge follows "
+               "the **type** you set — it refreshes when you confirm or re-sort.")
+    df = pd.DataFrame(pending, columns=TAC_COLS)
+    df["tier"] = [TIER_BADGE.get(tactical_extract.tier_for(it), "") for it in pending]
+    edited = st.data_editor(
+        df, key="tac_editor", num_rows="dynamic", use_container_width=True,
+        column_config={
+            "keep": st.column_config.CheckboxColumn("Keep", default=True, width="small",
+                                                    help="Untick to ignore this item"),
+            "type": st.column_config.SelectboxColumn(
+                "type", options=tactical_extract.ITEM_TYPES, required=True),
+            "tier": st.column_config.TextColumn(
+                "Tier", disabled=True, width="small",
+                help="Enforcement tier (from the item's type/level) — refreshes on Confirm"),
+            "asset_class": st.column_config.SelectboxColumn(
+                "asset_class", options=ALLOC_KEYS,
+                help="Allocation targets only — the sleeve this weight applies to"),
+            "weight_pct": st.column_config.NumberColumn(
+                "weight_pct", min_value=0.0, max_value=100.0, step=1.0, format="%.1f",
+                help="Allocation targets only — the target weight %"),
+            "note": st.column_config.TextColumn("Note to client / analyst",
+                                                help="What to confirm or raise; travels with the item"),
+        })
+    bc = st.columns(2)
+    if bc[0].button("✓ Confirm items", type="primary", key="tac_conf"):
+        rows = [r for r in edited.to_dict("records")
+                if r.get("keep", True) and (r.get("detail") or "").strip()]
+        for r in rows:                       # v8 — recompute tier from the final type/level
+            r["tier"] = tactical_extract.tier_for(r)
+        resolved = [r for r in rows if r.get("type") != "needs_clarification"]
+        unresolved = [r for r in rows if r.get("type") == "needs_clarification"]
+        st.session_state["tactical_items"] = resolved
+        st.session_state["tactical_pending"] = unresolved  # held back for clarification
+        note = f"✓ Confirmed {len(resolved)} item(s)."
+        if unresolved:
+            note += (f" {len(unresolved)} still need clarification and are held out of the "
+                     "proposal — resolve or remove them above.")
+        st.session_state["tactical_notice"] = note
+        st.rerun()
+    if bc[1].button("✕ Discard all", key="tac_disc"):
+        st.session_state["tactical_pending"] = []
+        st.rerun()
 
 
 LABEL_BY_KEY = dict(ALLOC_OPTIONS)
@@ -859,6 +1071,37 @@ if view == "Intake":
             tot += st.session_state[f"t_{k}"]
         (st.success if abs(tot - 100) < 0.05 else st.error)(f"Target total (6 sleeves) {tot:.1f}%")
 
+        # v7: propose allocation targets extracted from the client's instructions.
+        # The analyst approves before they drive the engine (never silently applied).
+        if st.session_state.pop("alloc_applied", None):
+            st.success("Applied the proposed weights to the sleeves above — verify and adjust "
+                       "as needed before analysing.")
+        prop = proposed_alloc(st.session_state.get("tactical_items", []))
+        _dismissed = bool(prop) and st.session_state.get("alloc_dismissed") == prop
+        _matches = bool(prop) and all(
+            round(st.session_state[f"t_{k}"], 2) == round(v, 2) for k, v in prop.items())
+        if prop and not _dismissed and not _matches:
+            with st.container(border=True):
+                st.markdown("**📥 Proposed allocation — from the client's instructions**")
+                rows = [{"Sleeve": LABEL_BY_KEY.get(k, k),
+                         "Current %": round(st.session_state[f"t_{k}"], 1),
+                         "Proposed %": v} for k, v in prop.items()]
+                st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+                ptot = sum(prop.values())
+                st.caption(f"Proposed total **{ptot:.1f}%** · sleeves not listed are left "
+                           "unchanged. Review, then apply — or ignore to keep your own numbers.")
+                ac = st.columns(2)
+                ac[0].button("↧ Apply to allocation targets", key="apply_alloc", type="primary",
+                             on_click=apply_proposed_alloc, args=(prop,))
+                ac[1].button("✕ Ignore proposal", key="ignore_alloc",
+                             on_click=dismiss_proposed_alloc, args=(prop,))
+        elif prop and _dismissed:
+            di = st.columns([3, 1])
+            di[0].caption("📥 Proposed allocation from the client's instructions — ignored.")
+            di[1].button("Show", key="unignore_alloc", on_click=restore_proposed_alloc)
+        elif prop and _matches:
+            st.caption("✓ The client's proposed allocation is applied to the sleeves above.")
+
         st.text_area("Additional considerations for the analysis", key="alloc_notes",
                      placeholder="Anything else the copilot should weigh — constraints, client "
                                  "preferences, upcoming liquidity events, tax or regulatory notes…")
@@ -872,37 +1115,76 @@ if view == "Intake":
         ec[1].checkbox("Real estate", key="excl_real_estate")
         ec[2].checkbox("Commodities", key="excl_commodity")
 
-    # ---- Tactical instructions (v10): free text passed straight to the AI ---- #
+    # ---- Tactical instructions (v6): free text -> typed, reviewable items ---- #
     st.divider()
     st.markdown("##### Tactical instructions")
     st.caption("Ad-hoc client guidance in plain language — e.g. *“buy the bond fund in "
                "tranches”*, *“add Nasdaq only after a 15–20% pullback”*, *“gold below "
-               "USD 4,000/oz”*, *“low fees and good liquidity”*. v10: these are **no longer "
-               "sorted into items** — the copilot passes them **verbatim** to the AI, alongside "
-               "the intake parameters, the client holdings and the research / other documents, "
-               "so the AI analyses them directly. They are context for the write-up, never a "
-               "source of computed figures — every number still comes from the engine.")
+               "USD 4,000/oz”*, *“low fees and good liquidity”*. These are varied but not "
+               "unstructured: the copilot sorts each instruction into a typed item "
+               "(entry trigger / execution style / selection criteria / question) that you "
+               "review before it drives anything. Levels are copied from the client's own "
+               "words — never invented; conditional entries become a monitoring watchlist.")
     st.text_area("Client tactical instructions (free text)", key="tactical_text", height=150,
                  placeholder="Paste or type the client's tactical asks in plain language…")
-    st.caption("These flow into the **prompt on the Proposal page** — where you (and the client) "
-               "can read the exact prompt, copy it, and test it with alternative LLMs.")
+    tac_key = resolve_key("ANTHROPIC_API_KEY") or resolve_key("API_KEY_260627")
+    tac_llm = (not DEMO_MODE) and bool(tac_key)
+    tc = st.columns([1, 1, 2])
+    if tc[0].button("⇢ Sort into items", type="primary", key="tac_sort"):
+        txt = st.session_state["tactical_text"].strip()
+        if not txt:
+            st.warning("Enter some instructions first.")
+        else:
+            try:
+                res = (tactical_extract.extract(txt, tac_key) if tac_llm
+                       else tactical_extract.heuristic_extract(txt))
+            except Exception as e:  # noqa: BLE001 — degrade to the keyword classifier
+                st.warning(f"LLM classification unavailable ({type(e).__name__}) — using "
+                           "the keyword classifier.")
+                res = tactical_extract.heuristic_extract(txt)
+            st.session_state["tactical_pending"] = res["items"]
+            st.session_state["tactical_src"] = res["source"]
+            st.rerun()
+    if tc[1].button("Clear items", key="tac_clear"):
+        st.session_state["tactical_pending"] = []
+        st.session_state["tactical_items"] = []
+        st.rerun()
+    st.caption("✅ LLM classification enabled." if tac_llm else
+               "🔒 Keyless demo uses a keyword classifier; set DEMO_MODE=0 with an API key "
+               "for the LLM pass. Either way you review every item before it counts.")
+    if st.session_state.get("tactical_notice"):
+        st.success(st.session_state.pop("tactical_notice"))
+    render_tactical_review()
 
     if analyst_inputs_present():
         st.divider()
-        st.markdown("##### Analyst inputs the copilot will pass to the AI")
-        st.caption("Free-text notes, tactical instructions and attached documents — passed to the "
-                   "AI as human context. Figures are never invented from them.")
+        st.markdown("##### Analyst inputs the copilot will incorporate")
+        st.caption("Free-text notes, overlay sleeves and attached documents — folded into the "
+                   "proposal as human context. Figures are never invented from them.")
         render_analyst_inputs()
-    # Next-step hand-off (state-aware). The deck needs a parsed book, so a missing
-    # book routes to Analyse rather than to an empty Proposal view.
-    if statements:
-        st.success("✅ **Next:** open **Proposal** in the sidebar — the prompt there bundles your "
-                   "inputs, the holdings and the documents for the AI. (Or review **Overview / "
-                   "Suitability** first; every view recomputes live as you adjust the parameters.)")
+    # Next-step hand-off (state-aware). Priority: if the client's instructions stated
+    # target weights that aren't in the sleeves yet, apply those FIRST (they drive the
+    # analysis) — then point to the book / Proposal. The deck needs a parsed book, so
+    # a missing book routes to Analyse rather than to an empty Proposal view.
+    _prop = proposed_alloc(st.session_state.get("tactical_items", []))
+    _prop_dismissed = bool(_prop) and st.session_state.get("alloc_dismissed") == _prop
+    _pending_alloc = bool(_prop) and not _prop_dismissed and any(
+        round(st.session_state[f"t_{k}"], 2) != round(v, 2) for k, v in _prop.items())
+    _then = ("open **Proposal** in the sidebar to generate the deck."
+             if statements else
+             "load the client's documents in the sidebar and press **Analyse ▸**.")
+    if _pending_alloc:
+        st.info("📥 **Next:** the client stated target weights that aren't in the sleeves yet — "
+                "click **↧ Apply to allocation targets** in the Allocation & limits panel to set "
+                "them (you can still adjust). Then " + _then)
+    elif statements:
+        st.success("✅ **Next:** open **Proposal** in the sidebar to generate the deck — your "
+                   "inputs above are folded in. (Or review **Overview / Suitability** first; every "
+                   "view recomputes live as you adjust the parameters.)")
     elif analyst_inputs_present():
         st.info("⏳ **Next:** load the client's documents in the sidebar and press **Analyse ▸** — "
-                "the proposal is built from the parsed statements. Your inputs above are saved and "
-                "will be passed to the AI once a book is loaded.")
+                "the Proposal deck is built from the parsed statements. Your inputs above are saved "
+                "and will be folded in once a book is loaded.")
 
 # ---- Sample statements (view the raw inputs; no digested book required) ---- #
 elif view == "Sample statements":
@@ -944,91 +1226,82 @@ elif view == "Proposal":
         st.info("👈 Load the client's documents in the sidebar and press **Analyse ▸** — the "
                 "proposal deck is generated from the parsed book.")
     else:
-        st.caption("The recommendation, built from the loaded statements. The tables and every "
-                   "figure are computed by the deterministic engine from the client's holdings "
-                   "(nothing is invented); the AI reads the prompt below — parameters, holdings, "
-                   "documents and the client's tactical instructions — and writes the proposal "
-                   "narrative around those figures.")
+        st.caption("The recommendation, generated from the loaded statements — the same deck "
+                   "you can download as PowerPoint or PDF. Every figure is computed by the "
+                   "deterministic engine from the client's holdings; nothing is invented.")
         model = proposal_model(book, params)
 
-        # ---- v10: THE PROMPT — the self-contained instruction handed to the AI,
-        #           surfaced prominently so the client can read it, copy it, and
-        #           test it with alternative LLMs. Rebuilt from the current inputs. --- #
+        # ---- v8: enforced price-trigger outcomes (the only guidance that gated a
+        #          computed number) — surfaced explicitly, with provenance. --- #
+        _enf = model.get("enforced_rules") or []
+        if _enf:
+            blocked = [e for e in _enf if e["verdict"] == "blocked"]
+            unver = [e for e in _enf if e["verdict"] == "unverified"]
+            head = f"🔒 **{len(_enf)} enforced condition(s)** checked against live prices"
+            if blocked:
+                st.warning(head + f" — **{len(blocked)} gated a trade** (buy → hold):\n\n"
+                           + "\n".join(f"- {e['mark']} {e['note']}  \n  <sub>{e['cite']}</sub>"
+                                       for e in _enf), icon="🔒")
+            elif unver:
+                st.info(head + " — live price unavailable for some; verify manually:\n\n"
+                        + "\n".join(f"- {e['mark']} {e['note']}" for e in _enf))
+            else:
+                st.success(head + " — all conditions met; no trade gated.")
+
+        # ---- v4: portable deck prompt + grounded CIO commentary ----------- #
         narr_key = resolve_key("ANTHROPIC_API_KEY") or resolve_key("API_KEY_260627")
         llm_on = (not DEMO_MODE) and bool(narr_key)
-        # Keep the shown prompt in step with the current inputs (the deterministic
-        # FACTS + parameters + docs + tactical text all fold into it).
-        _fresh_prompt = narrative.build_prompt(model)
-        if "narr_prompt" not in st.session_state:
-            st.session_state["narr_prompt"] = _fresh_prompt
-
-        st.markdown("### 🧠 The prompt handed to the AI")
-        st.caption(
-            "This is the **entire, self-contained prompt** the copilot sends to the model — the "
-            "role and grounding rules, the deterministic FACTS (the only source of numbers), the "
-            "intake parameters, the parsed holdings + raw statement source, the research / other "
-            "documents in full, and the client's tactical instructions verbatim. Read it, edit "
-            "it, copy it, and paste it into **any** LLM (Claude, GPT, Gemini, …) to reproduce the "
-            "proposal — this is how you test the system with alternative models.")
-        pc = st.columns([1, 1, 2])
-        if pc[0].button("↻ Rebuild prompt from current inputs"):
-            st.session_state["narr_prompt"] = _fresh_prompt
-            st.rerun()
-        if st.session_state["narr_prompt"] != _fresh_prompt:
-            pc[1].caption("✎ prompt edited or inputs changed — Rebuild to regenerate")
-        st.text_area(
-            "Prompt (editable — edit freely before generating or copying)",
-            key="narr_prompt", height=380,
-            help="The FACTS block is the only source of numbers; the parameters, documents and "
-                 "tactical instructions are intent and context, not figures.")
-        copy_button(st.session_state["narr_prompt"], "📋 Copy prompt to clipboard",
-                    key="copy_prompt")
-        st.download_button("⬇ Download prompt (.txt)", st.session_state["narr_prompt"],
-                           file_name="Meridian_proposal_prompt.txt", mime="text/plain")
-
-        st.divider()
-        st.markdown("### ✨ Generate the proposal with the live model")
-        gen = st.button("✨ Generate with Claude", type="primary")
-        if llm_on:
-            st.caption("Uses the live Claude API (claude-opus-4-8) on the prompt above. The model "
-                       "may quote the FACTS figures but never invents or alters them; the tables "
-                       "and downloads below stay deterministic.")
-        else:
-            st.caption("🔒 The live model is off (demo mode / no API key) — **Generate** produces a "
-                       "deterministic grounded summary from the same figures. Set `DEMO_MODE=0` "
-                       "with an `ANTHROPIC_API_KEY` to call Claude. The prompt above works in any "
-                       "LLM regardless.")
-        if gen:
-            if llm_on:
-                try:
-                    text, src = narrative.generate_claude(
-                        st.session_state["narr_prompt"], narr_key)
-                except Exception as e:  # noqa: BLE001
-                    st.warning(f"Claude unavailable ({type(e).__name__}) — using the "
-                               "deterministic grounded summary.")
+        with st.expander("💬 LLM deck prompt & CIO commentary", expanded=False):
+            st.caption(
+                "A self-contained prompt that regenerates this whole proposal deck. It "
+                "inlines the full instructions, the FACTS block (every computed figure) "
+                "and your analyst guidance — copy it verbatim into any LLM chat to rebuild "
+                "the PPTX and PDF, or press Generate to have the built-in model write a "
+                "grounded CIO commentary here. The LLM may quote the figures but never "
+                "invents or alters them; tables and charts stay deterministic.")
+            if "narr_prompt" not in st.session_state:
+                st.session_state["narr_prompt"] = narrative.build_prompt(model)
+            if st.button("↻ Rebuild prompt from current inputs"):
+                st.session_state["narr_prompt"] = narrative.build_prompt(model)
+            st.caption("📋 Copy the full prompt and paste it into any LLM chat to rebuild "
+                       "this deck.")
+            st.text_area(
+                "Prompt sent to LLM (editable)", key="narr_prompt", height=280,
+                help="Edit freely before generating. The FACTS block is the only source of "
+                     "numbers; the analyst guidance is intent and context, not figures.")
+            copy_button(st.session_state["narr_prompt"], "📋 Copy prompt to clipboard",
+                        key="copy_bottom")
+            gen = st.button("✨ Generate commentary", type="primary")
+            if not llm_on:
+                st.caption("🔒 The built-in model is off in demo mode / no API key — "
+                           "**Generate** produces a deterministic grounded summary from the "
+                           "same figures. The copy-and-paste prompt above works with any LLM.")
+            if gen:
+                if llm_on:
+                    try:
+                        text, src = narrative.generate_claude(
+                            st.session_state["narr_prompt"], narr_key)
+                    except Exception as e:  # noqa: BLE001
+                        st.warning(f"Claude unavailable ({type(e).__name__}) — using the "
+                                   "deterministic grounded summary.")
+                        text, src = narrative.deterministic_summary(model), "deterministic"
+                else:
                     text, src = narrative.deterministic_summary(model), "deterministic"
-            else:
-                text, src = narrative.deterministic_summary(model), "deterministic"
-            st.session_state["narrative_text"] = text
-            st.session_state["narrative_src"] = src
-        if st.session_state.get("narrative_text"):
-            src = st.session_state.get("narrative_src", "deterministic")
-            badge = ("Claude · claude-opus-4-8" if src == "claude"
-                     else "deterministic fallback (no model call)")
-            st.markdown(f"**Generated proposal narrative** · _{badge}_")
-            st.write(st.session_state["narrative_text"])
-            st.caption("Folded into the deck below and the PPTX/PDF downloads as a "
-                       "commentary slide after the cover.")
-            st.caption("⚖️ Every figure remains computed by the deterministic engine. The "
-                       "narrative's **qualitative** statements draw on the client's documents "
-                       "and instructions supplied to the model as context and are **not "
-                       "independently verified** — for discussion only, not investment advice.")
-            if st.button("✕ Clear generated narrative"):
-                st.session_state.pop("narrative_text", None)
-                st.session_state.pop("narrative_src", None)
+                st.session_state["narrative_text"] = text
+                st.session_state["narrative_src"] = src
+            if st.session_state.get("narrative_text"):
+                src = st.session_state.get("narrative_src", "deterministic")
+                badge = ("Claude · claude-opus-4-8" if src == "claude"
+                         else "deterministic fallback (no model call)")
+                st.markdown(f"**Generated commentary** · _{badge}_")
+                st.write(st.session_state["narrative_text"])
+                st.caption("Folded into the deck below and the PPTX/PDF downloads as a "
+                           "commentary slide after the cover.")
+                if st.button("✕ Clear commentary"):
+                    st.session_state.pop("narrative_text", None)
+                    st.session_state.pop("narrative_src", None)
         if st.session_state.get("narrative_text"):
             model["narrative"] = st.session_state["narrative_text"]
-        st.divider()
 
         stem = "Portfolio_Proposal_" + re.sub(r"[^A-Za-z0-9]+", "_",
                                                st.session_state.get("source", "book"))[:40]
