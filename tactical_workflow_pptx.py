@@ -1,11 +1,10 @@
-"""tactical_workflow_pptx.py — the "after Confirm" tactical-instructions workflow
-as a native 16:9 PowerPoint deck, for dropping into partner / client decks.
+"""tactical_workflow_pptx.py — the v10 tactical-instructions workflow as a native
+16:9 PowerPoint deck, for dropping into partner / client decks.
 
-Six slides that mirror the shareable artifact (tactical_workflow.html): what the
-copilot does the moment the analyst confirms the sorted tactical items — the
-structured record, the two-stream split (watchlist / guidance), the three places
-the items appear, and the guardrail (guidance never moves a number). House
-navy / gold style, matching generate_proposal.py.
+Six slides that mirror the shareable artifact (tactical_workflow_note.html): how the
+copilot turns the client's tactical instructions + documents into a proposal in v10
+— one self-contained prompt handed to the AI Model, which writes the narrative while
+the engine computes every number. House navy / gold style, matching generate_proposal.py.
 
 Run:  python tactical_workflow_pptx.py   ->  Tactical_Workflow.pptx
 """
@@ -77,9 +76,6 @@ def box(s, x, y, w, h, fill=None, line=None, line_w=1.0, radius=0.08, shadow=Fal
     else:
         shp.line.color.rgb = line; shp.line.width = Pt(line_w)
     shp.shadow.inherit = False
-    if shadow:
-        el = shp._element.spPr
-        # keep it simple — no custom shadow XML; flat design reads clean
     tf = shp.text_frame
     tf.margin_left = In(0.16); tf.margin_right = In(0.16)
     tf.margin_top = In(0.12); tf.margin_bottom = In(0.12)
@@ -150,11 +146,11 @@ eyebrow(s, "The tactical-instructions workflow", x=0.9, y=1.4)
 tf = txt(s, 0.9, 2.4, 10.6, 2.4)
 para(tf, "From the client's words to a working proposal", 38, WHITE,
      font=SERIF, bold=True, first=True, spacing=1.02)
-tf = txt(s, 0.9, 4.7, 9.6, 1.0)
-para(tf, "What the copilot does the moment you confirm the sorted items — and the "
-         "one rule that keeps every number trustworthy.", 15.5, CREAM, first=True, spacing=1.2)
+tf = txt(s, 0.9, 4.7, 9.8, 1.0)
+para(tf, "How the copilot turns the client's instructions and documents into a proposal — "
+         "and the one rule that keeps every number trustworthy.", 15.5, CREAM, first=True, spacing=1.2)
 tf = txt(s, 0.9, 6.5, 11.5, 0.5)
-para(tf, "Meridian Family Office Copilot   ·   v8 · Tactical instructions   ·   "
+para(tf, "Meridian Family Office Copilot   ·   v10 · Tactical instructions   ·   "
          "For partner & client discussion", 11.5, RGBColor(0x7F, 0x8C, 0xBB), first=True)
 
 
@@ -164,20 +160,19 @@ para(tf, "Meridian Family Office Copilot   ·   v8 · Tactical instructions   ·
 s = slide()
 snum(s, 2)
 eyebrow(s, "At a glance")
-title(s, "Four steps in, three outputs out")
-sub(s, "The first four steps are what the analyst does. Confirm is where this walkthrough "
-       "begins — everything to its right is automatic.")
+title(s, "Three steps in, one prompt, one proposal")
+sub(s, "The first three steps are what the analyst does. Everything to their right is automatic — "
+       "and fully visible in the prompt.")
 
 nodes = [
-    ("01", "Paste", "Client's asks, plain language", SLATE_TINT, INK, LINE),
-    ("02", "Sort", "Copilot types each ask", SLATE_TINT, INK, LINE),
-    ("03", "Review", "Keep · edit · flag unclear", SLATE_TINT, INK, LINE),
-    ("04", "Confirm", "You are here", GREEN_TINT, GREEN, GREEN),
-    ("→", "Watchlist", "Levels to monitor", GOLD_TINT, GOLD_DK, GOLD),
-    ("→", "Guidance", "Shapes the proposal", GOLD_TINT, GOLD_DK, GOLD),
-    ("→", "Allocation", "If weights → Apply", GOLD_TINT, GOLD_DK, GOLD),
+    ("01", "Paste", "Tactical text + documents", SLATE_TINT, INK, LINE),
+    ("02", "Set policy", "Mandate · risk · limits", SLATE_TINT, INK, LINE),
+    ("03", "Analyse", "Engine computes FACTS", SLATE_TINT, INK, LINE),
+    ("→", "Prompt", "One self-contained brief", GOLD_TINT, GOLD_DK, GOLD),
+    ("→", "AI Model", "Writes the narrative", GOLD_TINT, GOLD_DK, GOLD),
+    ("→", "Deck", "PPTX / PDF", GOLD_TINT, GOLD_DK, GOLD),
 ]
-n = len(nodes); gap = 0.22; x0 = 0.86; total = 11.6
+n = len(nodes); gap = 0.24; x0 = 0.86; total = 11.6
 w = (total - gap * (n - 1)) / n
 y = 3.1; h = 1.9
 for i, (k, t, d, fill, tcol, lcol) in enumerate(nodes):
@@ -185,7 +180,7 @@ for i, (k, t, d, fill, tcol, lcol) in enumerate(nodes):
     b = box(s, x, y, w, h, fill=fill, line=lcol, line_w=1.25, radius=0.10)
     tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.TOP
     para(tf, k, 12, FAINT if fill == SLATE_TINT else tcol, font=MONO, bold=True, first=True, ls=0.4)
-    para(tf, ("✓ " + t) if t == "Confirm" else t, 15, tcol, bold=True, before=4, spacing=1.0)
+    para(tf, t, 15, tcol, bold=True, before=4, spacing=1.0)
     para(tf, d, 11, SOFT, before=3, spacing=1.05)
     if i < n - 1:
         cx = x + w + (gap - 0.16) / 2
@@ -193,129 +188,111 @@ for i, (k, t, d, fill, tcol, lcol) in enumerate(nodes):
         para(ar, "›", 20, LINE_STRONG, first=True, align=PP_ALIGN.CENTER)
 
 tf = txt(s, 0.86, 5.35, 11, 0.5)
-para(tf, "The rest of this deck follows what leaves the Confirm step.", 13, SOFT,
-     first=True, bold=True)
+para(tf, "The rest of this deck follows what the copilot assembles and what the AI Model does with it.",
+     13, SOFT, first=True, bold=True)
 
 
 # =========================================================================== #
-# Slide 3 — structured record
+# Slide 3 — what goes into the one prompt
 # =========================================================================== #
 s = slide()
 snum(s, 3)
-eyebrow(s, "Step 1 · after Confirm")
-title(s, "Each ask is now a structured record")
-sub(s, "A sentence becomes fields the system can act on. Every level is copied from the "
-       "client's own words — never invented.")
+eyebrow(s, "Step 1 · assemble")
+title(s, "One self-contained prompt — everything in one place")
+sub(s, "The copilot assembles a single prompt: the deterministic FACTS plus the raw context. "
+       "Numbers come only from FACTS; the rest is intent and context.")
 
-# outer gold-tinted record frame
-box(s, 0.86, 3.0, 11.6, 1.75, fill=GOLD_TINT, line=GOLD, line_w=1.5, radius=0.06)
-fields = [
-    ("TYPE", "entry_trigger", GOLD_DK, MONO),
-    ("INSTRUMENT", "Gold ETF", INK, MONO),
-    ("ACTION", "Buy", INK, MONO),
-    ("LEVEL (COPIED)", "USD 4,000/oz", GOLD_DK, MONO),
+blocks = [
+    ("ROLE + GROUNDING RULES", "analyst persona · FACTS-only", INK, False),
+    ("INTAKE PARAMETERS", "mandate · risk · limits · targets", INK, False),
+    ("FACTS (JSON)", "the only source of numbers", GOLD_DK, True),
+    ("HOLDINGS + STATEMENT SOURCE", "parsed positions + raw text", INK, False),
+    ("RESEARCH / OTHER DOCUMENTS", "full text, as context", INK, False),
+    ("TACTICAL INSTRUCTIONS", "the client's words, verbatim", INK, False),
 ]
-fw = (11.6 - 0.18 - 0.14 * (len(fields) - 1)) / len(fields)
-fx = 0.86 + 0.09; fy = 3.16
-for i, (k, v, vcol, vfont) in enumerate(fields):
-    x = fx + i * (fw + 0.14)
-    b = box(s, x, fy, fw, 1.43, fill=PAPER, line=LINE, line_w=1.0, radius=0.09)
-    tf = b.text_frame
-    para(tf, k, 10, FAINT, bold=True, first=True, ls=0.8)
-    para(tf, v, 15, vcol, font=vfont, bold=True, before=8, spacing=1.05)
+bw = (11.6 - 0.28) / 3; bh = 1.18; bx0 = 0.86; bgx = 0.14; bgy = 0.2; by0 = 3.0
+for i, (k, v, vcol, hot) in enumerate(blocks):
+    col = i % 3; row = i // 3
+    x = bx0 + col * (bw + bgx)
+    yy = by0 + row * (bh + bgy)
+    fill = GOLD_TINT if hot else SLATE_TINT
+    lcol = GOLD if hot else LINE
+    b = box(s, x, yy, bw, bh, fill=fill, line=lcol, line_w=1.5 if hot else 1.0, radius=0.08)
+    tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
+    para(tf, k, 11.5, vcol, bold=True, first=True, ls=0.4)
+    para(tf, v, 11.5, SOFT, before=6, spacing=1.05)
 
-tf = txt(s, 0.86, 5.05, 11.6, 0.9)
-p = tf.paragraphs[0]
-r = p.add_run(); r.text = 'From:  '
-r.font.size = Pt(12.5); r.font.name = SANS; r.font.color.rgb = SOFT
-r = p.add_run(); r.text = '"the gold ETF can be bought below USD 4,000/oz"'
-r.font.size = Pt(12.5); r.font.name = MONO; r.font.color.rgb = INK
-para(tf, "Nothing computed — just sorted and copied.", 12.5, GREEN, bold=True, before=6)
+tf = txt(s, 0.86, 5.9, 11.6, 0.8)
+para(tf, "Shown on the Proposal page — editable, copyable, downloadable — so the client can read "
+         "exactly what the system asks the AI Model to do.", 12.5, GREEN, bold=True, first=True, spacing=1.1)
 
 
 # =========================================================================== #
-# Slide 4 — two streams
+# Slide 4 — the transparency surface
 # =========================================================================== #
 s = slide()
 snum(s, 4)
-eyebrow(s, "Step 2 · the split")
-title(s, "The items split by what they're for")
+eyebrow(s, "Step 2 · generate")
+title(s, "Read it, edit it, test it anywhere")
 
 sw = 5.68; sh = 3.15; sy = 2.75
-# Stream A — triggers -> watchlist
+# Stream A — generate in-app
 b = box(s, 0.86, sy, sw, sh, fill=GOLD_TINT, line=GOLD, line_w=1.5, radius=0.05)
 tf = b.text_frame
-para(tf, "\U0001F4E1   Entry triggers  →  Monitoring watchlist", 15, INK, bold=True, first=True)
-para(tf, "Conditional, level-based asks become a live list the portfolio is watched "
-         "against — the retention hook.", 12.8, SOFT, before=8, spacing=1.15)
-inner = box(s, 1.12, sy + 1.72, sw - 0.52, 1.1, fill=PAPER, line=LINE_STRONG, line_w=1.0, radius=0.08)
-tfi = inner.text_frame
-p = tfi.paragraphs[0]
-for seg, col, bold in [("Gold ETF · below ", SOFT, False), ("USD 4,000/oz", GOLD_DK, True),
-                       (" · Buy", SOFT, False)]:
-    r = p.add_run(); r.text = seg; r.font.size = Pt(11.5); r.font.name = MONO
-    r.font.color.rgb = col; r.font.bold = bold
-p2 = tfi.add_paragraph()
-for seg, col, bold in [("S&P 500 ETF · ", SOFT, False), ("−15% to −20%", GOLD_DK, True),
-                       (" from high", SOFT, False)]:
-    r = p2.add_run(); r.text = seg; r.font.size = Pt(11.5); r.font.name = MONO
-    r.font.color.rgb = col; r.font.bold = bold
+para(tf, "✨   Generate with the AI Model", 15, INK, bold=True, first=True)
+para(tf, "Runs the live AI model on the prompt. Its narrative folds into the proposal deck as a "
+         "commentary slide. Falls back to a deterministic summary with no key.", 12.8, SOFT,
+     before=8, spacing=1.15)
+inner = box(s, 1.12, sy + 1.9, sw - 0.52, 0.95, fill=PAPER, line=LINE_STRONG, line_w=1.0, radius=0.08)
+tfi = inner.text_frame; tfi.vertical_anchor = MSO_ANCHOR.MIDDLE
+para(tfi, "Model-agnostic UI — the button and badge read “AI Model”, never a vendor name.",
+     11.5, SOFT, first=True, spacing=1.1)
 
-# Stream B — every item -> guidance
+# Stream B — copy to any AI model
 b = box(s, 0.86 + sw + 0.24, sy, sw, sh, fill=SLATE_TINT, line=LINE_STRONG, line_w=1.25, radius=0.05)
 tf = b.text_frame
-para(tf, "\U0001F9ED   Every item  →  Analyst guidance", 15, INK, bold=True, first=True)
-para(tf, "All items (including the triggers) carry forward as intent that shapes the "
-         "written advice — never as figures.", 12.8, SOFT, before=8, spacing=1.15)
-inner = box(s, 0.86 + sw + 0.24 + 0.26, sy + 1.72, sw - 0.52, 1.1, fill=PAPER,
+para(tf, "\U0001F4CB   Copy into any AI model", 15, INK, bold=True, first=True)
+para(tf, "The prompt is self-contained, so pasting it verbatim into any external AI model "
+         "reproduces the proposal — the way the client tests the system across models.", 12.8, SOFT,
+     before=8, spacing=1.15)
+inner = box(s, 0.86 + sw + 0.24 + 0.26, sy + 1.9, sw - 0.52, 0.95, fill=PAPER,
             line=LINE_STRONG, line_w=1.0, radius=0.08)
-tfi = inner.text_frame
-for i, line in enumerate(['Execution style · "buy in tranches"',
-                          'Selection criteria · "low fees, good liquidity"',
-                          'Open question · "impact of rate hikes?"']):
-    para(tfi, line, 11, SOFT, font=MONO, first=(i == 0), before=(0 if i == 0 else 3), spacing=1.1)
+tfi = inner.text_frame; tfi.vertical_anchor = MSO_ANCHOR.MIDDLE
+para(tfi, "Edit before generating; the FACTS block stays the only source of numbers.",
+     11.5, SOFT, first=True, spacing=1.1)
 
-# note bar — clarification hold-out + allocation proposal
+# note bar
 nb = box(s, 0.86, 6.1, 11.6, 0.75, fill=SLATE_TINT, line=LINE, line_w=1.0, radius=0.06)
 tf = nb.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tf, "⚠️  Anything ambiguous is typed needs-clarification and held out of the "
-         "proposal until resolved. If the client stated target weights, Confirm surfaces a "
-         "Proposed allocation to Apply.", 12, SOFT, first=True, spacing=1.12)
+para(tf, "🧠  Both paths use the same prompt. There is no classification, review table, or "
+         "enforcement step in between — the analyst reviews the prompt itself.", 12, SOFT,
+     first=True, spacing=1.12)
 
 
 # =========================================================================== #
-# Slide 5 — three destinations
+# Slide 5 — the proposal
 # =========================================================================== #
 s = slide()
 snum(s, 5)
-eyebrow(s, "Step 3 · where they appear")
-title(s, "Three places the analyst sees them")
+eyebrow(s, "Step 3 · the proposal")
+title(s, "AI prose around deterministic tables")
 
 dw = 3.72; dh = 3.55; dy = 2.65; dx0 = 0.86; dgap = 0.22
 dests = [
-    ("\U0001F4E1", "Monitoring watchlist", "Triggers, ready to watch the book against.",
-     "IN THE COPILOT", GOLD_DK, GOLD, True),
-    ("\U0001F4C4", "Proposal deck", 'Listed under "Analyst notes folded into this proposal" '
-     "on the data & method slide.", "PPTX · PDF", INK, LINE, False),
-    ("\U0001F4AC", "CIO commentary", "Prose shaped by the guidance — quoting only the "
-     "computed figures.", "GENERATED NARRATIVE", INK, LINE, False),
+    ("\U0001F9E0", "The prompt", "On the Proposal page — exactly what the AI Model was asked to do.",
+     "TRANSPARENCY", GOLD_DK, GOLD, True),
+    ("\U0001F4AC", "CIO commentary", "The AI Model's narrative, shaped by the parameters, documents "
+     "and tactical instructions — quoting only the computed figures.", "GENERATED PROSE", INK, LINE, False),
+    ("\U0001F4CA", "Deterministic tables", "Allocation, drift, rebalance and suitability — computed "
+     "by the engine and unchanged by the AI.", "PPTX · PDF", INK, LINE, False),
 ]
-for i, (ic, t, d, where, tcol, lcol, tri) in enumerate(dests):
+for i, (ic, t, d, where, tcol, lcol, hot) in enumerate(dests):
     x = dx0 + i * (dw + dgap)
-    b = box(s, x, dy, dw, dh, fill=PAPER, line=lcol, line_w=1.5 if tri else 1.0, radius=0.06)
+    b = box(s, x, dy, dw, dh, fill=PAPER, line=lcol, line_w=1.5 if hot else 1.0, radius=0.06)
     tf = b.text_frame
     para(tf, ic, 22, INK, first=True)
     para(tf, t, 14, tcol, bold=True, before=8)
     para(tf, d, 12, SOFT, before=6, spacing=1.15)
-    if tri:
-        p = tf.add_paragraph(); p.space_before = Pt(10)
-        for seg, col in [("S&P 500 ETF  ", INK), ("−15/−20%", GOLD_DK)]:
-            r = p.add_run(); r.text = seg; r.font.size = Pt(11); r.font.name = MONO; r.font.color.rgb = col
-            r.font.bold = (col == INK)
-        p = tf.add_paragraph()
-        for seg, col in [("Gold ETF  ", INK), ("< $4,000", GOLD_DK)]:
-            r = p.add_run(); r.text = seg; r.font.size = Pt(11); r.font.name = MONO; r.font.color.rgb = col
-            r.font.bold = (col == INK)
     lab = txt(s, x + 0.16, dy + dh - 0.5, dw - 0.32, 0.35)
     para(lab, where, 10, FAINT, bold=True, first=True, ls=0.6)
 
@@ -325,30 +302,30 @@ for i, (ic, t, d, where, tcol, lcol, tri) in enumerate(dests):
 # =========================================================================== #
 s = slide()
 snum(s, 6)
-eyebrow(s, "Step 4 · the guardrail (v8: tiered)")
-title(s, "Guidance can gate a number — never invent one")
+eyebrow(s, "The guardrail")
+title(s, "The AI writes prose — never a number")
 
 gw = 5.68; gh = 2.45; gy = 2.5
 b = box(s, 0.86, gy, gw, gh, fill=GOLD_TINT, line=GOLD, line_w=1.5, radius=0.06)
 tf = b.text_frame
-para(tf, "GUIDANCE CAN SHAPE & GATE", 11, GOLD_DK, bold=True, first=True, ls=0.8)
-for i, li in enumerate(["The monitoring watchlist & the commentary",
-                        "🔒 Enforced trigger gates a rebalance buy (→ hold) vs a sourced live price",
-                        "What the analyst is prompted to weigh"]):
+para(tf, "THE AI MODEL CAN SHAPE", 11, GOLD_DK, bold=True, first=True, ls=0.8)
+for i, li in enumerate(["The CIO commentary and how it reads",
+                        "Which considerations to weigh, from the documents & instructions",
+                        "The emphasis and ordering of the narrative"]):
     para(tf, "•  " + li, 12.5, SOFT, before=(10 if i == 0 else 6), spacing=1.1)
 
 b = box(s, 0.86 + gw + 0.24, gy, gw, gh, fill=GREEN_TINT, line=GREEN, line_w=1.5, radius=0.06)
 tf = b.text_frame
-para(tf, "GUIDANCE NEVER INVENTS", 11, GREEN, bold=True, first=True, ls=0.8)
-for i, li in enumerate(["A figure from thin air — enforced checks use a price with provenance",
-                        "Suitability thresholds",
+para(tf, "THE AI MODEL NEVER INVENTS", 11, GREEN, bold=True, first=True, ls=0.8)
+for i, li in enumerate(["A figure — every number comes from the FACTS block",
+                        "Suitability thresholds or the rebalance",
                         "Holdings — every dollar from the real book"]):
     para(tf, "•  " + li, 12.5, SOFT, before=(10 if i == 0 else 6), spacing=1.1)
 
 tf = txt(s, 0.86, gy + gh + 0.45, 11.6, 1.4)
-para(tf, "Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. A client's condition can "
-         "gate or flag a trade — never fabricate one.", 18, NAVY, font=SERIF, italic=True, bold=True,
-     first=True, spacing=1.15)
+para(tf, "Qualitative claims drawn from the client's documents are context — not independently "
+         "verified. Every figure is computed deterministically by the engine.", 18, NAVY, font=SERIF,
+     italic=True, bold=True, first=True, spacing=1.15)
 
 
 OUT = "Tactical_Workflow.pptx"

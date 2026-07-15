@@ -1,13 +1,12 @@
-"""tactical_swimlane_pptx.py — the tactical-instructions process as a native
-16:9 PowerPoint swimlane, matching tactical_swimlane_note.html (v8).
+"""tactical_swimlane_pptx.py — the v10 tactical-instructions process as a native
+16:9 PowerPoint swimlane, matching tactical_swimlane_note.html (v10).
 
 Two slides:
-  1. The answer — does "Confirm items" fill Allocations & Limits? (the two-click
-     reality: Confirm fills nothing; a separate Apply fills the allocation sleeves;
-     limits are always manual).
-  2. The swimlane — three actor lanes (Client / You / Copilot) across four phases,
-     numbered action boxes 1-9, a needs-clarification decision, and the copilot's
-     Proposed-allocation step.
+  1. The answer — how do the client's tactical instructions reach the proposal?
+     (v10: they pass VERBATIM into one self-contained prompt; the AI Model writes
+     the narrative; every number stays deterministic).
+  2. The swimlane — three actor lanes (Client / You / Copilot) across four phases:
+     Set policy -> Capture -> Compute (deterministic) -> Assemble, generate & deliver.
 
 House navy / gold, matching the other decks. Run:
     python tactical_swimlane_pptx.py   ->  Tactical_Swimlane.pptx
@@ -104,26 +103,28 @@ def one(tf, text, size, color, **kw):
 
 
 # =========================================================================== #
-# Slide 1 — the two-click answer
+# Slide 1 — how tactical instructions reach the proposal (v10)
 # =========================================================================== #
 s = slide()
-one(txt(s, 0.8, 0.5, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v8", 11.5, GOLD,
+one(txt(s, 0.8, 0.5, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v10", 11.5, GOLD,
     bold=True, first=True)
-one(txt(s, 0.8, 0.92, 11.7, 0.9),
-    "Does “Confirm items” fill your Allocations & Limits?", 27, NAVY, font=SERIF,
+one(txt(s, 0.8, 0.92, 11.9, 0.9),
+    "How do the client’s tactical instructions reach the proposal?", 26, NAVY, font=SERIF,
     bold=True, first=True)
 
 cards = [
-    ("Confirm items", "commits the interpreted instructions", NAVY,
-     "Produces a 📡 monitoring watchlist (triggers) and guidance folded into the "
-     "proposal. It writes into NO field.", SLATE_TINT, LINE_STRONG, INK),
-    ("Apply to allocation targets", "the second, separate click", GOLD_DK,
-     "The ONLY action that fills the allocation sleeves. Appears only if the client "
-     "stated target weights (“Gold ETF: 20%”). You still verify and adjust.",
+    ("Pass through — verbatim", "no sorting, no classifying", NAVY,
+     "The client’s tactical text goes straight into the prompt, unedited — together with the "
+     "intake parameters, the parsed holdings + statement source, and the research / other "
+     "documents in full.", SLATE_TINT, LINE_STRONG, INK),
+    ("One self-contained prompt", "the transparency surface", GOLD_DK,
+     "Shown on the Proposal page — editable, copyable, downloadable. Paste it into ANY AI model "
+     "to reproduce the proposal and compare outputs. Generate in-app runs the live AI model.",
      GOLD_TINT, GOLD, GOLD_DK),
-    ("Limits", "band tolerance · liquidity · FX · position caps", SOFT,
-     "Always MANUAL — never extracted from the instructions or auto-filled.",
-     PAPER, LINE_STRONG, INK),
+    ("Numbers stay deterministic", "the guardrail", GREEN,
+     "Every figure is computed by the engine (the FACTS block). The AI writes prose only; "
+     "qualitative claims from the documents are context, not independently verified.",
+     GREEN_TINT, GREEN, INK),
 ]
 cy = 2.25; ch = 1.25; gap = 0.24
 for i, (title, kicker, tcol, body, fill, lcol, bodycol) in enumerate(cards):
@@ -136,19 +137,19 @@ for i, (title, kicker, tcol, body, fill, lcol, bodycol) in enumerate(cards):
 
 b = rect(s, 0.8, 6.5, 11.73, 0.95, fill=NAVY_DEEP, radius=0.06)
 tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tf, [("Order, Analyse & the v8 exception:  ", 11.5, GOLD, True, SANS),
-          ("Set the mandate / risk / allocations first, then Analyse — so the first read reflects the "
-           "policy. Confirm still fills no field; the one exception is a 🔒 enforced price trigger "
-           "(e.g. “gold below $4,000”), which gates a rebalance buy at Analyse using a sourced live "
-           "price — it can flag or hold a trade, never invent one.", 11.5, WHITE, False, SANS)],
+para(tf, [("What changed in v10:  ", 11.5, GOLD, True, SANS),
+          ("the copilot no longer sorts instructions into typed items, tags enforcement tiers, or "
+           "gates a trade on a price trigger. It hands the raw inputs to the AI Model in one prompt "
+           "and lets it analyse them — while the engine still computes every number, so nothing is "
+           "invented. The UI is model-agnostic: it always reads “AI Model”.", 11.5, WHITE, False, SANS)],
      first=True, spacing=1.04)
 
 
 # =========================================================================== #
-# Slide 2 — the swimlane
+# Slide 2 — the swimlane (v10)
 # =========================================================================== #
 s = slide()
-one(txt(s, 0.5, 0.34, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v8 · PROCESS",
+one(txt(s, 0.5, 0.34, 11.5, 0.4), "MERIDIAN FAMILY OFFICE COPILOT · v10 · PROCESS",
     11, GOLD, bold=True, first=True)
 one(txt(s, 0.5, 0.68, 12.4, 0.6), "Tactical instructions — who does what, and when",
     23, NAVY, font=SERIF, bold=True, first=True)
@@ -158,8 +159,8 @@ LX, LW = 0.4, 0.95
 GX = LX + LW                      # 1.35
 GR = 13.0
 PH_Y, PH_H = 1.5, 0.38
-# phase widths (B widest — most action): A, B, C, D
-PW = [2.5, 4.66, 2.02, 2.47]
+# phase widths (D widest — most action now lives in assemble/generate/deliver)
+PW = [2.7, 2.4, 2.75, 3.8]
 PXS = [GX]
 for w in PW:
     PXS.append(PXS[-1] + w)      # PXS[i]..PXS[i+1] is phase i
@@ -169,13 +170,13 @@ LANES = [("Client", "Source", CLIENT_TINT, 1.92, 1.18),
          ("Copilot", "System", SLATE_TINT, 5.68, 1.5)]
 
 # phase headers
-phase_titles = [("A", "Set profile & policy"), ("B", "Capture tactical instructions"),
-                ("C", "Analyse the statements"), ("D", "Review & generate")]
+phase_titles = [("A", "Set profile & policy"), ("B", "Capture inputs"),
+                ("C", "Compute · deterministic"), ("D", "Assemble → generate → deliver")]
 rect(s, LX, PH_Y, LW, PH_H, fill=NAVY_DEEP, radius=0.04)
 for i, (pn, pt) in enumerate(phase_titles):
     b = rect(s, PXS[i], PH_Y, PW[i], PH_H, fill=NAVY_DEEP, radius=0.04)
     tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    para(tf, [(f"{pn}  ", 11, GOLD, True, MONO), (pt, 11.5, WHITE, True, SANS)],
+    para(tf, [(f"{pn}  ", 11, GOLD, True, MONO), (pt, 11, WHITE, True, SANS)],
          first=True, align=PP_ALIGN.CENTER)
 
 # lane bands + labels
@@ -195,7 +196,6 @@ def abox(px, y, w, h, kind, num, title, desc, tsize=10, dsize=8.3):
         "you": (PAPER, GOLD, 1.25, False, GOLD_DK),
         "bot": (PAPER, LINE_STRONG, 1.0, True, FAINT),
         "cli": (PAPER, RGBColor(0x9C, 0xA8, 0xCE), 1.0, False, NAVY),
-        "dec": (AMBER_TINT, AMBER, 1.25, False, AMBER),
     }[kind]
     b = rect(s, px, y, w, h, fill=fill, line=lcol, line_w=lw, radius=0.10, dash=dash)
     tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
@@ -209,78 +209,65 @@ def abox(px, y, w, h, kind, num, title, desc, tsize=10, dsize=8.3):
     return b
 
 
-def gear(px, y, w, h, tag, title, desc):
-    b = rect(s, px, y, w, h, fill=PAPER, line=LINE_STRONG, line_w=1.0, radius=0.10, dash=True)
+def gear(px, y, w, h, tag, title, desc, accent=False):
+    lcol = GOLD if accent else LINE_STRONG
+    b = rect(s, px, y, w, h, fill=PAPER, line=lcol, line_w=1.3 if accent else 1.0,
+             radius=0.10, dash=not accent)
     tf = b.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-    one(tf, tag, 8, FAINT, bold=True, first=True)
-    one(tf, title, 10, SOFT, bold=True, before=2, spacing=1.0)
+    one(tf, tag, 8, GOLD_DK if accent else FAINT, bold=True, first=True)
+    one(tf, title, 10, INK if accent else SOFT, bold=True, before=2, spacing=1.0)
     if desc:
         one(tf, desc, 8.3, SOFT, before=2, spacing=1.0)
     return b
 
 # ---- CLIENT lane ---- #
 cy, ch = CY["Client"]
-# B: gives instructions
-abox(PXS[1] + 0.12, cy + 0.2, PW[1] * 0.6, ch - 0.4, "cli", None,
-     "Gives instructions (plain language)", "“gold below $4,000”, “Gold ETF: 20%”…",
+# B: gives instructions + documents
+abox(PXS[1] + 0.12, cy + 0.2, PW[1] - 0.24, ch - 0.4, "cli", None,
+     "Gives instructions + documents", "“gold below $4,000” · statements · research",
      tsize=10.5, dsize=8)
-# C: hands over statements
-abox(PXS[2] + 0.12, cy + 0.2, PW[2] - 0.24, ch - 0.4, "cli", None,
-     "Hands over statements", "INPUT", tsize=10.5, dsize=8)
 
 # ---- YOU lane ---- #
 yy, yh = CY["You"]
 # Phase A: boxes 1 (top) + 2 (bottom) — set the policy first
 ax, aw = PXS[0] + 0.12, PW[0] - 0.24
 abox(ax, yy + 0.24, aw, 1.02, "you", "1", "Set mandate, risk & ability", None)
-abox(ax, yy + 1.34, aw, 1.02, "you", "2", "Set allocation targets & limits",
-     "limits manual · sleeves can be pre-filled by 6")
-# Phase B: 2x2 grid + decision strip
-cx0 = PXS[1] + 0.1; cW = PW[1] - 0.2
-colw = (cW - 0.16) / 2
-c1, c2 = cx0, cx0 + colw + 0.16
-abox(c1, yy + 0.12, colw, 0.72, "you", "3", "Paste → Sort into items", None, tsize=9.5)
-abox(c2, yy + 0.12, colw, 0.72, "you", "4", "Review: Keep · edit · notes", None, tsize=9.5)
-# decision strip full width
-db = rect(s, cx0, yy + 0.9, cW, 0.5, fill=AMBER_TINT, line=AMBER, line_w=1.25, radius=0.12)
-tf = db.text_frame; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tf, [("◇ needs-clarification?  ", 9.5, AMBER, True, SANS),
-          ("Yes → ask client ⟲   ·   No ↓", 9, SOFT, False, SANS)], first=True,
-     align=PP_ALIGN.CENTER)
-abox(c1, yy + 1.48, colw, 0.86, "you", "5", "Confirm items",
-     "commits guidance + watchlist · fills NO fields", tsize=9.5, dsize=7.8)
-abox(c2, yy + 1.48, colw, 0.86, "you", "6", "Apply to allocation targets",
-     "only action that fills sleeves · optional · ⤶ fills 2", tsize=9.5, dsize=7.8)
-# Phase C: box 7 — Analyse, after the policy is set
-abox(PXS[2] + 0.12, yy + 0.75, PW[2] - 0.24, 0.95, "you", "7",
-     "Upload → Analyse ▸", "after policy above is set · then live")
-# Phase D: boxes 8 + 9
+abox(ax, yy + 1.34, aw, 1.02, "you", "2", "Set allocation targets & limits", "limits always manual")
+# Phase B: box 3 — paste + upload (verbatim; no sorting)
+abox(PXS[1] + 0.12, yy + 0.6, PW[1] - 0.24, 1.3, "you", "3",
+     "Paste tactical text (verbatim) + upload documents", "the client’s words, unedited",
+     tsize=10, dsize=8)
+# Phase C: box 4 — Analyse, after the policy is set
+abox(PXS[2] + 0.12, yy + 0.75, PW[2] - 0.24, 0.95, "you", "4",
+     "Analyse ▸", "after the policy above is set")
+# Phase D: boxes 5, 6, 7 stacked
 dx, dw = PXS[3] + 0.12, PW[3] - 0.24
-abox(dx, yy + 0.24, dw, 1.02, "you", "8", "Review Overview / Suitability", None)
-abox(dx, yy + 1.34, dw, 1.02, "you", "9", "Open Proposal → Generate deck", "PPTX / PDF")
+abox(dx, yy + 0.16, dw, 0.66, "you", "5", "Review the assembled prompt", None)
+abox(dx, yy + 0.90, dw, 0.66, "you", "6", "Generate — or copy to any AI model", None)
+abox(dx, yy + 1.64, dw, 0.66, "you", "7", "Review & download the deck", "PPTX / PDF")
 
 # ---- COPILOT lane ---- #
 py, ph = CY["Copilot"]
-# B: classify + on-confirm
-cpw = (PW[1] - 0.2 - 0.14) / 2
-gear(PXS[1] + 0.1, py + 0.2, cpw, ph - 0.4, "⚙ AUTO",
-     "Classify + tag tier", "🔒 / 📡 / 📝 per item")
-gear(PXS[1] + 0.1 + cpw + 0.14, py + 0.2, cpw, ph - 0.4, "⚙ ON CONFIRM",
-     "Watchlist + guidance", "+ builds Proposed allocation")
 # C: parse + compute (stacked, narrow lane)
-gear(PXS[2] + 0.12, py + 0.14, PW[2] - 0.24, 0.6, "⚙ ON ANALYSE",
+gear(PXS[2] + 0.12, py + 0.14, PW[2] - 0.24, 0.58, "⚙ ON ANALYSE",
      "Parse → build the book", None)
-gear(PXS[2] + 0.12, py + 0.8, PW[2] - 0.24, 0.6, "⚙ AUTO · LIVE",
-     "Compute + apply 🔒 triggers", "gates buys vs live price")
-# D: generate
-gear(PXS[3] + 0.12, py + 0.2, PW[3] - 0.24, ph - 0.4, "⚙ AUTO",
-     "Generate PPTX / PDF", "figures deterministic")
+gear(PXS[2] + 0.12, py + 0.78, PW[2] - 0.24, 0.58, "⚙ AUTO",
+     "Compute deterministic FACTS", "allocation · drift · suitability")
+# D: assemble → AI model → render (three across)
+gw = (PW[3] - 0.24 - 2 * 0.12) / 3
+g1x = PXS[3] + 0.12
+g2x = g1x + gw + 0.12
+g3x = g2x + gw + 0.12
+gear(g1x, py + 0.3, gw, 0.9, "⚙ ASSEMBLE", "One self-contained prompt", None)
+gear(g2x, py + 0.3, gw, 0.9, "✨ AI MODEL", "Writes the narrative", None, accent=True)
+gear(g3x, py + 0.3, gw, 0.9, "⚙ RENDER", "PPTX / PDF deck", "figures deterministic")
 
 # footer key point
 one(txt(s, 0.5, 7.16, 12.5, 0.3),
-    "Recommended order: set the policy (1–6) first, then Analyse (7). Confirm (5) fills no fields; "
-    "allocations only via Apply (6); limits manual. v8: a 🔒 enforced price trigger gates a buy at "
-    "Analyse (vs a sourced live price); 📡/📝 items never touch a figure.", 10, SOFT, bold=True, first=True)
+    "Recommended order: set the policy (1–2) first, then Analyse (4). The tactical text and documents "
+    "pass verbatim into one self-contained prompt (5–6) that the AI Model writes from — and that you can "
+    "copy into any AI model. Every figure is computed deterministically; the AI writes prose only.",
+    10, SOFT, bold=True, first=True)
 
 OUT = "Tactical_Swimlane.pptx"
 prs.save(OUT)
