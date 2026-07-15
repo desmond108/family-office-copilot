@@ -226,9 +226,32 @@ def build_prompt(model: dict) -> str:
     )
 
 
+def supplied_context(model: dict, per_doc: int = 150, tac_len: int = 220,
+                     max_items: int = 6) -> list[str]:
+    """Short, quoted excerpts of the analyst-supplied context — the client's
+    tactical instructions and each research / other document — so even the
+    NO-MODEL deterministic commentary reflects the documents' actual content (not
+    just their names). Context only; never a source of figures."""
+    out: list[str] = []
+    tac = " ".join((model.get("tactical_text") or "").split())
+    if tac:
+        out.append("client tactical instructions — " + tac[:tac_len]
+                   + ("…" if len(tac) > tac_len else ""))
+    for d in (model.get("research_docs") or []) + (model.get("other_docs") or []):
+        ex = " ".join((d.get("text") or "").split())
+        if ex:
+            out.append(f"“{d.get('name', 'document')}” — " + ex[:per_doc]
+                       + ("…" if len(ex) > per_doc else ""))
+    if len(out) > max_items:
+        extra = len(out) - max_items
+        out = out[:max_items] + [f"(+{extra} more attached)"]
+    return out
+
+
 def deterministic_summary(model: dict) -> str:
     """A grounded commentary assembled with NO model call — used in DEMO_MODE or
-    when no API key is available. Quotes the same computed figures verbatim."""
+    when no API key is available. Quotes the same computed figures verbatim, and
+    reflects the supplied documents / tactical instructions as context."""
     m = dict(model["metrics"])
     meta = model["meta"]
     rs = model["reb_summary"]
@@ -246,9 +269,14 @@ def deterministic_summary(model: dict) -> str:
         " Data quality is clean." if not dq else
         f" {len(dq)} data-quality item(s) — including "
         f"{dq[0][1]} — should be resolved before the book is treated as final.")
-    notes = model.get("analyst_notes") or []
+    notes = [n for n in (model.get("analyst_notes") or [])
+             if not n.startswith("Document ")]   # doc pointers are covered below, in full
     note_line = (" Analyst considerations incorporated: " + "; ".join(notes) + "."
                  if notes else "")
+    ctx = supplied_context(model)
+    ctx_line = ("" if not ctx else
+                " Supplied context reflected here (shaping the narrative, not the figures): "
+                + " · ".join(ctx) + ".")
 
     p1 = (
         f"This consolidated portfolio carries a net worth of {m.get('Net worth', 'n/a')} "
@@ -265,8 +293,8 @@ def deterministic_summary(model: dict) -> str:
         f"{fund}.{dq_line}")
     p3 = (
         f"We recommend executing the sleeve moves as tabled and resolving any flagged "
-        f"items before implementation.{note_line} This commentary is for discussion "
-        f"only and is not investment advice.")
+        f"items before implementation.{note_line}{ctx_line} This commentary is for "
+        f"discussion only and is not investment advice.")
     return f"{p1}\n\n{p2}\n\n{p3}"
 
 

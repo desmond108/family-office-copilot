@@ -87,6 +87,7 @@ Run:  streamlit run app.py
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -987,46 +988,78 @@ elif view == "Proposal":
                            file_name="Meridian_proposal_prompt.txt", mime="text/plain")
 
         st.divider()
-        st.markdown("### ✨ Generate the proposal with the live model")
-        gen = st.button("✨ Generate with AI Model", type="primary")
-        if llm_on:
-            st.caption("Runs the prompt above against the live AI model. The model may quote the "
-                       "FACTS figures but never invents or alters them; the tables and downloads "
-                       "below stay deterministic.")
-        else:
-            st.caption("🔒 The live AI model is off (demo mode / no API key) — **Generate** produces "
-                       "a deterministic grounded summary from the same figures. Set `DEMO_MODE=0` "
-                       "with an API key (see the deploy notes) to call the live AI model. The "
-                       "prompt above works in any AI model regardless.")
-        if gen:
+        st.markdown("### ✨ Proposal commentary — writes from your inputs & documents")
+
+        # The commentary is what folds the research / other documents and the tactical
+        # instructions into the DELIVERABLE. It generates AUTOMATICALLY from the prompt
+        # above (which carries the full document text) so the deck always reflects the
+        # inputs — no separate click needed. It regenerates when the prompt changes and
+        # is cached so a rerun does not re-call the model. Every figure stays deterministic.
+        prompt = st.session_state["narr_prompt"]
+        phash = hashlib.md5(prompt.encode("utf-8")).hexdigest()
+
+        @st.cache_data(ttl=3600, show_spinner=False)
+        def _gen_cached(prompt_text: str, key: str):
+            return narrative.generate_claude(prompt_text, key)
+
+        def _generate(fresh: bool):
+            """Return (text, src). fresh=True bypasses the cache (manual regenerate)."""
             if llm_on:
                 try:
-                    text, src = narrative.generate_claude(
-                        st.session_state["narr_prompt"], narr_key)
+                    return (narrative.generate_claude(prompt, narr_key) if fresh
+                            else _gen_cached(prompt, narr_key))
                 except Exception as e:  # noqa: BLE001
                     st.warning(f"AI model unavailable ({type(e).__name__}) — using the "
                                "deterministic grounded summary.")
-                    text, src = narrative.deterministic_summary(model), "deterministic"
-            else:
-                text, src = narrative.deterministic_summary(model), "deterministic"
+            return narrative.deterministic_summary(model), "deterministic"
+
+        bc = st.columns([1, 1, 2])
+        regen = bc[0].button("↻ Regenerate commentary", type="primary")
+        has_inputs = analyst_inputs_present()
+        # auto-generate: inputs to reflect, and we have not already generated (or been
+        # told to suppress) a commentary for THIS exact prompt.
+        auto = (has_inputs and not regen
+                and st.session_state.get("narrative_phash") != phash
+                and st.session_state.get("narrative_suppress") != phash)
+        if regen or auto:
+            spin = ("Writing the proposal commentary from your inputs & documents…"
+                    if llm_on else "Assembling the grounded commentary…")
+            with st.spinner(spin):
+                text, src = _generate(fresh=regen)
             st.session_state["narrative_text"] = text
             st.session_state["narrative_src"] = src
+            st.session_state["narrative_phash"] = phash
+            st.session_state.pop("narrative_suppress", None)
+
+        if llm_on:
+            st.caption("Generated automatically from the prompt above — including your research / "
+                       "other documents and tactical instructions — and folded into the deck. It "
+                       "refreshes when the inputs change. The model may quote the FACTS figures but "
+                       "never invents or alters them; the tables and downloads stay deterministic.")
+        else:
+            st.caption("🔒 Live AI model off (demo mode / no API key): the commentary is a "
+                       "**deterministic** grounded summary that still reflects your documents & "
+                       "tactical instructions as context. Set `DEMO_MODE=0` with an API key for the "
+                       "live model to synthesise them fully. The prompt above works in any AI model.")
+
         if st.session_state.get("narrative_text"):
             src = st.session_state.get("narrative_src", "deterministic")
             badge = ("AI Model" if src == "claude"
                      else "deterministic fallback (no model call)")
-            st.markdown(f"**Generated proposal narrative** · _{badge}_")
+            st.markdown(f"**Proposal commentary** · _{badge}_")
             st.write(st.session_state["narrative_text"])
-            st.caption("Folded into the deck below and the PPTX/PDF downloads as a "
-                       "commentary slide after the cover.")
+            st.caption("Folded into the deck below and the PPTX/PDF downloads as a commentary "
+                       "slide after the cover.")
             st.caption("⚖️ Every figure remains computed by the deterministic engine. The "
                        "narrative's **qualitative** statements draw on the client's documents "
                        "and instructions supplied to the model as context and are **not "
                        "independently verified** — for discussion only, not investment advice.")
-            if st.button("✕ Clear generated narrative"):
+            if bc[1].button("✕ Clear commentary"):
                 st.session_state.pop("narrative_text", None)
                 st.session_state.pop("narrative_src", None)
-        if st.session_state.get("narrative_text"):
+                st.session_state.pop("narrative_phash", None)
+                st.session_state["narrative_suppress"] = phash   # don't auto-regenerate this one
+                st.rerun()
             model["narrative"] = st.session_state["narrative_text"]
         st.divider()
 
