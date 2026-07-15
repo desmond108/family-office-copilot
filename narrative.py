@@ -226,6 +226,55 @@ def build_prompt(model: dict) -> str:
     )
 
 
+COMMENTARY_SPEC = """\
+You are a private-banking portfolio analyst. Write ONLY the CHIEF INVESTMENT OFFICE COMMENTARY \
+for a client portfolio proposal — the prose that goes on the commentary slide. Do NOT build a \
+deck, do NOT produce files, do NOT output slide labels, headings, bullets, markup or code.
+
+Write 2-3 short paragraphs, 150-220 words total, measured and professional. Ground every number \
+strictly in the FACTS JSON below — copy figures verbatim; never invent, estimate, re-round or add \
+a figure that is not in FACTS. Shape the narrative with the intake parameters, the client's \
+tactical instructions and the research / other documents (these are intent and context, never a \
+source of figures). End with one short sentence noting that this commentary quotes but does not \
+alter the figures, and that any qualitative statements draw on the client's documents and \
+instructions supplied as context and are not independently verified — for discussion only, not \
+investment advice.
+
+Output the commentary prose and nothing else."""
+
+
+def build_commentary_prompt(model: dict) -> str:
+    """The prompt that actually generates the deck's CIO COMMENTARY slide.
+
+    Unlike build_prompt() — which asks an LLM to reproduce the ENTIRE deck as a
+    file and is shown to the client as a portable artifact — this asks for ONLY
+    the commentary prose, so the returned text drops cleanly into the commentary
+    slide (no slide-by-slide spec, no "I can't write files" preamble). Same FACTS
+    and context; different, focused instruction."""
+    facts = json.dumps(facts_block(model), indent=2)
+    guidance = guidance_block(model)
+    g = "\n".join(f"- {line}" for line in guidance) if guidance else "- (none supplied)"
+    tactical = (model.get("tactical_text") or "").strip() or "(none supplied)"
+    return (
+        f"{COMMENTARY_SPEC}\n\n"
+        "Everything you need is below. FACTS is the ONLY source of NUMBERS; the intake "
+        "parameters, documents and tactical instructions are context that shapes the "
+        "write-up — never a source of figures.\n\n"
+        f"PORTFOLIO POLICY & INTAKE PARAMETERS (set by the analyst on the Intake page):\n"
+        f"{params_block(model.get('intake'))}\n\n"
+        f"FACTS (JSON — the only figures you may use):\n{facts}\n\n"
+        f"CLIENT HOLDINGS (parsed from the statements — the ground-truth positions):\n"
+        f"{holdings_block(model.get('holdings'))}\n\n"
+        f"RESEARCH DOCUMENTS (formal research — advisory context, NOT figures):\n"
+        f"{_docs_block(model.get('research_docs'))}\n\n"
+        f"OTHER DOCUMENTS (informal context — emails, notes):\n"
+        f"{_docs_block(model.get('other_docs'))}\n\n"
+        "CLIENT TACTICAL INSTRUCTIONS (the client's own ad-hoc guidance, verbatim — "
+        f"intent/context, never a source of computed figures):\n{tactical}\n\n"
+        f"ANALYST GUIDANCE (sleeve notes and additional considerations):\n{g}"
+    )
+
+
 def supplied_context(model: dict, per_doc: int = 150, tac_len: int = 220,
                      max_items: int = 6) -> list[str]:
     """Short, quoted excerpts of the analyst-supplied context — the client's

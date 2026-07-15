@@ -56,6 +56,14 @@ def _text(at):
     return "\n".join(str(p) for p in parts)
 
 
+def sv(at, key):
+    """Read a session_state value, tolerating AppTest's KeyError on missing keys."""
+    try:
+        return at.session_state[key]
+    except Exception:
+        return None
+
+
 # --- the app boots ---------------------------------------------------------- #
 def test_app_boots_without_a_book():
     at = AppTest.from_file(APP, default_timeout=90)
@@ -74,6 +82,27 @@ def test_each_sample_loads_into_overview(fname):
 def test_core_views_render_with_full_book(view):
     at = _load(view=view)
     assert not at.exception, f"{view} raised {at.exception}"
+
+
+# --- the commentary must NOT auto-generate (no model call / cost on open) ---- #
+def test_proposal_does_not_auto_generate_commentary():
+    at = _load(view="Proposal")
+    assert not at.exception
+    assert sv(at, "narrative_text") in (None, ""), \
+        "opening the Proposal view must not generate commentary on its own"
+    assert any("Generate commentary" in b.label for b in at.button), \
+        "expected an explicit Generate commentary button"
+
+
+def test_generate_button_produces_commentary_on_click():
+    at = _load(view="Proposal")
+    btns = [b for b in at.button if "Generate commentary" in b.label]
+    assert btns
+    btns[0].click(); at.run()
+    assert not at.exception
+    assert sv(at, "narrative_text"), "clicking Generate should produce a commentary"
+    assert "SLIDE" not in (sv(at, "narrative_text") or "").upper(), \
+        "commentary must be prose, not a deck spec"
 
 
 # --- Proposal: the prompt + deterministic commentary appear ----------------- #

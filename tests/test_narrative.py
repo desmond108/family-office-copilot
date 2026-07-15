@@ -69,3 +69,25 @@ def test_deterministic_summary_quotes_computed_figures_only():
 def test_deterministic_summary_carries_the_disclaimer():
     text = narrative.deterministic_summary(make_model())
     assert "not investment advice" in text.lower()
+
+
+# --- the commentary prompt is focused prose, not a whole-deck spec ---------- #
+def test_commentary_prompt_asks_for_prose_only_not_a_deck():
+    """The prompt that generates the commentary slide must NOT ask the model to
+    build a deck / produce files — otherwise the model returns the slide-by-slide
+    spec, which leaks onto the commentary slide."""
+    cp = narrative.build_commentary_prompt(make_model(with_docs=True))
+    for marker in ("SLIDE 1", "SLIDE 2", "PowerPoint", "produce it as",
+                   "COVER (full navy", "ready to download"):
+        assert marker not in cp, f"commentary prompt leaks deck-spec marker {marker!r}"
+    assert "commentary prose and nothing else" in cp.lower()
+    # still fully grounded + carries the documents/tactical as context
+    assert "FACTS" in cp
+    assert "liquidity event" in cp.lower()
+
+
+def test_full_deck_prompt_remains_available_for_reproduction():
+    """The portable whole-deck prompt (a separate artifact) still asks for the full
+    deck — that behaviour is intentional and must stay distinct from the commentary."""
+    dp = narrative.build_prompt(make_model())
+    assert "SLIDE" in dp.upper() and ("POWERPOINT" in dp.upper() or "PPTX" in dp.upper())

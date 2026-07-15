@@ -570,6 +570,24 @@ def _render_doc_status(docs: list[dict]):
                         unsafe_allow_html=True)
 
 
+def _doc_staging_status(uploader_key: str, committed_key: str):
+    """v10: uploaded research / other files are STAGED, not processed. They are only
+    read and folded into the analysis when the user presses Analyse — so uploading
+    or removing a file incurs no processing/cost until then. Show the committed
+    (already-read) docs, and flag when the staged uploads differ from them."""
+    staged = st.session_state.get(uploader_key) or []
+    committed = st.session_state.get(committed_key, [])
+    if {f.name for f in staged} != {d.get("name") for d in committed}:
+        if staged:
+            st.markdown(f"<div class='prov'>📎 <b>{len(staged)} file(s) staged</b> — press "
+                        "<b>Analyse ▸</b> to read &amp; include them. Nothing is processed "
+                        "until you do.</div>", unsafe_allow_html=True)
+        elif committed:
+            st.markdown("<div class='prov'>Uploads changed — press <b>Analyse ▸</b> to update "
+                        "the included set.</div>", unsafe_allow_html=True)
+    _render_doc_status(committed)
+
+
 # --------------------------------------------------------------------------- #
 # Sidebar — brand + live status (nav is the tabs)
 # --------------------------------------------------------------------------- #
@@ -622,6 +640,15 @@ with st.sidebar:
             labels.append(fname)
             sources.append({"name": fname, "text": (STMT_DIR / fname).read_text()})
         st.session_state["extracted"] = pending
+        # v10: read & COMMIT the research / other documents ONLY here, on Analyse —
+        # never automatically on upload. Uploading (or removing) a file does nothing
+        # until the user presses Analyse, so no processing/cost is incurred on a
+        # change of mind. Read from the uploader widgets' persisted session state
+        # (this handler runs before the uploaders are re-instantiated this run).
+        st.session_state["research_docs"] = [
+            _read_doc(f) for f in (st.session_state.get("research_uploader") or [])]
+        st.session_state["other_docs"] = [
+            _read_doc(f) for f in (st.session_state.get("other_uploader") or [])]
         if sts:
             st.session_state["statements"] = sts
             st.session_state["source"] = ", ".join(labels)
@@ -633,12 +660,17 @@ with st.sidebar:
         elif pending:
             st.session_state["view"] = "Intake"
             st.rerun()
+        elif st.session_state.get("statements"):
+            # A book is already loaded; Analyse just (re)committed the documents.
+            st.rerun()
         else:
             st.warning("Add at least one document first.")
     if b2.button("Clear", use_container_width=True):
         st.session_state["statements"] = []
         st.session_state["extracted"] = []
         st.session_state["statement_sources"] = []
+        st.session_state["research_docs"] = []
+        st.session_state["other_docs"] = []
         st.session_state["live"] = False
         st.session_state["view"] = "Intake"
         st.rerun()
@@ -673,26 +705,25 @@ with st.sidebar:
     st.divider()
     st.markdown("##### 2 · Research documents")
     st.caption("Formal research — house or third-party investment research, factsheets, "
-               "strategy and market reports. Their **full text is read and passed to the AI "
-               "as advisory context** in the prompt — never as a source of figures.")
+               "strategy and market reports. On **Analyse** their full text is read and passed "
+               "to the AI as advisory context in the prompt — never as a source of figures.")
     research = st.file_uploader(
         "Upload research reports, factsheets (.pdf / .docx / .txt / .md / .html)",
         type=["pdf", "docx", "doc", "txt", "md", "html", "rtf"],
         accept_multiple_files=True, key="research_uploader")
-    st.session_state["research_docs"] = [_read_doc(f) for f in (research or [])]
-    _render_doc_status(st.session_state["research_docs"])
+    _doc_staging_status("research_uploader", "research_docs")
 
     # --- Other documents (v2): emails, notes — informal context ------------- #
     st.divider()
     st.markdown("##### 3 · Other documents")
-    st.caption("Informal context — emails, meeting notes and correspondence. Text is read and "
-               "passed to the AI as advisory context in the prompt, alongside the statements.")
+    st.caption("Informal context — emails, meeting notes and correspondence. On **Analyse** the "
+               "text is read and passed to the AI as advisory context in the prompt, alongside "
+               "the statements.")
     other = st.file_uploader(
         "Upload emails, notes (.pdf / .docx / .txt / .md / .eml / .msg)",
         type=["pdf", "docx", "doc", "txt", "md", "eml", "msg", "rtf", "html", "png", "jpg"],
         accept_multiple_files=True, key="other_uploader")
-    st.session_state["other_docs"] = [_read_doc(f) for f in (other or [])]
-    _render_doc_status(st.session_state["other_docs"])
+    _doc_staging_status("other_uploader", "other_docs")
 
     st.divider()
     st.markdown("##### Navigate")
@@ -952,92 +983,96 @@ elif view == "Proposal":
                    "narrative around those figures.")
         model = proposal_model(book, params)
 
-        # ---- v10: THE PROMPT — the self-contained instruction handed to the AI,
-        #           surfaced prominently so the client can read it, copy it, and
-        #           test it with alternative LLMs. Rebuilt from the current inputs. --- #
+        # ---- v10: THE PROMPT — the focused instruction that generates the deck's
+        #           CIO commentary. Surfaced so the client can read it, edit it, copy
+        #           it, and test it with alternative LLMs. It asks ONLY for the
+        #           commentary prose (not a whole deck), so the returned text drops
+        #           cleanly onto the commentary slide. --- #
         narr_key = resolve_key("ANTHROPIC_API_KEY") or resolve_key("API_KEY_260627")
         llm_on = (not DEMO_MODE) and bool(narr_key)
-        # Keep the shown prompt in step with the current inputs (the deterministic
-        # FACTS + parameters + docs + tactical text all fold into it).
-        _fresh_prompt = narrative.build_prompt(model)
+        # Keep the shown prompt in step with the current inputs (FACTS + parameters +
+        # committed docs + tactical text all fold into it).
+        _fresh_prompt = narrative.build_commentary_prompt(model)
         if "narr_prompt" not in st.session_state:
             st.session_state["narr_prompt"] = _fresh_prompt
 
         st.markdown("### 🧠 The prompt handed to the AI")
         st.caption(
-            "This is the **entire, self-contained prompt** the copilot sends to the model — the "
-            "role and grounding rules, the deterministic FACTS (the only source of numbers), the "
-            "intake parameters, the parsed holdings + raw statement source, the research / other "
-            "documents in full, and the client's tactical instructions verbatim. Read it, edit "
-            "it, copy it, and paste it into **any** AI model to reproduce the proposal — this is "
-            "how you test the system with alternative models.")
+            "The **self-contained prompt** the copilot sends to the model to write the "
+            "**Investment Commentary** — the grounding rule, the deterministic FACTS (the only "
+            "source of numbers), the intake parameters, the parsed holdings, the research / other "
+            "documents in full and the client's tactical instructions verbatim. It asks for the "
+            "commentary prose only. Read it, edit it, copy it, and paste it into **any** AI model.")
         pc = st.columns([1, 1, 2])
         if pc[0].button("↻ Rebuild prompt from current inputs"):
             st.session_state["narr_prompt"] = _fresh_prompt
             st.rerun()
         if st.session_state["narr_prompt"] != _fresh_prompt:
-            pc[1].caption("✎ prompt edited or inputs changed — Rebuild to regenerate")
+            pc[1].caption("✎ prompt edited or inputs changed — Rebuild to refresh")
         st.text_area(
             "Prompt (editable — edit freely before generating or copying)",
-            key="narr_prompt", height=380,
+            key="narr_prompt", height=340,
             help="The FACTS block is the only source of numbers; the parameters, documents and "
                  "tactical instructions are intent and context, not figures.")
         copy_button(st.session_state["narr_prompt"], "📋 Copy prompt to clipboard",
                     key="copy_prompt")
         st.download_button("⬇ Download prompt (.txt)", st.session_state["narr_prompt"],
-                           file_name="Meridian_proposal_prompt.txt", mime="text/plain")
+                           file_name="Meridian_commentary_prompt.txt", mime="text/plain")
+
+        # The portable WHOLE-DECK prompt — a separate artifact for reproducing the
+        # entire deck in any LLM. Not used to generate the commentary above.
+        with st.expander("📄 Full deck-reproduction prompt (optional) — paste into any LLM to "
+                         "rebuild the entire deck"):
+            deck_prompt = narrative.build_prompt(model)
+            st.caption("This asks an LLM to reproduce the **whole** proposal deck as a file. It is "
+                       "**not** what writes the commentary here — it's provided so you can "
+                       "regenerate the full deck elsewhere.")
+            st.code(deck_prompt, language="text")
+            st.download_button("⬇ Download full deck prompt (.txt)", deck_prompt,
+                               file_name="Meridian_full_deck_prompt.txt", mime="text/plain",
+                               key="dl_deck_prompt")
 
         st.divider()
         st.markdown("### ✨ Proposal commentary — writes from your inputs & documents")
 
-        # The commentary is what folds the research / other documents and the tactical
-        # instructions into the DELIVERABLE. It generates AUTOMATICALLY from the prompt
-        # above (which carries the full document text) so the deck always reflects the
-        # inputs — no separate click needed. It regenerates when the prompt changes and
-        # is cached so a rerun does not re-call the model. Every figure stays deterministic.
+        # The commentary folds the research / other documents and the tactical
+        # instructions into the DELIVERABLE. It generates ONLY when the user presses the
+        # button below — never automatically — so no model call (and no cost) is incurred
+        # on upload or navigation. Every figure stays deterministic regardless.
         prompt = st.session_state["narr_prompt"]
         phash = hashlib.md5(prompt.encode("utf-8")).hexdigest()
 
-        @st.cache_data(ttl=3600, show_spinner=False)
-        def _gen_cached(prompt_text: str, key: str):
-            return narrative.generate_claude(prompt_text, key)
-
-        def _generate(fresh: bool):
-            """Return (text, src). fresh=True bypasses the cache (manual regenerate)."""
+        def _generate():
+            """Return (text, src). Runs the live model when on, else the grounded summary."""
             if llm_on:
                 try:
-                    return (narrative.generate_claude(prompt, narr_key) if fresh
-                            else _gen_cached(prompt, narr_key))
+                    return narrative.generate_claude(prompt, narr_key)
                 except Exception as e:  # noqa: BLE001
                     st.warning(f"AI model unavailable ({type(e).__name__}) — using the "
                                "deterministic grounded summary.")
             return narrative.deterministic_summary(model), "deterministic"
 
+        have_narr = bool(st.session_state.get("narrative_text"))
         bc = st.columns([1, 1, 2])
-        regen = bc[0].button("↻ Regenerate commentary", type="primary")
-        has_inputs = analyst_inputs_present()
-        # auto-generate: inputs to reflect, and we have not already generated (or been
-        # told to suppress) a commentary for THIS exact prompt.
-        auto = (has_inputs and not regen
-                and st.session_state.get("narrative_phash") != phash
-                and st.session_state.get("narrative_suppress") != phash)
-        if regen or auto:
+        gen_label = "↻ Regenerate commentary" if have_narr else "✨ Generate commentary"
+        gen = bc[0].button(gen_label, type="primary")
+        if gen:
             spin = ("Writing the proposal commentary from your inputs & documents…"
                     if llm_on else "Assembling the grounded commentary…")
             with st.spinner(spin):
-                text, src = _generate(fresh=regen)
+                text, src = _generate()
             st.session_state["narrative_text"] = text
             st.session_state["narrative_src"] = src
             st.session_state["narrative_phash"] = phash
-            st.session_state.pop("narrative_suppress", None)
+            st.rerun()
 
         if llm_on:
-            st.caption("Generated automatically from the prompt above — including your research / "
-                       "other documents and tactical instructions — and folded into the deck. It "
-                       "refreshes when the inputs change. The model may quote the FACTS figures but "
-                       "never invents or alters them; the tables and downloads stay deterministic.")
+            st.caption("Nothing is sent to the model until you press **Generate** — it then writes "
+                       "the commentary from your inputs, documents and tactical instructions and "
+                       "folds it into the deck. The model may quote the FACTS figures but never "
+                       "invents or alters them; the tables and downloads stay deterministic.")
         else:
-            st.caption("🔒 Live AI model off (demo mode / no API key): the commentary is a "
+            st.caption("🔒 Live AI model off (demo mode / no API key): **Generate** assembles a "
                        "**deterministic** grounded summary that still reflects your documents & "
                        "tactical instructions as context. Set `DEMO_MODE=0` with an API key for the "
                        "live model to synthesise them fully. The prompt above works in any AI model.")
@@ -1047,6 +1082,9 @@ elif view == "Proposal":
             badge = ("AI Model" if src == "claude"
                      else "deterministic fallback (no model call)")
             st.markdown(f"**Proposal commentary** · _{badge}_")
+            if st.session_state.get("narrative_phash") != phash:
+                st.info("Inputs or the prompt changed since this was written — press "
+                        "**Regenerate commentary** to refresh it.")
             st.write(st.session_state["narrative_text"])
             st.caption("Folded into the deck below and the PPTX/PDF downloads as a commentary "
                        "slide after the cover.")
@@ -1058,7 +1096,6 @@ elif view == "Proposal":
                 st.session_state.pop("narrative_text", None)
                 st.session_state.pop("narrative_src", None)
                 st.session_state.pop("narrative_phash", None)
-                st.session_state["narrative_suppress"] = phash   # don't auto-regenerate this one
                 st.rerun()
             model["narrative"] = st.session_state["narrative_text"]
         st.divider()
