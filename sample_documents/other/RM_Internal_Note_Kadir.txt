@@ -1,0 +1,38 @@
+INTERNAL RELATIONSHIP-MANAGER NOTE — CONFIDENTIAL
+Client: Kadir (household account)
+Prepared by: Relationship Manager, Meridian Family Office
+Last updated: 6 July 2026
+(Synthetic example for testing — no real client data.)
+
+PURPOSE
+Context to accompany the proposal. This note is advisory background for the
+copilot and the analyst; it is NOT a source of portfolio figures. Every number in
+the proposal must come from the parsed statements and the deterministic engine.
+
+CLIENT PROFILE
+- Long-standing relationship; hands-on, reads the reasoning, dislikes jargon.
+- Tax: non-US person. No US-person reporting constraints.
+- Mandate context: advisory. Client makes the final call on execution.
+- Risk: moderate appetite; solid ability to take risk (stable income, 10+ yr horizon).
+
+KEY PREFERENCES (reiterated across recent contacts)
+- Cost- and liquidity-sensitive: strong preference for cheap, liquid ETFs; avoid
+  complex or illiquid structures and any lock-ups.
+- Valuation-aware on US equity: wants to wait for a 15-20% pullback before adding
+  meaningfully to Nasdaq-100 / S&P 500; comfortable parking that cash in a USD
+  money-market fund meanwhile.
+- Gold: strategic buyer, accumulate below USD 4,000/oz only.
+- Bonds: medium duration, build in tranches; wants a plain-English view on rate risk.
+
+PLANNING / LIQUIDITY
+- Expected Q4 property sale, ~USD 500k of new cash to invest. Treat as future dry
+  powder to phase into the agreed plan; do not assume it is in the book yet.
+- No near-term withdrawal needs beyond normal living expenses.
+
+WATCH-OUTS FOR THE WRITE-UP
+- Keep the language simple and the logic transparent.
+- Be explicit that today's recommendation intentionally holds most US-equity money
+  in cash, pending the pullback rule.
+- Flag interest-rate sensitivity on the bond sleeve; do not overstate certainty.
+
+For internal advisory context only. Not investment advice.
