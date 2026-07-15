@@ -113,18 +113,18 @@
 </style>
 
 <div class="wrap">
-  <p class="eyebrow">Meridian Family Office Copilot · v8</p>
+  <p class="eyebrow">Meridian Family Office Copilot · v10</p>
   <h1>Tactical instructions — who does what, and when</h1>
-  <p class="dek">The end-to-end process across three actors. The <b>You</b> lane is what the analyst does; the <b>Copilot</b> lane happens automatically. Each confirmed instruction now carries an <b>enforcement tier</b> — 🔒 enforced / 📡 monitored / 📝 advisory.</p>
+  <p class="dek">The end-to-end process across three actors. The <b>You</b> lane is what the analyst does; the <b>Copilot</b> lane happens automatically. In v10 the client's tactical text passes <b>verbatim</b> into one self-contained prompt — no sorting, no classifying — that the <b>AI Model</b> writes the proposal from.</p>
 
   <div class="answer">
     <span class="q">?</span>
     <div>
-      <h2>Does “Confirm items” fill my Allocations &amp; Limits?</h2>
-      <p><span class="no">By itself, no.</span> <b>Confirm items</b> commits the interpreted instructions — it produces a <b>monitoring watchlist</b> (triggers) and <b>guidance</b> folded into the proposal. It writes into <b>no field</b>.</p>
-      <p><b>Allocations</b> are filled only by a <b>second, separate click</b>: if the instructions named target weights (“Gold ETF: 20%”), a <b>📥 Proposed allocation</b> panel appears with an <b>Apply to allocation targets</b> button (Step 6). You still verify and adjust. <b>Limits</b> (band tolerance, liquidity, FX, position caps) are <b>always manual</b> — never extracted.</p>
-      <p><b>The order matters:</b> set the <b>mandate, risk and allocations first</b> (Steps 1–6), <b>then press Analyse</b> (Step 7). They're technically independent, but analysing before the policy is set computes against the default preset — which looks wrong until you fix it; doing the policy first means the <b>first analysis already reflects the client's policy</b>. Only the review &amp; proposal views (Steps 8–9) need the parsed book, and later tweaks recompute <b>live</b>.</p>
-      <p><b>One exception (v8):</b> a 🔒 <b>enforced</b> price trigger — a stated absolute level on a priceable instrument, e.g. <i>“buy gold below $4,000”</i> — <b>does</b> reach the numbers. When you Analyse, the copilot checks the live price and <b>gates the matching rebalance row</b> (a buy above the level becomes a HOLD), using a figure with provenance. Confirm still writes no field itself; the enforced check runs at Analyse, so confirm the trigger <b>before</b> Step 7. Everything else stays 📡 monitored or 📝 advisory and never touches a figure.</p>
+      <h2>How do the client's tactical instructions reach the proposal?</h2>
+      <p><b>Verbatim, in one prompt.</b> The tactical text goes straight to the AI Model — together with the intake parameters, the deterministic <b>FACTS</b>, the parsed holdings + statement source, and the research / other documents in full. There is <b>no</b> classification, review table, or enforcement step in between.</p>
+      <p><b>The prompt is the transparency surface.</b> It's shown on the Proposal page — <b>editable, copyable, downloadable</b> — so you (and the client) can read exactly what the system asks the AI Model to do, and paste it into <b>any AI model</b> to reproduce the proposal and compare. Generate in-app runs the live AI model.</p>
+      <p><b>Numbers stay deterministic.</b> Every figure is computed by the engine (the FACTS block); the AI writes <b>prose only</b>. Qualitative claims drawn from the documents are context — <b>not independently verified</b>.</p>
+      <p><b>The order matters:</b> set the <b>mandate, risk and allocations first</b> (Steps 1–2), <b>then press Analyse</b> (Step 4), so the first analysis already reflects the client's policy. Limits (band tolerance, liquidity, FX, position caps) are <b>always manual</b>.</p>
     </div>
   </div>
 
@@ -132,7 +132,7 @@
     <span><span class="sw you"></span> You (analyst) — do this</span>
     <span><span class="sw bot"></span> Copilot — automatic</span>
     <span><span class="sw cli"></span> Client — provides input</span>
-    <span><span class="sw dec"></span> Your decision</span>
+    <span><span class="sw you" style="border-width:2px;border-left-width:2px;border-radius:5px"></span> AI Model — writes prose</span>
   </div>
 
   <div class="scroll">
@@ -140,63 +140,53 @@
       <!-- header row -->
       <div class="phdr corner">Actor ↓ / Phase →</div>
       <div class="phdr"><span class="pn">A</span>Set profile &amp; policy</div>
-      <div class="phdr"><span class="pn">B</span>Capture tactical instructions</div>
-      <div class="phdr"><span class="pn">C</span>Analyse the statements</div>
-      <div class="phdr"><span class="pn">D</span>Review &amp; generate</div>
+      <div class="phdr"><span class="pn">B</span>Capture inputs</div>
+      <div class="phdr"><span class="pn">C</span>Compute · deterministic</div>
+      <div class="phdr"><span class="pn">D</span>Assemble → generate → deliver</div>
 
       <!-- CLIENT lane -->
       <div class="lane-label cli">Client<small>Source</small></div>
       <div class="lane-cell cli"></div>
       <div class="lane-cell cli">
-        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Gives tactical instructions in plain language</div><div class="d">“gold below $4,000”, “buy in tranches”, “Gold ETF: 20%”…</div></div>
+        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Gives instructions + documents</div><div class="d">“gold below $4,000”, “buy in tranches” · statements · research</div></div>
         <div class="down">↓</div>
       </div>
-      <div class="lane-cell cli">
-        <div class="box cli"><span class="tag">Input</span><div class="t" style="margin-top:3px">Hands over bank / custodian statements</div></div>
-        <div class="down">↓</div>
-      </div>
+      <div class="lane-cell cli"></div>
       <div class="lane-cell cli"></div>
 
       <!-- YOU lane -->
       <div class="lane-label you">You<small>Analyst</small></div>
       <div class="lane-cell you">
         <div class="box you"><span class="n">1</span><span class="t">Set mandate, risk &amp; ability</span></div>
-        <div class="box you"><span class="n">2</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">Limits are always manual. Allocation sleeves can be <b>pre-filled</b> by Step 6 — you still verify.</div></div>
+        <div class="box you"><span class="n">2</span><span class="t">Set allocation targets &amp; limits</span><span class="manual">✋ manual</span><div class="d">Limits are always manual.</div></div>
       </div>
       <div class="lane-cell you">
-        <div class="box you"><span class="n">3</span><span class="t">Paste instructions →</span> <span class="btn">Sort into items</span></div>
-        <div class="hand">↓ copilot sorts · ↑ you review</div>
-        <div class="box you"><span class="n">4</span><span class="t">Review the sorted list</span><div class="d">Edit type / level · untick <b>Keep</b> to ignore · add <b>Notes</b></div></div>
-        <div class="decision"><div class="t">◇ Any ⚠️ needs-clarification items?</div>
-          <div class="br"><b>Yes</b> → resolve or ask the client <span class="loop">⟲ back to Step 4</span></div>
-          <div class="br"><b>No</b> ↓</div></div>
-        <div class="box you"><span class="n">5</span><span class="t">Press</span> <span class="btn">Confirm items</span><div class="d">Commits guidance + watchlist. <b>Fills no fields.</b></div></div>
-        <div class="box you"><span class="n">6</span><span class="t">If weights were stated:</span> <span class="btn">Apply to allocation targets</span><div class="d">The <b>only</b> action that fills the allocation sleeves (Step 2). Optional; limits stay manual. <span class="loop">⤶ fills Step 2</span></div></div>
+        <div class="box you"><span class="n">3</span><span class="t">Paste tactical text (verbatim) + upload documents</span><div class="d">The client's words, unedited — straight into the prompt.</div></div>
       </div>
       <div class="lane-cell you">
-        <div class="box you"><span class="n">7</span><span class="t">Upload →</span> <span class="btn">Analyse ▸</span><div class="d"><b>After</b> the policy above is set — so the first analysis reflects it. Later tweaks recompute live.</div></div>
+        <div class="box you"><span class="n">4</span><span class="t">Upload →</span> <span class="btn">Analyse ▸</span><div class="d"><b>After</b> the policy above is set — so the first analysis reflects it. Later tweaks recompute live.</div></div>
       </div>
       <div class="lane-cell you">
-        <div class="box you"><span class="n">8</span><span class="t">Review Overview / Suitability</span><div class="d">Check the watchlist &amp; the folded-in guidance.</div></div>
-        <div class="box you"><span class="n">9</span><span class="t">Open Proposal →</span> <span class="btn">Generate deck</span><div class="d">Download PPTX / PDF.</div></div>
+        <div class="box you"><span class="n">5</span><span class="t">Review the assembled prompt</span><div class="d">The full, self-contained brief — edit before generating.</div></div>
+        <div class="box you"><span class="n">6</span><span class="t">Generate — or copy to any AI model</span><div class="d">Run the live AI model, or paste the prompt elsewhere to compare.</div></div>
+        <div class="box you"><span class="n">7</span><span class="t">Review &amp; download the deck</span><div class="d">Download PPTX / PDF.</div></div>
       </div>
 
       <!-- COPILOT lane -->
       <div class="lane-label bot">Copilot<small>System</small></div>
       <div class="lane-cell bot"></div>
-      <div class="lane-cell bot">
-        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Classifies each ask + tags a tier</div><div class="d">Copies stated levels &amp; weights; assigns 🔒 / 📡 / 📝; flags unclear ones — invents nothing.</div></div>
-        <div class="box bot"><span class="gear">⚙ ON CONFIRM</span><div class="t" style="margin-top:3px">Triggers → 📡 watchlist; all → guidance</div><div class="d">unclear items held out; builds a Proposed allocation.</div></div>
-      </div>
+      <div class="lane-cell bot"></div>
       <div class="lane-cell bot">
         <div class="box bot"><span class="gear">⚙ ON ANALYSE</span><div class="t" style="margin-top:3px">Parses statements → builds the book</div></div>
-        <div class="box bot"><span class="gear">⚙ AUTO · LIVE</span><div class="t" style="margin-top:3px">Computes allocation, drift &amp; suitability</div><div class="d">Against the policy set above; <b>applies 🔒 enforced triggers</b> → gates buys vs the live price.</div></div>
+        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Computes deterministic FACTS</div><div class="d">Allocation · drift · suitability, against the policy above.</div></div>
       </div>
       <div class="lane-cell bot">
-        <div class="box bot"><span class="gear">⚙ AUTO</span><div class="t" style="margin-top:3px">Generates PPTX / PDF</div><div class="d">Figures deterministic; guidance folded in as notes.</div></div>
+        <div class="box bot"><span class="gear">⚙ ASSEMBLE</span><div class="t" style="margin-top:3px">One self-contained prompt</div><div class="d">Params · FACTS · holdings + source · documents · tactical text.</div></div>
+        <div class="box bot" style="border-style:solid;border-color:var(--gold-br)"><span class="gear" style="color:var(--gold)">✨ AI MODEL</span><div class="t" style="margin-top:3px">Writes the narrative</div><div class="d">Prose only — quotes the figures, never alters them.</div></div>
+        <div class="box bot"><span class="gear">⚙ RENDER</span><div class="t" style="margin-top:3px">Generates PPTX / PDF</div><div class="d">Figures deterministic; the narrative folds in as a commentary slide.</div></div>
       </div>
     </div>
   </div>
 
-  <p class="foot"><b>Read it like this:</b> the numbers show the <b>recommended order</b> — set the policy (Steps 1–6) <b>first</b>, then press <b>Analyse</b> (Step 7), so the first analysis already reflects the client's policy. The dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> Confirm (5) fills no fields — the allocation sleeves are written only if you click Apply (6), and limits are always manual. <b>v8:</b> a 🔒 <b>enforced</b> price trigger is the one exception — it gates a rebalance buy at Analyse (against a sourced live price); 📡 monitored and 📝 advisory items never touch a figure. · Confidential.</p>
+  <p class="foot"><b>Read it like this:</b> the numbers show the <b>recommended order</b> — set the policy (Steps 1–2) <b>first</b>, then press <b>Analyse</b> (Step 4), so the first analysis already reflects the client's policy. The dashed <b>Copilot</b> boxes are the system's automatic response. <b>Key point:</b> the tactical text and documents pass <b>verbatim</b> into one self-contained prompt (5–6) that the AI Model writes from — and that you can copy into any AI model. Every figure is computed deterministically; the AI writes prose only. · Confidential.</p>
 </div>

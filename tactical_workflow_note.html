@@ -167,9 +167,9 @@
 <div class="deck">
 
   <div class="intro">
-    <p class="eyebrow">Meridian Family Office Copilot · v8</p>
-    <h1>What happens after you confirm the tactical items</h1>
-    <p>A six-slide walkthrough — deck-ready (16:9). The analyst pastes the client's plain-language instructions, the copilot sorts them into typed items, and the analyst reviews (keep / edit / flag) and confirms. Here's the journey from that click to a working proposal.</p>
+    <p class="eyebrow">Meridian Family Office Copilot · v10</p>
+    <h1>How the tactical instructions become a proposal</h1>
+    <p>A six-slide walkthrough — deck-ready (16:9). The analyst pastes the client's plain-language instructions and uploads the documents; the copilot assembles one self-contained prompt and the <b>AI Model</b> writes the proposal — while the engine computes every number. Here's the journey.</p>
   </div>
 
   <!-- Slide 1 — title -->
@@ -178,97 +178,94 @@
     <span class="snum">01 / 06</span>
     <p class="eyebrow">The tactical-instructions workflow</p>
     <h1>From the client's words to a working proposal</h1>
-    <p class="lede">What the copilot does the moment you confirm the sorted items — and the one rule that keeps every number trustworthy.</p>
-    <div class="foot"><span>Meridian Family Office Copilot</span><span class="dot"></span><span>v8 · Tactical instructions</span><span class="dot"></span><span>For partner &amp; client discussion</span></div>
+    <p class="lede">How the copilot turns the client's instructions and documents into a proposal — and the one rule that keeps every number trustworthy.</p>
+    <div class="foot"><span>Meridian Family Office Copilot</span><span class="dot"></span><span>v10 · Tactical instructions</span><span class="dot"></span><span>For partner &amp; client discussion</span></div>
   </div>
 
   <!-- Slide 2 — pipeline at a glance -->
   <div class="slide">
     <span class="snum">02 / 06</span>
     <p class="eyebrow">At a glance</p>
-    <h2>Four steps in, three outputs out</h2>
-    <p class="sub">The first four steps are what the analyst does. <b>Confirm</b> is where this walkthrough begins — everything to its right is automatic.</p>
+    <h2>Three steps in, one prompt, one proposal</h2>
+    <p class="sub">The first three steps are what the analyst does. Everything to their right is automatic — and fully visible in the prompt.</p>
     <div class="body">
       <div class="pipe">
-        <div class="pnode"><span class="pk">01</span><span class="pt">Paste</span><span class="pd">Client's asks, in plain language</span></div>
-        <div class="pnode"><span class="pk">02</span><span class="pt">Sort</span><span class="pd">Copilot types each ask</span></div>
-        <div class="pnode"><span class="pk">03</span><span class="pt">Review</span><span class="pd">Keep · edit · flag unclear</span></div>
-        <div class="pnode done"><span class="pk">04</span><span class="pt">✓ Confirm</span><span class="pd">You are here</span></div>
-        <div class="pnode out"><span class="pk">→</span><span class="pt">Watchlist</span><span class="pd">Levels to monitor</span></div>
-        <div class="pnode out"><span class="pk">→</span><span class="pt">Guidance</span><span class="pd">Shapes the proposal</span></div>
-        <div class="pnode out"><span class="pk">→</span><span class="pt">Allocation</span><span class="pd">If weights → Apply</span></div>
+        <div class="pnode"><span class="pk">01</span><span class="pt">Paste</span><span class="pd">Tactical text + documents</span></div>
+        <div class="pnode"><span class="pk">02</span><span class="pt">Set policy</span><span class="pd">Mandate · risk · limits</span></div>
+        <div class="pnode"><span class="pk">03</span><span class="pt">Analyse</span><span class="pd">Engine computes FACTS</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">Prompt</span><span class="pd">One self-contained brief</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">AI Model</span><span class="pd">Writes the narrative</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">Deck</span><span class="pd">PPTX / PDF</span></div>
       </div>
-      <p class="pcap"><b>The rest of this deck follows what leaves the Confirm step.</b></p>
+      <p class="pcap"><b>The rest of this deck follows what the copilot assembles and what the AI Model does with it.</b></p>
     </div>
   </div>
 
-  <!-- Slide 3 — structured record -->
+  <!-- Slide 3 — the one prompt -->
   <div class="slide">
     <span class="snum">03 / 06</span>
-    <p class="eyebrow">Step 1 · after Confirm</p>
-    <h2>Each ask is now a structured record</h2>
-    <p class="sub">A sentence becomes fields the system can act on. Every level is <b>copied from the client's own words</b> — never invented.</p>
+    <p class="eyebrow">Step 1 · assemble</p>
+    <h2>One self-contained prompt — everything in one place</h2>
+    <p class="sub">The copilot assembles a single prompt: the deterministic <b>FACTS</b> plus the raw context. Numbers come only from FACTS; the rest is intent and context.</p>
     <div class="body">
-      <div class="record">
-        <div class="field"><div class="fk">Type</div><div class="fv"><span class="tagv">entry_trigger</span></div></div>
-        <div class="field"><div class="fk">Instrument</div><div class="fv">Gold ETF</div></div>
-        <div class="field"><div class="fk">Action</div><div class="fv">Buy</div></div>
-        <div class="field lvl"><div class="fk">Level (copied)</div><div class="fv">USD 4,000/oz</div></div>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px">
+        <div class="field"><div class="fk">Role + grounding rules</div><div class="fv" style="font-size:13px">analyst persona · FACTS-only</div></div>
+        <div class="field"><div class="fk">Intake parameters</div><div class="fv" style="font-size:13px">mandate · risk · limits · targets</div></div>
+        <div class="field lvl"><div class="fk">FACTS (JSON)</div><div class="fv" style="font-size:13px">the only source of numbers</div></div>
+        <div class="field"><div class="fk">Holdings + statement source</div><div class="fv" style="font-size:13px">parsed positions + raw text</div></div>
+        <div class="field"><div class="fk">Research / other documents</div><div class="fv" style="font-size:13px">full text, as context</div></div>
+        <div class="field"><div class="fk">Tactical instructions</div><div class="fv" style="font-size:13px">the client's words, verbatim</div></div>
       </div>
-      <p class="rec-note">From: <span class="mono">"the gold ETF can be bought below USD 4,000/oz"</span> &nbsp;·&nbsp; <b>Nothing computed — just sorted and copied.</b></p>
+      <p class="rec-note"><b>Shown on the Proposal page</b> — editable, copyable, downloadable — so the client can read exactly what the system asks the AI Model to do.</p>
     </div>
   </div>
 
-  <!-- Slide 4 — two streams -->
+  <!-- Slide 4 — generate / test anywhere -->
   <div class="slide">
     <span class="snum">04 / 06</span>
-    <p class="eyebrow">Step 2 · the split</p>
-    <h2>The items split by what they're for</h2>
+    <p class="eyebrow">Step 2 · generate</p>
+    <h2>Read it, edit it, test it anywhere</h2>
     <div class="body" style="flex:1; min-height:0; display:flex; flex-direction:column; gap:12px">
       <div class="split" style="flex:1; min-height:0">
         <div class="stream a">
-          <div class="sh"><span class="ic">📡</span><span class="st">Entry triggers → Monitoring watchlist</span></div>
-          <div class="sd">Conditional, level-based asks become a live list the portfolio is watched against — the retention hook.</div>
-          <div class="ex">Gold ETF · below <b>USD 4,000/oz</b> · Buy<br>S&amp;P 500 ETF · <b>−15% to −20%</b> from high · Consider</div>
+          <div class="sh"><span class="ic">✨</span><span class="st">Generate with the AI Model</span></div>
+          <div class="sd">Runs the live AI model on the prompt. Its narrative folds into the proposal deck as a commentary slide. Falls back to a deterministic summary with no key.</div>
+          <div class="ex">Model-agnostic — the button &amp; badge read <b>“AI Model”</b>, never a vendor name.</div>
         </div>
         <div class="stream b">
-          <div class="sh"><span class="ic">🧭</span><span class="st">Every item → Analyst guidance</span></div>
-          <div class="sd">All items (including the triggers) carry forward as <b>intent</b> that shapes the written advice — never as figures.</div>
-          <div class="ex">Execution style · "buy in tranches"<br>Selection criteria · "low fees, good liquidity"<br>Open question · "impact of rate hikes?"</div>
+          <div class="sh"><span class="ic">📋</span><span class="st">Copy into any AI model</span></div>
+          <div class="sd">The prompt is self-contained, so pasting it verbatim into any external AI model reproduces the proposal — how the client tests the system across models.</div>
+          <div class="ex">Edit before generating; the <b>FACTS</b> block stays the only source of numbers.</div>
         </div>
       </div>
-      <div style="flex:none; font-size:12.5px; color:var(--ink-soft); background:var(--slate-tint); border:1px solid var(--line); border-radius:8px; padding:10px 14px">⚠️ Anything ambiguous or contradictory is typed <b>needs-clarification</b> — held out of the proposal until you resolve it. And if the client stated target weights, Confirm surfaces a <b>Proposed allocation</b> to Apply.</div>
+      <div style="flex:none; font-size:12.5px; color:var(--ink-soft); background:var(--slate-tint); border:1px solid var(--line); border-radius:8px; padding:10px 14px">🧠 Both paths use the <b>same prompt</b>. There is no classification, review table, or enforcement step in between — the analyst reviews the prompt itself.</div>
     </div>
   </div>
 
-  <!-- Slide 5 — three destinations -->
+  <!-- Slide 5 — the proposal -->
   <div class="slide">
     <span class="snum">05 / 06</span>
-    <p class="eyebrow">Step 3 · where they appear</p>
-    <h2>Three places the analyst sees them</h2>
+    <p class="eyebrow">Step 3 · the proposal</p>
+    <h2>AI prose around deterministic tables</h2>
     <div class="body" style="flex:1; min-height:0">
       <div class="dests">
         <div class="dest tri">
-          <div class="dic">📡</div>
-          <div class="dt">Monitoring watchlist</div>
-          <div class="dp">Triggers, ready to watch the book against.</div>
-          <div class="mw">
-            <div class="mrow"><span class="mi">S&amp;P 500 ETF</span><span class="ml">−15/−20%</span></div>
-            <div class="mrow"><span class="mi">Gold ETF</span><span class="ml">&lt; $4,000</span></div>
-          </div>
-          <div class="where">In the copilot</div>
-        </div>
-        <div class="dest">
-          <div class="dic">📄</div>
-          <div class="dt">Proposal deck</div>
-          <div class="dp">Listed under <em>"Analyst notes folded into this proposal"</em> on the data &amp; method slide.</div>
-          <div class="where">PPTX · PDF</div>
+          <div class="dic">🧠</div>
+          <div class="dt">The prompt</div>
+          <div class="dp">On the Proposal page — exactly what the AI Model was asked to do.</div>
+          <div class="where">Transparency</div>
         </div>
         <div class="dest">
           <div class="dic">💬</div>
           <div class="dt">CIO commentary</div>
-          <div class="dp">Prose shaped by the guidance — quoting only the computed figures.</div>
-          <div class="where">Generated narrative</div>
+          <div class="dp">The AI Model's narrative — shaped by the parameters, documents &amp; instructions, quoting only the computed figures.</div>
+          <div class="where">Generated prose</div>
+        </div>
+        <div class="dest">
+          <div class="dic">📊</div>
+          <div class="dt">Deterministic tables</div>
+          <div class="dp">Allocation, drift, rebalance and suitability — computed by the engine and unchanged by the AI.</div>
+          <div class="where">PPTX · PDF</div>
         </div>
       </div>
     </div>
@@ -277,28 +274,28 @@
   <!-- Slide 6 — guardrail -->
   <div class="slide">
     <span class="snum">06 / 06</span>
-    <p class="eyebrow">Step 4 · the guardrail (v8: tiered)</p>
-    <h2>Guidance can gate a number — never invent one</h2>
+    <p class="eyebrow">The guardrail</p>
+    <h2>The AI writes prose — never a number</h2>
     <div class="body guard">
       <div class="gcompare">
         <div class="gbox shapes">
-          <div class="gl">Guidance can shape &amp; gate</div>
+          <div class="gl">The AI Model can shape</div>
           <ul>
-            <li>The monitoring watchlist &amp; the written commentary</li>
-            <li>🔒 An <b>enforced</b> price trigger gates a rebalance buy (→ hold) vs a <b>sourced live price</b></li>
-            <li>What the analyst is prompted to weigh</li>
+            <li>The CIO commentary and how it reads</li>
+            <li>Which considerations to weigh, from the documents &amp; instructions</li>
+            <li>The emphasis and ordering of the narrative</li>
           </ul>
         </div>
         <div class="gbox never">
-          <div class="gl">Guidance never invents</div>
+          <div class="gl">The AI Model never invents</div>
           <ul>
-            <li>A figure out of thin air — an enforced check uses a price <b>with provenance</b></li>
-            <li>Suitability thresholds</li>
+            <li>A figure — every number comes from the <b>FACTS</b> block</li>
+            <li>Suitability thresholds or the rebalance</li>
             <li>Holdings — every dollar stays derived from the real book</li>
           </ul>
         </div>
       </div>
-      <p class="gpunch">Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. A client's condition can <b>gate or flag</b> a trade — never <b>fabricate</b> one.</p>
+      <p class="gpunch">Qualitative claims drawn from the client's documents are context — <b>not independently verified</b>. Every figure is computed deterministically by the engine.</p>
     </div>
   </div>
 

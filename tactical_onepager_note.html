@@ -91,54 +91,50 @@
 
 <div class="wrap">
   <div class="slide">
-    <p class="eyebrow">Meridian Family Office Copilot · v8</p>
+    <p class="eyebrow">Meridian Family Office Copilot · v10</p>
     <h1>The tactical-instructions workflow, at a glance</h1>
-    <p class="lede">What the copilot does the moment you confirm the sorted items — read left to right.</p>
+    <p class="lede">How the copilot turns the client's instructions and documents into a proposal — read left to right.</p>
 
     <div class="pipe">
       <div class="card words">
-        <div class="lab">1 · Client's words</div>
-        <div class="sm">In plain language</div>
-        <div class="q">“Gold ETF: 20% · S&amp;P 500: 30%”</div>
+        <div class="lab">1 · Client's words + docs</div>
+        <div class="sm">In plain language, plus statements &amp; research</div>
         <div class="q">“gold below USD 4,000/oz”</div>
         <div class="q">“add Nasdaq after a 15–20% pullback”</div>
         <div class="q">“buy the bond fund in tranches”</div>
         <div class="q">“low fees, good liquidity”</div>
-        <div class="q">“impact of rate hikes?”</div>
+        <div class="q">+ statements · research · notes</div>
       </div>
 
       <div class="chev">›</div>
 
       <div class="card confirm">
-        <div class="lab">2 · Sort + Confirm</div>
-        <div class="sm">The copilot types each ask; the analyst keeps / edits / flags unclear ones, then confirms.</div>
-        <div class="ok">✓ typed &amp; confirmed</div>
+        <div class="lab">2 · One prompt</div>
+        <div class="sm">Assembled by the copilot: intake parameters · FACTS (the only numbers) · holdings + statement source · research / other documents · tactical text (verbatim).</div>
+        <div class="ok">✓ editable · copyable · on the Proposal page</div>
       </div>
 
       <div class="chev">›</div>
 
       <div class="stack">
         <div class="card out a">
-          <div class="top"><span class="ttl">📡 Monitoring watchlist</span><span class="badge">Lives in the copilot</span></div>
-          <p class="desc">Level-based triggers to watch the book against.</p>
-          <div class="data">S&amp;P 500 · <b>−15/−20%</b>&nbsp;&nbsp;&nbsp;Gold · <b>&lt; $4,000</b></div>
+          <div class="top"><span class="ttl">✨ AI Model writes the narrative</span><span class="badge">Generated prose</span></div>
+          <p class="desc">The CIO commentary, shaped by the parameters, documents &amp; instructions.</p>
         </div>
         <div class="card out b">
-          <div class="top"><span class="ttl">🧭 Analyst guidance</span><span class="badge">Proposal deck · CIO commentary</span></div>
-          <p class="desc">Intent that shapes the written advice — never the figures.</p>
-          <div class="data" style="color:var(--ink-soft)">Execution style · selection criteria · open questions</div>
+          <div class="top"><span class="ttl">📊 Deterministic tables</span><span class="badge">Computed, not invented</span></div>
+          <p class="desc">Allocation · drift · rebalance · suitability — computed by the engine.</p>
         </div>
         <div class="card out c">
-          <div class="top"><span class="ttl">📥 Proposed allocation</span><span class="badge">You Apply / Ignore</span></div>
-          <p class="desc">If the client stated weights → offered to fill the sleeves.</p>
-          <div class="data" style="color:var(--ink-soft)">Nasdaq 20% + S&amp;P 30% → equity 50%</div>
+          <div class="top"><span class="ttl">📋 A portable prompt</span><span class="badge">Test any model</span></div>
+          <p class="desc">Copy it into any AI model to reproduce the proposal and compare outputs.</p>
         </div>
       </div>
     </div>
 
     <div class="guard">
-      <p class="gl">The guardrail (v8: tiered)</p>
-      <p>Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. A 🔒 enforced price trigger can <b>gate</b> a rebalance buy (→ hold) against a <b>sourced live price</b>; everything else shapes the narrative &amp; watchlist only. A client's condition can gate or flag a trade — <b>never invent one</b>. Every figure stays derived from real holdings.</p>
+      <p class="gl">The guardrail</p>
+      <p>The AI Model writes <b>prose only</b> — every figure is computed deterministically by the engine, so nothing is invented. Qualitative claims drawn from the client's documents are context, <b>not independently verified</b>. The UI is model-agnostic — it always reads “AI Model”.</p>
     </div>
   </div>
   <p class="cap">Single-slide overview · “Print → Save as PDF” for a clean 16:9 export · Confidential.</p>
