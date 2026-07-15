@@ -10,6 +10,14 @@ python3 -m pytest            # whole suite (69 tests)
 python3 -m pytest tests/test_suitability.py -v
 ```
 
+## Report deliverables
+
+`python3 tests/build_report.py` runs the suite and regenerates the styled test
+report from the live results — `Meridian_Copilot_Test_Report_v10.docx` / `.pptx`
+in the repo root, plus `_v10_document.pdf` / `_v10_slides.pdf` when a LibreOffice
+`soffice` binary is available (PDFs are skipped gracefully otherwise). Paths derive
+from the script location, so it runs from any working directory.
+
 ## What each file covers
 
 | File | Layer | Scenarios |
