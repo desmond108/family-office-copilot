@@ -968,8 +968,8 @@ elif view == "Proposal":
             "role and grounding rules, the deterministic FACTS (the only source of numbers), the "
             "intake parameters, the parsed holdings + raw statement source, the research / other "
             "documents in full, and the client's tactical instructions verbatim. Read it, edit "
-            "it, copy it, and paste it into **any** LLM (Claude, GPT, Gemini, …) to reproduce the "
-            "proposal — this is how you test the system with alternative models.")
+            "it, copy it, and paste it into **any** AI model to reproduce the proposal — this is "
+            "how you test the system with alternative models.")
         pc = st.columns([1, 1, 2])
         if pc[0].button("↻ Rebuild prompt from current inputs"):
             st.session_state["narr_prompt"] = _fresh_prompt
@@ -988,23 +988,23 @@ elif view == "Proposal":
 
         st.divider()
         st.markdown("### ✨ Generate the proposal with the live model")
-        gen = st.button("✨ Generate with Claude", type="primary")
+        gen = st.button("✨ Generate with AI Model", type="primary")
         if llm_on:
-            st.caption("Uses the live Claude API (claude-opus-4-8) on the prompt above. The model "
-                       "may quote the FACTS figures but never invents or alters them; the tables "
-                       "and downloads below stay deterministic.")
+            st.caption("Runs the prompt above against the live AI model. The model may quote the "
+                       "FACTS figures but never invents or alters them; the tables and downloads "
+                       "below stay deterministic.")
         else:
-            st.caption("🔒 The live model is off (demo mode / no API key) — **Generate** produces a "
-                       "deterministic grounded summary from the same figures. Set `DEMO_MODE=0` "
-                       "with an `ANTHROPIC_API_KEY` to call Claude. The prompt above works in any "
-                       "LLM regardless.")
+            st.caption("🔒 The live AI model is off (demo mode / no API key) — **Generate** produces "
+                       "a deterministic grounded summary from the same figures. Set `DEMO_MODE=0` "
+                       "with an API key (see the deploy notes) to call the live AI model. The "
+                       "prompt above works in any AI model regardless.")
         if gen:
             if llm_on:
                 try:
                     text, src = narrative.generate_claude(
                         st.session_state["narr_prompt"], narr_key)
                 except Exception as e:  # noqa: BLE001
-                    st.warning(f"Claude unavailable ({type(e).__name__}) — using the "
+                    st.warning(f"AI model unavailable ({type(e).__name__}) — using the "
                                "deterministic grounded summary.")
                     text, src = narrative.deterministic_summary(model), "deterministic"
             else:
@@ -1013,7 +1013,7 @@ elif view == "Proposal":
             st.session_state["narrative_src"] = src
         if st.session_state.get("narrative_text"):
             src = st.session_state.get("narrative_src", "deterministic")
-            badge = ("Claude · claude-opus-4-8" if src == "claude"
+            badge = ("AI Model" if src == "claude"
                      else "deterministic fallback (no model call)")
             st.markdown(f"**Generated proposal narrative** · _{badge}_")
             st.write(st.session_state["narrative_text"])
@@ -1165,8 +1165,8 @@ elif view == "Data quality":
 elif view == "Ask the book":
     st.caption("Answers computed by the deterministic tools — every figure shows its source."
                + ("" if DEMO_MODE else
-                  " Optionally let grounded Claude phrase them (falls back if no API key)."))
-    use_ai = False if DEMO_MODE else st.toggle("Use grounded Claude phrasing")
+                  " Optionally let the grounded AI model phrase them (falls back if no API key)."))
+    use_ai = False if DEMO_MODE else st.toggle("Use grounded AI phrasing")
     q = st.text_input("Ask about the book",
                       placeholder="e.g. How much is unhedged? Which holdings breach my mandate?")
     st.caption("Try: What's my net worth? · How much is unhedged? · "

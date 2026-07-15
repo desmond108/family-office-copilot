@@ -1,6 +1,13 @@
 """tactical_flow_chart_v2_build.py — BPMN-style connected swimlane flowchart of the
-tactical-instructions process (Start -> process/decision -> Finish), a COMPLEMENT to
-the matrix-style tactical_swimlane.
+v10 tactical-instructions process (Start -> process -> Finish), a COMPLEMENT to the
+matrix-style tactical_swimlane.
+
+v10 flow: the client's tactical text is passed VERBATIM to the AI model together with
+the intake parameters, the deterministic FACTS, the holdings + statement source and
+the research / other documents, in ONE self-contained prompt — the AI writes the
+proposal narrative; the engine still computes every number. (This replaces the v6-v8
+Sort -> classify -> confirm -> enforce pipeline that earlier versions of this chart
+showed.)
 
 Emits TWO looks, same layout:
   * COLOR  — Meridian navy/gold, theme-aware  -> tactical_flow_chart_v2_note.html (+ .svg)
@@ -19,8 +26,8 @@ PH_Y, PH_H = 40, 38
 TOP = PH_Y + PH_H
 LANE_H = (H - TOP) / 3
 
-PX = [66, 246, 676, 966, 1200]
-PHASES = ["Capture", "Classify & confirm", "Analyse", "Review & generate"]
+PX = [66, 336, 606, 936, 1200]
+PHASES = ["Capture", "Compute · deterministic", "Assemble & generate", "Deliver"]
 LANES = [("Client", "Source"), ("Analyst", "You"), ("Copilot", "System")]
 
 # ----- palettes ----------------------------------------------------------- #
@@ -31,14 +38,13 @@ COLOR = {
     "term_fill": "var(--navy-deep)", "term_stroke": "var(--gold-br)", "term_text": "#eef1fb",
     "proc_stroke": "var(--gold-br)", "proc_text": "var(--ink)", "proc_sw": 1.6,
     "bot_stroke": "var(--line-strong)", "bot_text": "var(--ink-soft)", "bot_sw": 1.3, "bot_dash": True,
-    "dec_fill": "var(--amber-tint)", "dec_stroke": "var(--amber)", "dec_text": "var(--amber-strong)", "dec_sw": 1.7,
+    "ai_stroke": "var(--gold-br)", "ai_text": "var(--ink)", "ai_sw": 2.3, "ai_spark": True,
     "lane_fill": ["var(--client-tint)", "var(--gold-lane)", "var(--slate-tint)"],
     "lane_lab": ["var(--navy)", "var(--gold)", "var(--ink-soft)"], "lane_sub": "var(--ink-faint)",
     "phase_band": "var(--slate-tint)", "phase_text": "var(--navy)",
     "line": "var(--line)", "line_strong": "var(--line-strong)",
     "arrow": "var(--ink-soft)", "arrow_faint": "var(--ink-faint)",
     "label": "var(--ink-soft)", "label_faint": "var(--ink-faint)", "plate": "var(--paper)",
-    "tier": "tag tier  \U0001F512 \U0001F4E1 \U0001F4DD",
 }
 MONO = {
     "paper": "#ffffff", "ink": "#000000", "ink_soft": "#1a1a1a", "ink_faint": "#555555",
@@ -46,14 +52,13 @@ MONO = {
     "term_fill": "#ffffff", "term_stroke": "#000000", "term_text": "#000000",
     "proc_stroke": "#000000", "proc_text": "#000000", "proc_sw": 1.5,
     "bot_stroke": "#000000", "bot_text": "#000000", "bot_sw": 1.2, "bot_dash": True,
-    "dec_fill": "#ffffff", "dec_stroke": "#000000", "dec_text": "#000000", "dec_sw": 1.5,
+    "ai_stroke": "#000000", "ai_text": "#000000", "ai_sw": 2.2, "ai_spark": False,
     "lane_fill": ["#ffffff", "#ffffff", "#ffffff"],
     "lane_lab": ["#000000", "#000000", "#000000"], "lane_sub": "#555555",
     "phase_band": "#ffffff", "phase_text": "#000000",
     "line": "#9a9a9a", "line_strong": "#333333",
     "arrow": "#000000", "arrow_faint": "#777777",
     "label": "#000000", "label_faint": "#666666", "plate": "#ffffff",
-    "tier": "tag tier: E / M / A",
 }
 
 P: dict = COLOR
@@ -95,20 +100,17 @@ def term(cx, cy, lines):
     multiline(cx, cy, lines, 12, P["term_text"], "700")
 
 
-def diamond(cx, cy, lines):
-    hw, hh = 64, 36
-    pts = f"{cx},{cy-hh} {cx+hw},{cy} {cx},{cy+hh} {cx-hw},{cy}"
-    add(f'<polygon points="{pts}" fill="{P["dec_fill"]}" stroke="{P["dec_stroke"]}" '
-        f'stroke-width="{P["dec_sw"]}"/>')
-    multiline(cx, cy, lines, 11.5, P["dec_text"], "800")
-
-
-def tag(cx, cy, text):
-    w, h = 104, 32
+def aimodel(cx, cy, lines):
+    """The AI-model node — a distinct, accented rounded box (the one place a model
+    writes prose). Model-agnostic: labelled 'AI Model', never a specific vendor."""
+    w, h = 152, 54
     x, y = cx - w / 2, cy - h / 2
-    add(f'<rect x="{x:.0f}" y="{y:.0f}" width="{w}" height="{h}" rx="16" fill="{P["dec_fill"]}" '
-        f'stroke="{P["dec_stroke"]}" stroke-width="1.4"/>')
-    multiline(cx, cy, [text], 11, P["dec_text"], "800")
+    add(f'<rect x="{x:.0f}" y="{y:.0f}" width="{w}" height="{h}" rx="11" fill="{P["paper"]}" '
+        f'stroke="{P["ai_stroke"]}" stroke-width="{P["ai_sw"]}"/>')
+    disp = list(lines)
+    if P["ai_spark"]:
+        disp[0] = "✨ " + disp[0]
+    multiline(cx, cy, disp, 12, P["ai_text"], "800")
 
 
 def arrow(path, faint=False):
@@ -148,7 +150,7 @@ def build(mode: str) -> str:
     add(f'<rect x="0.5" y="0.5" width="{W-1}" height="{TITLE_H}" fill="{P["title_fill"]}"{tb}/>')
     add(f'<text x="{W/2:.0f}" y="{TITLE_H/2+5:.0f}" text-anchor="middle" font-size="16" '
         f'font-weight="800" fill="{P["title_text"]}" letter-spacing="0.3">'
-        f'The tactical-instructions process — end to end</text>')
+        f'The tactical-instructions process — end to end (v10)</text>')
     # phase band
     add(f'<rect x="{GX}" y="{PH_Y}" width="{W-GX}" height="{PH_H}" fill="{P["phase_band"]}" '
         f'stroke="{P["line"]}" stroke-width="1"/>')
@@ -176,42 +178,35 @@ def build(mode: str) -> str:
         add(f'<line x1="{xb}" y1="{PH_Y}" x2="{xb}" y2="{H-1}" stroke="{P["line_strong"]}" '
             f'stroke-width="1.4" stroke-dasharray="4 5"/>')
 
+    # lane y-centres: Client 175 · Analyst 369 · Copilot 563
     # ----- nodes ----- #
-    term(156, 175, ["Client gives", "instructions"])
-    rect(430, 175, ["Ask the client", "(clarify)"], "proc")
-    rect(821, 175, ["Hands over", "statements"], "proc")
-    rect(156, 369, ["Paste →", "Sort into items"])
-    rect(316, 369, ["Review the", "sorted list"])
-    diamond(468, 369, ["Needs", "clarification?"])
-    rect(610, 369, ["Confirm", "items"])
-    rect(821, 369, ["Set policy →", "Analyse"])
-    rect(1083, 369, ["Review &", "generate deck"])
-    rect(316, 563, ["Classify +", P["tier"]], "bot")
-    rect(610, 563, ["Watchlist, guidance", "+ proposed alloc"], "bot")
-    rect(746, 563, ["Parse book;", "compute drift"], "bot")
-    diamond(892, 563, ["trigger", "met?"] if mode == "print" else ["\U0001F512 trigger", "met?"])
-    term(1083, 520, ["Proposal deck", "(PPTX / PDF)"])
-    tag(1010, 610, "buy → HOLD")
+    # Client
+    term(201, 175, ["Client gives", "instructions + docs"])
+    # Analyst
+    rect(201, 369, ["Paste tactical text", "+ upload documents"])
+    rect(471, 369, ["Set policy &", "parameters → Analyse"])
+    rect(771, 369, ["Review the", "assembled prompt"])
+    rect(1068, 369, ["Review & download", "the deck"])
+    # Copilot
+    rect(471, 563, ["Parse book; compute", "deterministic FACTS"], "bot")
+    rect(700, 563, ["Assemble one", "self-contained prompt"], "bot")
+    aimodel(900, 563, ["AI Model writes", "the narrative"])
+    term(1068, 563, ["Proposal deck", "(PPTX / PDF)"])
 
     # ----- arrows ----- #
-    arrow("M156,198 V344")
-    arrow("M156,394 V563 H250"); alabel(200, 556, "sort")
-    arrow("M316,538 V394"); alabel(348, 468, "tiered")
-    arrow("M382,369 H404")
-    arrow("M468,333 V198"); alabel(505, 250, "yes · unclear")
-    arrow("M396,198 V300 H316 V344"); alabel(342, 296, "resolve")
-    arrow("M532,369 H544"); alabel(538, 345, "no")
-    arrow("M610,394 V538"); alabel(656, 466, "on confirm")
-    arrow("M676,369 H755"); alabel(715, 356, "then")
-    arrow("M821,198 V344"); alabel(866, 275, "statements")
-    arrow("M821,394 V520 H746 V538"); alabel(800, 468, "analyse")
-    arrow("M812,563 H828")
-    arrow("M892,527 V369 H1017"); alabel(958, 356, "met · buy stands")
-    arrow("M892,599 V610 H958"); alabel(918, 588, "breached")
-    arrow("M1010,594 V520 H1019")
-    arrow("M1083,394 V497"); alabel(1120, 455, "generate")
-    arrow("M610,588 V636 H1083 V543", faint=True)
-    alabel(850, 630, "guidance folds into the deck", faint=True)
+    arrow("M201,198 V344")                                    # client -> paste
+    arrow("M267,369 H405"); alabel(336, 356, "then")         # paste -> set policy
+    arrow("M471,394 V538"); alabel(507, 466, "Analyse")      # set policy -> compute
+    arrow("M537,563 H634"); alabel(586, 550, "then")         # compute -> assemble
+    arrow("M700,538 V440 H771 V394"); alabel(742, 436, "review")   # assemble -> review prompt
+    arrow("M837,369 H870 V536"); alabel(902, 452, "Generate")      # review prompt (right) -> AI model
+    arrow("M976,563 H1004")                                   # AI model -> deck
+    arrow("M1068,540 V394"); alabel(1104, 466, "download")   # deck -> review & download
+
+    # external-model + guardrail annotations (faint)
+    arrow("M771,344 V302", faint=True)
+    alabel(771, 294, "or copy → any AI model", faint=True)
+    alabel(724, 636, "Every figure is computed deterministically — the AI writes prose only, never a number.", faint=True)
     add("</svg>")
     return "\n".join(svg)
 
@@ -267,9 +262,9 @@ HTML_COLOR = f"""<style>
   .legend {{ display:flex; flex-wrap:wrap; gap:9px 20px; margin:0 0 18px; font-size:12.5px; color:var(--ink-soft); }}
   .legend span {{ display:inline-flex; align-items:center; gap:8px; }}
   .k {{ width:26px; height:15px; border-radius:4px; border:1.6px solid var(--gold-br); background:var(--paper); flex:none; }}
-  .k.dec {{ width:16px; height:16px; border-radius:3px; transform:rotate(45deg); border-color:var(--amber); background:var(--amber-tint); }}
   .k.term {{ border-radius:8px; background:var(--navy-deep); border-color:var(--gold-br); }}
   .k.bot {{ border-style:dashed; border-color:var(--line-strong); }}
+  .k.ai {{ border-width:2.3px; border-radius:6px; }}
   .scroll {{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--paper); box-shadow:0 1px 2px rgba(10,18,40,.05),0 18px 46px -30px rgba(10,18,40,.3); }}
   .flow {{ display:block; width:100%; min-width:1000px; height:auto; }}
   .foot {{ margin-top:20px; font-size:12.5px; color:var(--ink-faint); }}
@@ -278,17 +273,17 @@ HTML_COLOR = f"""<style>
 </style>
 
 <div class="wrap">
-  <p class="eyebrow">Meridian Family Office Copilot · v8</p>
+  <p class="eyebrow">Meridian Family Office Copilot · v10</p>
   <h1>Tactical instructions — process flowchart</h1>
-  <p class="dek">The same workflow as the swimlane matrix, drawn as a <b>connected flow</b>: it traces the decision path — the <b>needs-clarification</b> loop back to the client, and the \U0001F512 <b>enforced-trigger</b> check that gates a buy. Three lanes (Client / Analyst / Copilot) across four phases.</p>
+  <p class="dek">The v10 flow, drawn as a <b>connected path</b>: the client's tactical text is passed <b>verbatim</b> to the <b>AI Model</b> — together with the intake parameters, the deterministic FACTS, the holdings and the documents — in <b>one self-contained prompt</b> the analyst can review, generate from, or copy into <b>any AI model</b>. The engine still computes every number. Three lanes (Client / Analyst / Copilot) across four phases.</p>
   <div class="legend">
     <span><span class="k term"></span> Start / end</span>
     <span><span class="k"></span> Analyst / client step</span>
     <span><span class="k bot"></span> Copilot (automatic)</span>
-    <span><span class="k dec"></span> Decision</span>
+    <span><span class="k ai"></span> AI Model (writes prose)</span>
   </div>
   <div class="scroll">{SVG_COLOR}</div>
-  <p class="foot"><b>Read with:</b> the swimlane matrix answers “my role at a glance”; this flowchart answers “what’s the decision path.” A <b>white / print</b> version (for pen-and-paper annotation) is the companion document. · Confidential.</p>
+  <p class="foot"><b>Read with:</b> the swimlane matrix answers “my role at a glance”; this flowchart answers “what’s the path.” A <b>white / print</b> version (for pen-and-paper annotation) is the companion document. · Confidential.</p>
 </div>
 """
 
@@ -306,25 +301,25 @@ HTML_PRINT = f"""<style>
   .legend span {{ display:inline-flex; align-items:center; gap:8px; }}
   .k {{ width:26px; height:15px; border:1.5px solid #000; background:#fff; flex:none; border-radius:4px; }}
   .k.term {{ border-radius:8px; }}
-  .k.dec {{ width:15px; height:15px; transform:rotate(45deg); border-radius:2px; }}
   .k.bot {{ border-style:dashed; }}
+  .k.ai {{ border-width:2.2px; border-radius:6px; }}
   .foot {{ margin-top:16px; font-size:12px; color:#444; }}
   @media print {{ .scroll{{overflow:visible; border:none;}} .flow{{min-width:0;}} .hint{{display:none;}} }}
 </style>
 
 <div class="wrap">
-  <p class="eyebrow">Meridian Family Office Copilot · v8 — worksheet</p>
+  <p class="eyebrow">Meridian Family Office Copilot · v10 — worksheet</p>
   <h1>Tactical instructions — process flowchart (print &amp; annotate · B&amp;W)</h1>
-  <p class="dek">White line-art of the same flow. Print it and mark it up by hand — trace a client's path, circle the decision points, note where a rule should be enforced.</p>
+  <p class="dek">White line-art of the v10 flow. Print it and mark it up by hand — trace a client's path from their words to the deck, and note where the prompt is reviewed or copied into another AI model.</p>
   <p class="hint">Tip: <b>File → Print</b> (landscape, “fit to page”, background graphics off) gives a clean A4/Letter sheet. Nothing is filled in, so pen and pencil read clearly.</p>
   <div class="legend">
     <span><span class="k term"></span> Start / end</span>
     <span><span class="k"></span> Analyst / client step</span>
     <span><span class="k bot"></span> Copilot (automatic)</span>
-    <span><span class="k dec"></span> Decision</span>
+    <span><span class="k ai"></span> AI Model (writes prose)</span>
   </div>
   <div class="scroll">{SVG_PRINT}</div>
-  <p class="foot">Tiers on “Classify + tag tier”: <b>E</b> = enforced (binds a number) · <b>M</b> = monitored · <b>A</b> = advisory. · Confidential.</p>
+  <p class="foot">The AI Model writes the narrative only; every figure is computed deterministically by the engine and is unchanged by the model. · Confidential.</p>
 </div>
 """
 

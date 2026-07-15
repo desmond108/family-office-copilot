@@ -312,7 +312,7 @@ def ask_ai(book: Book, question: str, api_key: str | None = None, llm=None) -> A
         return Answer(text, [("source", "grounded in the deterministic briefing", book.prov)], "claude")
     except Exception as e:  # noqa: BLE001 — degrade to deterministic
         det = ask(book, question)
-        det.summary = f"[Claude unavailable: {type(e).__name__}; deterministic answer] " + det.summary
+        det.summary = f"[AI model unavailable: {type(e).__name__}; deterministic answer] " + det.summary
         return det
 
 
