@@ -1,0 +1,145 @@
+<style>
+  :root {
+    --ground: #e9ecf4; --paper: #ffffff; --ink: #16203c; --ink-soft: #47517a;
+    --ink-faint: #838cad; --navy: #1e2a56; --navy-deep: #131d3d; --gold: #9c7422;
+    --gold-br: #b0872a; --gold-tint: #f7efdc; --green: #2f6f57; --green-tint: #e6f1eb;
+    --line: #dfe2ee; --line-strong: #c8cddd; --slate-tint: #eef0f6;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #05091a; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+      --ink-faint: #7883a6; --navy: #dbe2f6; --navy-deep: #0a1430; --gold: #d3a94f;
+      --gold-br: #d3a94f; --gold-tint: #241f10; --green: #6bbf9a; --green-tint: #10281f;
+      --line: #22305a; --line-strong: #33477b; --slate-tint: #16224a;
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #e9ecf4; --paper: #ffffff; --ink: #16203c; --ink-soft: #47517a;
+    --ink-faint: #838cad; --navy: #1e2a56; --navy-deep: #131d3d; --gold: #9c7422;
+    --gold-br: #b0872a; --gold-tint: #f7efdc; --green: #2f6f57; --green-tint: #e6f1eb;
+    --line: #dfe2ee; --line-strong: #c8cddd; --slate-tint: #eef0f6;
+  }
+  :root[data-theme="dark"] {
+    --ground: #05091a; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+    --ink-faint: #7883a6; --navy: #dbe2f6; --navy-deep: #0a1430; --gold: #d3a94f;
+    --gold-br: #d3a94f; --gold-tint: #241f10; --green: #6bbf9a; --green-tint: #10281f;
+    --line: #22305a; --line-strong: #33477b; --slate-tint: #16224a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans);
+    line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: clamp(16px, 4vw, 40px) clamp(12px, 3vw, 30px); }
+
+  .slide {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 10px;
+    padding: clamp(22px, 3.4vw, 42px);
+    box-shadow: 0 1px 2px rgba(10,18,40,.05), 0 22px 50px -34px rgba(10,18,40,.42);
+    aspect-ratio: 16 / 9; display: flex; flex-direction: column;
+  }
+  .eyebrow { font-size: 11.5px; letter-spacing: .17em; text-transform: uppercase; font-weight: 700; color: var(--gold-br); margin: 0 0 10px; }
+  h1 { font-family: var(--serif); font-weight: 600; color: var(--navy); font-size: clamp(21px, 3.6vw, 33px); line-height: 1.1; letter-spacing: -.012em; margin: 0 0 8px; text-wrap: balance; }
+  .lede { font-size: clamp(13px, 1.8vw, 15px); color: var(--ink-soft); margin: 0; }
+
+  .pipe { display: grid; grid-template-columns: 1.15fr auto .95fr auto 1.55fr; align-items: center; gap: clamp(6px, 1vw, 14px); flex: 1; min-height: 0; margin-top: clamp(16px, 2.4vw, 26px); }
+  .chev { color: var(--line-strong); font-size: clamp(22px, 3vw, 34px); text-align: center; line-height: 1; }
+  .stack { display: flex; flex-direction: column; gap: clamp(8px, 1.3vw, 14px); height: 100%; justify-content: center; }
+
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: clamp(12px, 1.6vw, 18px); background: var(--paper); }
+  .card .lab { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; font-weight: 800; color: var(--gold); margin-bottom: 5px; }
+  .card .sm { font-size: 12px; color: var(--ink-soft); line-height: 1.35; }
+
+  .words { background: var(--slate-tint); border-color: var(--line-strong); height: 100%; display: flex; flex-direction: column; justify-content: center; }
+  .words .q { font-family: var(--mono); font-size: clamp(10px, 1.25vw, 12px); color: var(--ink); margin-top: 6px; line-height: 1.4; }
+  .words .q:first-of-type { margin-top: 10px; }
+
+  .confirm { background: var(--green-tint); border-color: var(--green); height: 100%; display: flex; flex-direction: column; justify-content: center; }
+  .confirm .lab { color: var(--green); }
+  .confirm .ok { color: var(--green); font-weight: 800; font-size: 12.5px; margin-top: 10px; }
+
+  .out { }
+  .out.a { background: var(--gold-tint); border-color: color-mix(in srgb, var(--gold-br) 55%, var(--line)); border-width: 1.5px; }
+  .out.b { background: var(--slate-tint); border-color: var(--line-strong); }
+  .out.c { background: var(--green-tint); border-color: color-mix(in srgb, var(--green) 42%, var(--line)); }
+  .out.c .badge { color: var(--green); }
+  .out .top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .out .ttl { font-size: clamp(13px, 1.6vw, 15px); font-weight: 800; color: var(--ink); }
+  .out .badge { font-size: 9.5px; letter-spacing: .05em; text-transform: uppercase; font-weight: 800; color: var(--ink-faint); white-space: nowrap; }
+  .out.a .badge { color: var(--gold); }
+  .out .desc { font-size: 12px; color: var(--ink-soft); margin: 5px 0 0; line-height: 1.35; }
+  .out .data { font-family: var(--mono); font-size: clamp(10.5px, 1.2vw, 12px); margin-top: 8px; color: var(--ink); }
+  .out .data b { color: var(--gold); }
+
+  .guard { margin-top: clamp(14px, 2vw, 22px); background: var(--navy-deep); border-radius: 10px; padding: clamp(16px, 2.2vw, 22px) clamp(18px, 2.6vw, 28px); }
+  .guard .gl { font-size: 11px; letter-spacing: .13em; text-transform: uppercase; font-weight: 800; color: var(--gold-br); margin: 0 0 6px; }
+  .guard p { margin: 0; font-family: var(--serif); font-style: italic; font-size: clamp(14px, 2vw, 18px); color: #eef1fb; line-height: 1.4; text-wrap: pretty; }
+
+  .cap { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 14px; }
+
+  @media (max-width: 780px) {
+    .slide { aspect-ratio: auto; }
+    .pipe { grid-template-columns: 1fr; }
+    .chev { transform: rotate(90deg); padding: 2px 0; }
+  }
+  @media print {
+    body { background: #fff; } .wrap { max-width: none; padding: 0; } .cap { display: none; }
+    .slide { aspect-ratio: 16/9; border: none; border-radius: 0; box-shadow: none; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="slide">
+    <p class="eyebrow">Meridian Family Office Copilot · v8</p>
+    <h1>The tactical-instructions workflow, at a glance</h1>
+    <p class="lede">What the copilot does the moment you confirm the sorted items — read left to right.</p>
+
+    <div class="pipe">
+      <div class="card words">
+        <div class="lab">1 · Client's words</div>
+        <div class="sm">In plain language</div>
+        <div class="q">“Gold ETF: 20% · S&amp;P 500: 30%”</div>
+        <div class="q">“gold below USD 4,000/oz”</div>
+        <div class="q">“add Nasdaq after a 15–20% pullback”</div>
+        <div class="q">“buy the bond fund in tranches”</div>
+        <div class="q">“low fees, good liquidity”</div>
+        <div class="q">“impact of rate hikes?”</div>
+      </div>
+
+      <div class="chev">›</div>
+
+      <div class="card confirm">
+        <div class="lab">2 · Sort + Confirm</div>
+        <div class="sm">The copilot types each ask; the analyst keeps / edits / flags unclear ones, then confirms.</div>
+        <div class="ok">✓ typed &amp; confirmed</div>
+      </div>
+
+      <div class="chev">›</div>
+
+      <div class="stack">
+        <div class="card out a">
+          <div class="top"><span class="ttl">📡 Monitoring watchlist</span><span class="badge">Lives in the copilot</span></div>
+          <p class="desc">Level-based triggers to watch the book against.</p>
+          <div class="data">S&amp;P 500 · <b>−15/−20%</b>&nbsp;&nbsp;&nbsp;Gold · <b>&lt; $4,000</b></div>
+        </div>
+        <div class="card out b">
+          <div class="top"><span class="ttl">🧭 Analyst guidance</span><span class="badge">Proposal deck · CIO commentary</span></div>
+          <p class="desc">Intent that shapes the written advice — never the figures.</p>
+          <div class="data" style="color:var(--ink-soft)">Execution style · selection criteria · open questions</div>
+        </div>
+        <div class="card out c">
+          <div class="top"><span class="ttl">📥 Proposed allocation</span><span class="badge">You Apply / Ignore</span></div>
+          <p class="desc">If the client stated weights → offered to fill the sleeves.</p>
+          <div class="data" style="color:var(--ink-soft)">Nasdaq 20% + S&amp;P 30% → equity 50%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guard">
+      <p class="gl">The guardrail (v8: tiered)</p>
+      <p>Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. A 🔒 enforced price trigger can <b>gate</b> a rebalance buy (→ hold) against a <b>sourced live price</b>; everything else shapes the narrative &amp; watchlist only. A client's condition can gate or flag a trade — <b>never invent one</b>. Every figure stays derived from real holdings.</p>
+    </div>
+  </div>
+  <p class="cap">Single-slide overview · “Print → Save as PDF” for a clean 16:9 export · Confidential.</p>
+</div>

@@ -239,9 +239,9 @@ SVG_PRINT = build("print").replace('font-family="var(--sans)"',
                                    'font-family="Helvetica, Arial, sans-serif"')
 
 # standalone SVGs (for render verification)
-with open("tactical_flow_chart_v2.svg", "w") as f:
+with open("tactical_flow_chart_v2_v10.svg", "w") as f:
     f.write(literalize(SVG_COLOR))
-with open("tactical_flow_chart_v2_print_BW.svg", "w") as f:
+with open("tactical_flow_chart_v2_print_BW_v10.svg", "w") as f:
     f.write(SVG_PRINT)
 
 # ----- HTML artifacts ------------------------------------------------------ #
@@ -323,8 +323,8 @@ HTML_PRINT = f"""<style>
 </div>
 """
 
-with open("tactical_flow_chart_v2_note.html", "w") as f:
+with open("tactical_flow_chart_v2_note_v10.html", "w") as f:
     f.write(HTML_COLOR)
-with open("tactical_flow_chart_v2_print_BW_note.html", "w") as f:
+with open("tactical_flow_chart_v2_print_BW_note_v10.html", "w") as f:
     f.write(HTML_PRINT)
 print("wrote color + print .svg and _note.html")

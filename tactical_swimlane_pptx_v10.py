@@ -9,7 +9,7 @@ Two slides:
      Set policy -> Capture -> Compute (deterministic) -> Assemble, generate & deliver.
 
 House navy / gold, matching the other decks. Run:
-    python tactical_swimlane_pptx.py   ->  Tactical_Swimlane.pptx
+    python tactical_swimlane_pptx.py   ->  Tactical_Swimlane_v10.pptx
 """
 from __future__ import annotations
 
@@ -269,6 +269,6 @@ one(txt(s, 0.5, 7.16, 12.5, 0.3),
     "copy into any AI model. Every figure is computed deterministically; the AI writes prose only.",
     10, SOFT, bold=True, first=True)
 
-OUT = "Tactical_Swimlane.pptx"
+OUT = "Tactical_Swimlane_v10.pptx"
 prs.save(OUT)
 print(f"wrote {OUT} — {len(prs.slides._sldIdLst)} slides")

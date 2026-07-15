@@ -6,7 +6,7 @@ copilot turns the client's tactical instructions + documents into a proposal in 
 — one self-contained prompt handed to the AI Model, which writes the narrative while
 the engine computes every number. House navy / gold style, matching generate_proposal.py.
 
-Run:  python tactical_workflow_pptx.py   ->  Tactical_Workflow.pptx
+Run:  python tactical_workflow_pptx.py   ->  Tactical_Workflow_v10.pptx
 """
 from __future__ import annotations
 
@@ -328,6 +328,6 @@ para(tf, "Qualitative claims drawn from the client's documents are context — n
      italic=True, bold=True, first=True, spacing=1.15)
 
 
-OUT = "Tactical_Workflow.pptx"
+OUT = "Tactical_Workflow_v10.pptx"
 prs.save(OUT)
 print(f"wrote {OUT} — {len(prs.slides.__iter__.__self__._sldIdLst)} slides")

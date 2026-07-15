@@ -1,0 +1,307 @@
+<style>
+  :root {
+    --ground: #e9ecf4;
+    --paper: #ffffff;
+    --ink: #16203c;
+    --ink-soft: #47517a;
+    --ink-faint: #838cad;
+    --navy: #1e2a56;
+    --navy-deep: #131d3d;
+    --gold: #9c7422;
+    --gold-br: #b0872a;
+    --gold-tint: #f7efdc;
+    --green: #2f6f57;
+    --green-tint: #e6f1eb;
+    --line: #dfe2ee;
+    --line-strong: #c8cddd;
+    --slate-tint: #eef0f6;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #05091a; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+      --ink-faint: #7883a6; --navy: #dbe2f6; --navy-deep: #0a1430; --gold: #d3a94f;
+      --gold-br: #d3a94f; --gold-tint: #241f10; --green: #6bbf9a; --green-tint: #10281f;
+      --line: #22305a; --line-strong: #33477b; --slate-tint: #16224a;
+    }
+  }
+  :root[data-theme="light"] {
+    --ground: #e9ecf4; --paper: #ffffff; --ink: #16203c; --ink-soft: #47517a;
+    --ink-faint: #838cad; --navy: #1e2a56; --navy-deep: #131d3d; --gold: #9c7422;
+    --gold-br: #b0872a; --gold-tint: #f7efdc; --green: #2f6f57; --green-tint: #e6f1eb;
+    --line: #dfe2ee; --line-strong: #c8cddd; --slate-tint: #eef0f6;
+  }
+  :root[data-theme="dark"] {
+    --ground: #05091a; --paper: #0f1830; --ink: #e8ebf6; --ink-soft: #aab3d1;
+    --ink-faint: #7883a6; --navy: #dbe2f6; --navy-deep: #0a1430; --gold: #d3a94f;
+    --gold-br: #d3a94f; --gold-tint: #241f10; --green: #6bbf9a; --green-tint: #10281f;
+    --line: #22305a; --line-strong: #33477b; --slate-tint: #16224a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans);
+    line-height: 1.55; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .deck { max-width: 1000px; margin: 0 auto; padding: clamp(18px, 4vw, 44px) clamp(14px, 3vw, 30px); }
+  .intro { margin: 0 0 26px; }
+  .intro .eyebrow { font-size: 11.5px; letter-spacing: .19em; text-transform: uppercase; font-weight: 700; color: var(--gold); margin: 0 0 10px; }
+  .intro h1 { font-family: var(--serif); font-weight: 600; color: var(--navy); font-size: clamp(24px, 4.4vw, 34px); line-height: 1.12; letter-spacing: -.01em; margin: 0 0 10px; text-wrap: balance; }
+  .intro p { font-size: clamp(15px, 2.2vw, 17px); color: var(--ink-soft); margin: 0; max-width: 64ch; }
+
+  /* 16:9 slide cards */
+  .slide {
+    position: relative; background: var(--paper); border: 1px solid var(--line);
+    border-radius: 8px; margin-bottom: 20px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(10,18,40,.05), 0 20px 46px -34px rgba(10,18,40,.4);
+    aspect-ratio: 16 / 9; display: flex; flex-direction: column;
+    padding: clamp(22px, 3.4vw, 44px);
+  }
+  .slide.title { background: var(--navy-deep); border-color: var(--navy-deep); }
+  .snum {
+    position: absolute; top: 18px; right: 22px; font-family: var(--mono);
+    font-size: 11px; color: var(--ink-faint); letter-spacing: .04em;
+  }
+  .slide.title .snum { color: #6b78a8; }
+  .eyebrow { font-size: 11px; letter-spacing: .17em; text-transform: uppercase; font-weight: 700; color: var(--gold-br); margin: 0 0 12px; }
+  .slide h2 { font-family: var(--serif); font-weight: 600; color: var(--navy); font-size: clamp(19px, 3vw, 27px); line-height: 1.12; letter-spacing: -.01em; margin: 0 0 6px; text-wrap: balance; }
+  .slide .sub { font-size: clamp(13px, 1.9vw, 15.5px); color: var(--ink-soft); margin: 0 0 auto; max-width: 62ch; }
+  .body { margin-top: clamp(16px, 2.4vw, 26px); }
+  .mono { font-family: var(--mono); }
+
+  /* title slide */
+  .title .eyebrow { color: var(--gold-br); }
+  .title h1 { font-family: var(--serif); font-weight: 600; color: #fff; font-size: clamp(24px, 4.6vw, 40px); line-height: 1.1; letter-spacing: -.015em; margin: auto 0 14px; text-wrap: balance; max-width: 20ch; }
+  .title .lede { font-size: clamp(14px, 2.1vw, 17px); color: #b9c2e0; margin: 0; max-width: 52ch; }
+  .title .foot { margin-top: 20px; font-size: 12px; color: #7f8cbb; display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center; }
+  .title .foot .dot { width: 3px; height: 3px; border-radius: 50%; background: #4a5788; }
+  .title .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(var(--gold-br), #7a5d18); }
+
+  /* pipeline strip */
+  .pipe { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
+  .pnode { flex: 1 1 0; min-width: 92px; background: var(--slate-tint); border: 1px solid var(--line); border-radius: 8px; padding: 13px 12px; display: flex; flex-direction: column; gap: 3px; }
+  .pnode .pk { font-family: var(--mono); font-size: 10px; color: var(--ink-faint); letter-spacing: .04em; }
+  .pnode .pt { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .pnode .pd { font-size: 11.5px; color: var(--ink-soft); line-height: 1.35; }
+  .pnode.done { background: var(--green-tint); border-color: color-mix(in srgb, var(--green) 38%, var(--line)); }
+  .pnode.done .pt { color: var(--green); }
+  .pnode.out { background: var(--gold-tint); border-color: color-mix(in srgb, var(--gold-br) 40%, var(--line)); }
+  .pnode.out .pt { color: var(--gold); }
+  .pcap { margin-top: 16px; font-size: 12.5px; color: var(--ink-faint); }
+  .pcap b { color: var(--ink-soft); }
+
+  /* record anatomy */
+  .record { border: 1.5px solid color-mix(in srgb, var(--gold-br) 42%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--gold-tint) 40%, var(--paper)); padding: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .field { flex: 1 1 120px; background: var(--paper); border: 1px solid var(--line); border-radius: 7px; padding: 11px 13px; }
+  .field .fk { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--ink-faint); margin-bottom: 5px; }
+  .field .fv { font-family: var(--mono); font-size: 14px; color: var(--ink); font-weight: 600; }
+  .field.lvl .fv { color: var(--gold); }
+  .field .tagv { font-size: 12.5px; font-weight: 700; color: var(--gold); text-transform: none; font-family: var(--mono); }
+  .rec-note { margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+  .rec-note b { color: var(--green); }
+
+  /* two-stream split */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: 100%; }
+  .stream { border: 1px solid var(--line); border-radius: 10px; padding: 18px 18px 16px; display: flex; flex-direction: column; }
+  .stream.a { border-color: color-mix(in srgb, var(--gold-br) 40%, var(--line)); background: color-mix(in srgb, var(--gold-tint) 34%, var(--paper)); }
+  .stream.b { border-color: var(--line-strong); background: var(--slate-tint); }
+  .stream .sh { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+  .stream .ic { font-size: 18px; }
+  .stream .st { font-size: 14.5px; font-weight: 800; color: var(--ink); }
+  .stream .sd { font-size: 12.8px; color: var(--ink-soft); line-height: 1.45; margin-bottom: 12px; }
+  .stream .ex { margin-top: auto; font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); background: var(--paper); border: 1px dashed var(--line-strong); border-radius: 6px; padding: 9px 11px; line-height: 1.5; }
+  .stream.a .ex b { color: var(--gold); font-weight: 700; }
+
+  /* three destinations */
+  .dests { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; height: 100%; }
+  .dest { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--paper); display: flex; flex-direction: column; }
+  .dest .dic { font-size: 20px; margin-bottom: 9px; }
+  .dest .dt { font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 5px; }
+  .dest .dp { font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+  .dest .where { margin-top: auto; padding-top: 11px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--ink-faint); }
+  .dest.tri { border-color: color-mix(in srgb, var(--gold-br) 40%, var(--line)); }
+  .dest.tri .dt { color: var(--gold); }
+
+  /* mini watchlist inside dest */
+  .mw { margin-top: 8px; font-size: 11px; }
+  .mw .mrow { display: flex; justify-content: space-between; gap: 6px; padding: 4px 0; border-top: 1px solid var(--line); }
+  .mw .mrow:first-child { border-top: 0; }
+  .mw .mi { color: var(--ink); font-weight: 600; }
+  .mw .ml { font-family: var(--mono); color: var(--gold); }
+
+  /* guardrail slide */
+  .guard { display: flex; flex-direction: column; height: 100%; }
+  .gcompare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+  .gbox { border: 1px solid var(--line); border-radius: 10px; padding: 17px 18px; }
+  .gbox .gl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; font-weight: 800; margin-bottom: 9px; }
+  .gbox.shapes { background: var(--gold-tint); border-color: color-mix(in srgb, var(--gold-br) 40%, var(--line)); }
+  .gbox.shapes .gl { color: var(--gold); }
+  .gbox.never { background: var(--green-tint); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); }
+  .gbox.never .gl { color: var(--green); }
+  .gbox ul { margin: 0; padding-left: 16px; }
+  .gbox li { font-size: 12.8px; color: var(--ink-soft); margin-bottom: 6px; line-height: 1.45; }
+  .gbox li:last-child { margin-bottom: 0; }
+  .gpunch { margin-top: 16px; font-family: var(--serif); font-size: clamp(15px, 2.3vw, 19px); font-style: italic; color: var(--navy); line-height: 1.4; text-wrap: balance; }
+
+  .footer-note { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 8px; }
+
+  @media (max-width: 720px) {
+    .slide { aspect-ratio: auto; }
+    .split, .dests, .gcompare { grid-template-columns: 1fr; }
+    .pipe { gap: 6px; }
+  }
+  @media print {
+    body { background: #fff; }
+    .deck { max-width: none; padding: 0; }
+    .intro, .footer-note { display: none; }
+    .slide { aspect-ratio: 16 / 9; page-break-after: always; margin: 0; border-radius: 0; box-shadow: none; border: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .slide { animation: rise .5s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+
+<div class="deck">
+
+  <div class="intro">
+    <p class="eyebrow">Meridian Family Office Copilot · v8</p>
+    <h1>What happens after you confirm the tactical items</h1>
+    <p>A six-slide walkthrough — deck-ready (16:9). The analyst pastes the client's plain-language instructions, the copilot sorts them into typed items, and the analyst reviews (keep / edit / flag) and confirms. Here's the journey from that click to a working proposal.</p>
+  </div>
+
+  <!-- Slide 1 — title -->
+  <div class="slide title">
+    <span class="rail"></span>
+    <span class="snum">01 / 06</span>
+    <p class="eyebrow">The tactical-instructions workflow</p>
+    <h1>From the client's words to a working proposal</h1>
+    <p class="lede">What the copilot does the moment you confirm the sorted items — and the one rule that keeps every number trustworthy.</p>
+    <div class="foot"><span>Meridian Family Office Copilot</span><span class="dot"></span><span>v8 · Tactical instructions</span><span class="dot"></span><span>For partner &amp; client discussion</span></div>
+  </div>
+
+  <!-- Slide 2 — pipeline at a glance -->
+  <div class="slide">
+    <span class="snum">02 / 06</span>
+    <p class="eyebrow">At a glance</p>
+    <h2>Four steps in, three outputs out</h2>
+    <p class="sub">The first four steps are what the analyst does. <b>Confirm</b> is where this walkthrough begins — everything to its right is automatic.</p>
+    <div class="body">
+      <div class="pipe">
+        <div class="pnode"><span class="pk">01</span><span class="pt">Paste</span><span class="pd">Client's asks, in plain language</span></div>
+        <div class="pnode"><span class="pk">02</span><span class="pt">Sort</span><span class="pd">Copilot types each ask</span></div>
+        <div class="pnode"><span class="pk">03</span><span class="pt">Review</span><span class="pd">Keep · edit · flag unclear</span></div>
+        <div class="pnode done"><span class="pk">04</span><span class="pt">✓ Confirm</span><span class="pd">You are here</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">Watchlist</span><span class="pd">Levels to monitor</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">Guidance</span><span class="pd">Shapes the proposal</span></div>
+        <div class="pnode out"><span class="pk">→</span><span class="pt">Allocation</span><span class="pd">If weights → Apply</span></div>
+      </div>
+      <p class="pcap"><b>The rest of this deck follows what leaves the Confirm step.</b></p>
+    </div>
+  </div>
+
+  <!-- Slide 3 — structured record -->
+  <div class="slide">
+    <span class="snum">03 / 06</span>
+    <p class="eyebrow">Step 1 · after Confirm</p>
+    <h2>Each ask is now a structured record</h2>
+    <p class="sub">A sentence becomes fields the system can act on. Every level is <b>copied from the client's own words</b> — never invented.</p>
+    <div class="body">
+      <div class="record">
+        <div class="field"><div class="fk">Type</div><div class="fv"><span class="tagv">entry_trigger</span></div></div>
+        <div class="field"><div class="fk">Instrument</div><div class="fv">Gold ETF</div></div>
+        <div class="field"><div class="fk">Action</div><div class="fv">Buy</div></div>
+        <div class="field lvl"><div class="fk">Level (copied)</div><div class="fv">USD 4,000/oz</div></div>
+      </div>
+      <p class="rec-note">From: <span class="mono">"the gold ETF can be bought below USD 4,000/oz"</span> &nbsp;·&nbsp; <b>Nothing computed — just sorted and copied.</b></p>
+    </div>
+  </div>
+
+  <!-- Slide 4 — two streams -->
+  <div class="slide">
+    <span class="snum">04 / 06</span>
+    <p class="eyebrow">Step 2 · the split</p>
+    <h2>The items split by what they're for</h2>
+    <div class="body" style="flex:1; min-height:0; display:flex; flex-direction:column; gap:12px">
+      <div class="split" style="flex:1; min-height:0">
+        <div class="stream a">
+          <div class="sh"><span class="ic">📡</span><span class="st">Entry triggers → Monitoring watchlist</span></div>
+          <div class="sd">Conditional, level-based asks become a live list the portfolio is watched against — the retention hook.</div>
+          <div class="ex">Gold ETF · below <b>USD 4,000/oz</b> · Buy<br>S&amp;P 500 ETF · <b>−15% to −20%</b> from high · Consider</div>
+        </div>
+        <div class="stream b">
+          <div class="sh"><span class="ic">🧭</span><span class="st">Every item → Analyst guidance</span></div>
+          <div class="sd">All items (including the triggers) carry forward as <b>intent</b> that shapes the written advice — never as figures.</div>
+          <div class="ex">Execution style · "buy in tranches"<br>Selection criteria · "low fees, good liquidity"<br>Open question · "impact of rate hikes?"</div>
+        </div>
+      </div>
+      <div style="flex:none; font-size:12.5px; color:var(--ink-soft); background:var(--slate-tint); border:1px solid var(--line); border-radius:8px; padding:10px 14px">⚠️ Anything ambiguous or contradictory is typed <b>needs-clarification</b> — held out of the proposal until you resolve it. And if the client stated target weights, Confirm surfaces a <b>Proposed allocation</b> to Apply.</div>
+    </div>
+  </div>
+
+  <!-- Slide 5 — three destinations -->
+  <div class="slide">
+    <span class="snum">05 / 06</span>
+    <p class="eyebrow">Step 3 · where they appear</p>
+    <h2>Three places the analyst sees them</h2>
+    <div class="body" style="flex:1; min-height:0">
+      <div class="dests">
+        <div class="dest tri">
+          <div class="dic">📡</div>
+          <div class="dt">Monitoring watchlist</div>
+          <div class="dp">Triggers, ready to watch the book against.</div>
+          <div class="mw">
+            <div class="mrow"><span class="mi">S&amp;P 500 ETF</span><span class="ml">−15/−20%</span></div>
+            <div class="mrow"><span class="mi">Gold ETF</span><span class="ml">&lt; $4,000</span></div>
+          </div>
+          <div class="where">In the copilot</div>
+        </div>
+        <div class="dest">
+          <div class="dic">📄</div>
+          <div class="dt">Proposal deck</div>
+          <div class="dp">Listed under <em>"Analyst notes folded into this proposal"</em> on the data &amp; method slide.</div>
+          <div class="where">PPTX · PDF</div>
+        </div>
+        <div class="dest">
+          <div class="dic">💬</div>
+          <div class="dt">CIO commentary</div>
+          <div class="dp">Prose shaped by the guidance — quoting only the computed figures.</div>
+          <div class="where">Generated narrative</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6 — guardrail -->
+  <div class="slide">
+    <span class="snum">06 / 06</span>
+    <p class="eyebrow">Step 4 · the guardrail (v8: tiered)</p>
+    <h2>Guidance can gate a number — never invent one</h2>
+    <div class="body guard">
+      <div class="gcompare">
+        <div class="gbox shapes">
+          <div class="gl">Guidance can shape &amp; gate</div>
+          <ul>
+            <li>The monitoring watchlist &amp; the written commentary</li>
+            <li>🔒 An <b>enforced</b> price trigger gates a rebalance buy (→ hold) vs a <b>sourced live price</b></li>
+            <li>What the analyst is prompted to weigh</li>
+          </ul>
+        </div>
+        <div class="gbox never">
+          <div class="gl">Guidance never invents</div>
+          <ul>
+            <li>A figure out of thin air — an enforced check uses a price <b>with provenance</b></li>
+            <li>Suitability thresholds</li>
+            <li>Holdings — every dollar stays derived from the real book</li>
+          </ul>
+        </div>
+      </div>
+      <p class="gpunch">Each item is tiered 🔒 enforced / 📡 monitored / 📝 advisory. A client's condition can <b>gate or flag</b> a trade — never <b>fabricate</b> one.</p>
+    </div>
+  </div>
+
+  <p class="footer-note">Tip: “Print → Save as PDF” gives one 16:9 slide per page — drop straight into your deck. · Confidential.</p>
+
+</div>

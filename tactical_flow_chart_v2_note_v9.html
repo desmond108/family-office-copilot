@@ -1,0 +1,136 @@
+<style>
+  :root { --paper:#ffffff;--ink:#16203c;--ink-soft:#47517a;--ink-faint:#838cad;--navy:#1e2a56;--navy-deep:#131d3d;--gold:#9c7422;--gold-br:#b0872a;--gold-lane:#fbf6e9;--amber:#b06a17;--amber-strong:#8a4f11;--amber-tint:#fbe6d2;--line:#dfe2ee;--line-strong:#c8cddd;--slate-tint:#eef0f6;--client-tint:#eef2fb;--sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --ground:#eef0f6; --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace; }
+  @media (prefers-color-scheme: dark) { :root { --paper:#0f1830;--ink:#e8ebf6;--ink-soft:#aab3d1;--ink-faint:#7883a6;--navy:#dbe2f6;--navy-deep:#0a1430;--gold:#d3a94f;--gold-br:#d3a94f;--gold-lane:#171f0f;--amber:#e0954a;--amber-strong:#e9a860;--amber-tint:#2c1c0c;--line:#22305a;--line-strong:#33477b;--slate-tint:#14203f;--client-tint:#141d3a; --ground:#05091a; } }
+  :root[data-theme="light"] { --paper:#ffffff;--ink:#16203c;--ink-soft:#47517a;--ink-faint:#838cad;--navy:#1e2a56;--navy-deep:#131d3d;--gold:#9c7422;--gold-br:#b0872a;--gold-lane:#fbf6e9;--amber:#b06a17;--amber-strong:#8a4f11;--amber-tint:#fbe6d2;--line:#dfe2ee;--line-strong:#c8cddd;--slate-tint:#eef0f6;--client-tint:#eef2fb;--sans:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; --ground:#eef0f6; }
+  :root[data-theme="dark"] { --paper:#0f1830;--ink:#e8ebf6;--ink-soft:#aab3d1;--ink-faint:#7883a6;--navy:#dbe2f6;--navy-deep:#0a1430;--gold:#d3a94f;--gold-br:#d3a94f;--gold-lane:#171f0f;--amber:#e0954a;--amber-strong:#e9a860;--amber-tint:#2c1c0c;--line:#22305a;--line-strong:#33477b;--slate-tint:#14203f;--client-tint:#141d3a; --ground:#05091a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink); font-family:var(--sans); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1240px; margin:0 auto; padding:clamp(18px,4vw,44px) clamp(14px,3vw,30px); }
+  .eyebrow { font-size:11.5px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; color:var(--gold-br); margin:0 0 10px; }
+  h1 { font-family:var(--serif); font-weight:600; color:var(--navy); font-size:clamp(24px,4.4vw,34px); line-height:1.12; letter-spacing:-.01em; margin:0 0 10px; text-wrap:balance; }
+  .dek { font-size:clamp(15px,2.2vw,17px); color:var(--ink-soft); margin:0 0 20px; max-width:70ch; }
+  .legend { display:flex; flex-wrap:wrap; gap:9px 20px; margin:0 0 18px; font-size:12.5px; color:var(--ink-soft); }
+  .legend span { display:inline-flex; align-items:center; gap:8px; }
+  .k { width:26px; height:15px; border-radius:4px; border:1.6px solid var(--gold-br); background:var(--paper); flex:none; }
+  .k.dec { width:16px; height:16px; border-radius:3px; transform:rotate(45deg); border-color:var(--amber); background:var(--amber-tint); }
+  .k.term { border-radius:8px; background:var(--navy-deep); border-color:var(--gold-br); }
+  .k.bot { border-style:dashed; border-color:var(--line-strong); }
+  .scroll { overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--paper); box-shadow:0 1px 2px rgba(10,18,40,.05),0 18px 46px -30px rgba(10,18,40,.3); }
+  .flow { display:block; width:100%; min-width:1000px; height:auto; }
+  .foot { margin-top:20px; font-size:12.5px; color:var(--ink-faint); }
+  .foot b { color:var(--ink-soft); }
+  @media print { body{background:#fff;} .scroll{overflow:visible;} .flow{min-width:0;} }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Meridian Family Office Copilot · v8</p>
+  <h1>Tactical instructions — process flowchart</h1>
+  <p class="dek">The same workflow as the swimlane matrix, drawn as a <b>connected flow</b>: it traces the decision path — the <b>needs-clarification</b> loop back to the client, and the 🔒 <b>enforced-trigger</b> check that gates a buy. Three lanes (Client / Analyst / Copilot) across four phases.</p>
+  <div class="legend">
+    <span><span class="k term"></span> Start / end</span>
+    <span><span class="k"></span> Analyst / client step</span>
+    <span><span class="k bot"></span> Copilot (automatic)</span>
+    <span><span class="k dec"></span> Decision</span>
+  </div>
+  <div class="scroll"><svg viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg" font-family="var(--sans)" class="flow">
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-soft)"/></marker><marker id="af" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--ink-faint)"/></marker></defs>
+<rect x="0.5" y="0.5" width="1199" height="659" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1"/>
+<rect x="0.5" y="0.5" width="1199" height="40" fill="var(--navy-deep)"/>
+<text x="600" y="25" text-anchor="middle" font-size="16" font-weight="800" fill="#eef1fb" letter-spacing="0.3">The tactical-instructions process — end to end</text>
+<rect x="66" y="40" width="1134" height="38" fill="var(--slate-tint)" stroke="var(--line)" stroke-width="1"/>
+<text x="156" y="63" text-anchor="middle" font-size="12.5" font-weight="700" font-style="italic" fill="var(--navy)">Capture</text>
+<text x="461" y="63" text-anchor="middle" font-size="12.5" font-weight="700" font-style="italic" fill="var(--navy)">Classify &amp; confirm</text>
+<text x="821" y="63" text-anchor="middle" font-size="12.5" font-weight="700" font-style="italic" fill="var(--navy)">Analyse</text>
+<text x="1083" y="63" text-anchor="middle" font-size="12.5" font-weight="700" font-style="italic" fill="var(--navy)">Review &amp; generate</text>
+<rect x="66" y="78" width="1134" height="194" fill="var(--client-tint)" stroke="var(--line)" stroke-width="1"/>
+<rect x="0.5" y="78" width="65.5" height="194" fill="var(--paper)" stroke="var(--line)" stroke-width="1"/>
+<text x="26" y="175" text-anchor="middle" font-size="13" font-weight="800" fill="var(--navy)" transform="rotate(-90 26 175)">Client</text>
+<text x="44" y="175" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="1" fill="var(--ink-faint)" transform="rotate(-90 44 175)">SOURCE</text>
+<rect x="66" y="272" width="1134" height="194" fill="var(--gold-lane)" stroke="var(--line)" stroke-width="1"/>
+<rect x="0.5" y="272" width="65.5" height="194" fill="var(--paper)" stroke="var(--line)" stroke-width="1"/>
+<text x="26" y="369" text-anchor="middle" font-size="13" font-weight="800" fill="var(--gold)" transform="rotate(-90 26 369)">Analyst</text>
+<text x="44" y="369" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="1" fill="var(--ink-faint)" transform="rotate(-90 44 369)">YOU</text>
+<rect x="66" y="466" width="1134" height="194" fill="var(--slate-tint)" stroke="var(--line)" stroke-width="1"/>
+<rect x="0.5" y="466" width="65.5" height="194" fill="var(--paper)" stroke="var(--line)" stroke-width="1"/>
+<text x="26" y="563" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink-soft)" transform="rotate(-90 26 563)">Copilot</text>
+<text x="44" y="563" text-anchor="middle" font-size="9" font-weight="600" letter-spacing="1" fill="var(--ink-faint)" transform="rotate(-90 44 563)">SYSTEM</text>
+<line x1="246" y1="40" x2="246" y2="659" stroke="var(--line-strong)" stroke-width="1.4" stroke-dasharray="4 5"/>
+<line x1="676" y1="40" x2="676" y2="659" stroke="var(--line-strong)" stroke-width="1.4" stroke-dasharray="4 5"/>
+<line x1="966" y1="40" x2="966" y2="659" stroke="var(--line-strong)" stroke-width="1.4" stroke-dasharray="4 5"/>
+<rect x="92" y="152" width="128" height="46" rx="23" fill="var(--navy-deep)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="156" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="#eef1fb"><tspan x="156" dy="0.0">Client gives</tspan><tspan x="156" dy="13.9">instructions</tspan></text>
+<rect x="364" y="150" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="430" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="430" dy="0.0">Ask the client</tspan><tspan x="430" dy="13.9">(clarify)</tspan></text>
+<rect x="755" y="150" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="821" y="168.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="821" dy="0.0">Hands over</tspan><tspan x="821" dy="13.9">statements</tspan></text>
+<rect x="90" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="156" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="156" dy="0.0">Paste →</tspan><tspan x="156" dy="13.9">Sort into items</tspan></text>
+<rect x="250" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="316" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="316" dy="0.0">Review the</tspan><tspan x="316" dy="13.9">sorted list</tspan></text>
+<polygon points="468,333 532,369 468,405 404,369" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.7"/>
+<text x="468" y="362.3" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--amber-strong)"><tspan x="468" dy="0.0">Needs</tspan><tspan x="468" dy="13.3">clarification?</tspan></text>
+<rect x="544" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="610" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="610" dy="0.0">Confirm</tspan><tspan x="610" dy="13.9">items</tspan></text>
+<rect x="755" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="821" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="821" dy="0.0">Set policy →</tspan><tspan x="821" dy="13.9">Analyse</tspan></text>
+<rect x="1017" y="344" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="1083" y="362.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink)"><tspan x="1083" dy="0.0">Review &amp;</tspan><tspan x="1083" dy="13.9">generate deck</tspan></text>
+<rect x="250" y="538" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1.3" stroke-dasharray="5 4"/>
+<text x="316" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)"><tspan x="316" dy="0.0">Classify +</tspan><tspan x="316" dy="13.9">tag tier  🔒 📡 📝</tspan></text>
+<rect x="544" y="538" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1.3" stroke-dasharray="5 4"/>
+<text x="610" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)"><tspan x="610" dy="0.0">Watchlist, guidance</tspan><tspan x="610" dy="13.9">+ proposed alloc</tspan></text>
+<rect x="680" y="538" width="132" height="50" rx="7" fill="var(--paper)" stroke="var(--line-strong)" stroke-width="1.3" stroke-dasharray="5 4"/>
+<text x="746" y="556.0" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)"><tspan x="746" dy="0.0">Parse book;</tspan><tspan x="746" dy="13.9">compute drift</tspan></text>
+<polygon points="892,527 956,563 892,599 828,563" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.7"/>
+<text x="892" y="556.3" text-anchor="middle" font-size="11.5" font-weight="800" fill="var(--amber-strong)"><tspan x="892" dy="0.0">🔒 trigger</tspan><tspan x="892" dy="13.3">met?</tspan></text>
+<rect x="1019" y="497" width="128" height="46" rx="23" fill="var(--navy-deep)" stroke="var(--gold-br)" stroke-width="1.6"/>
+<text x="1083" y="513.0" text-anchor="middle" font-size="12" font-weight="700" fill="#eef1fb"><tspan x="1083" dy="0.0">Proposal deck</tspan><tspan x="1083" dy="13.9">(PPTX / PDF)</tspan></text>
+<rect x="958" y="594" width="104" height="32" rx="16" fill="var(--amber-tint)" stroke="var(--amber)" stroke-width="1.4"/>
+<text x="1010" y="610.0" text-anchor="middle" font-size="11" font-weight="800" fill="var(--amber-strong)"><tspan x="1010" dy="0.0">buy → HOLD</tspan></text>
+<path d="M156,198 V344" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M156,394 V563 H250" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="184.6" y="545" width="31" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="200" y="556" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">sort</text>
+<path d="M316,538 V394" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="326.9" y="457" width="42" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="348" y="468" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">tiered</text>
+<path d="M382,369 H404" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M468,333 V198" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="463.9" y="239" width="82" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="505" y="250" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">yes · unclear</text>
+<path d="M396,198 V300 H316 V344" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="318.1" y="285" width="48" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="342" y="296" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">resolve</text>
+<path d="M532,369 H544" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="528.3" y="334" width="19" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="538" y="345" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">no</text>
+<path d="M610,394 V538" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="623.5" y="455" width="65" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="656" y="466" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">on confirm</text>
+<path d="M676,369 H755" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="699.6" y="345" width="31" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="715" y="356" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">then</text>
+<path d="M821,198 V344" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="833.5" y="264" width="65" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="866" y="275" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">statements</text>
+<path d="M821,394 V520 H746 V538" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="776.0" y="457" width="48" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="800" y="468" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">analyse</text>
+<path d="M812,563 H828" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M892,527 V369 H1017" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="908.4" y="345" width="99" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="958" y="356" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">met · buy stands</text>
+<path d="M892,599 V610 H958" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="891.2" y="577" width="54" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="918" y="588" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">breached</text>
+<path d="M1010,594 V520 H1019" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M1083,394 V497" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="1093.2" y="444" width="54" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="1120" y="455" text-anchor="middle" font-size="10.5" font-style="normal" font-weight="600" fill="var(--ink-soft)">generate</text>
+<path d="M610,588 V636 H1083 V543" fill="none" stroke="var(--ink-faint)" stroke-width="1.6" marker-end="url(#af)" stroke-dasharray="5 4"/>
+<rect x="766.2" y="619" width="168" height="15" rx="3" fill="var(--paper)" opacity="0.92"/>
+<text x="850" y="630" text-anchor="middle" font-size="10.5" font-style="italic" font-weight="600" fill="var(--ink-faint)">guidance folds into the deck</text>
+</svg></div>
+  <p class="foot"><b>Read with:</b> the swimlane matrix answers “my role at a glance”; this flowchart answers “what’s the decision path.” A <b>white / print</b> version (for pen-and-paper annotation) is the companion document. · Confidential.</p>
+</div>
