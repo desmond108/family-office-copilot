@@ -39,6 +39,10 @@ FILES = [
  ("test_app_scenarios","End-to-end app","App",
   "Drive the real Streamlit app across the views a banker walks through: load samples, "
   "review each view, change the mandate & tactical instructions — and never error."),
+ ("test_business_scenarios","Business scenarios","Business",
+  "What happens to the output on a client macro view — a rate hike/cut, a war (or its "
+  "end) prompting alternatives, a tax rise/cut: it reaches the AI, shapes the commentary, "
+  "and never moves the grounded figures."),
 ]
 
 HUMAN = {
@@ -89,9 +93,18 @@ HUMAN = {
  "test_mandate_drives_enforcement_severity":"Changing the mandate changes the suitability gate.",
  "test_single_custodian_book_proposal":"A single-custodian book still produces a proposal.",
  "test_proposal_without_book_is_graceful":"The Proposal view with no book degrades gracefully.",
+ "test_scenario_reaches_the_prompt":"A client macro view (rate/war/tax) reaches the AI verbatim.",
+ "test_scenario_shapes_the_commentary":"The macro view shapes the advisory commentary.",
+ "test_scenario_leaves_the_numbers_grounded":"A macro view never alters the computed figures.",
+ "test_rate_scenario_reports_exposure_without_fabricating":"Rate scenario reports bond exposure, invents no unsourced impact.",
+ "test_rate_question_routes_to_the_rate_tool":"A rate-move question routes to the rate tool.",
+ "test_scenario_changes_deck_prose_not_its_numbers":"The scenario moves the deck's prose, not its tables.",
 }
 PARAM = {"test_each_sample_loads_into_overview":3,"test_core_views_render_with_full_book":4,
-         "test_mandate_drives_enforcement_severity":2}
+         "test_mandate_drives_enforcement_severity":2,
+         # business scenarios: 6 scenarios × 2 delivery channels
+         "test_scenario_reaches_the_prompt":12, "test_scenario_shapes_the_commentary":12,
+         "test_scenario_leaves_the_numbers_grounded":12}
 
 def first_line(s): return re.sub(r"\s+"," ",s.strip().split("\n\n")[0]).strip() if s else ""
 
@@ -185,7 +198,8 @@ for i,txt in enumerate(("Layer","What it proves","Tests")):
     set_font(hdr[i].paragraphs[0].runs[0],10,True,"FFFFFF"); shade(hdr[i],NAVY)
 LAYER_DESC={"Engine":"Parsing, reconciliation, suitability policy, grounded Q&A",
             "Deliverable":"Document ingestion, portable prompt, narrative, deck render",
-            "App":"The Streamlit app end-to-end across every view"}
+            "App":"The Streamlit app end-to-end across every view",
+            "Business":"Client macro views (rates, war, tax) shape prose, not the numbers"}
 for layer,cnt in layers.items():
     row=t.add_row().cells
     row[0].paragraphs[0].add_run(layer); set_font(row[0].paragraphs[0].runs[0],10,True,NAVY)
@@ -280,23 +294,34 @@ box(s,PI(0.7),PI(1.15),PI(3.2),PI(0.05),fill=GOLD)
 txt(s,PI(0.7),PI(1.35),PI(12),PI(0.6),
     [[("Central invariant: ",14,True,NAVY),
       ("every number is deterministic; documents and instructions shape prose, never figures.",14,False,INK)]])
-cards=[("Engine","3 files · 30 tests","Parsing · reconciliation · suitability · grounded Q&A"),
-       ("Deliverable","3 files · 21 tests","Doc ingestion · portable prompt · narrative · deck render"),
-       ("App","1 file · 14 tests","Streamlit end-to-end across every view")]
-x=PI(0.7); cw=PI(3.95); gap=PI(0.1)
+# cards computed dynamically from DATA so they stay correct as tests grow
+LAYER_BLURB={"Engine":"Parsing · reconciliation · suitability · grounded Q&A",
+             "Deliverable":"Doc ingestion · portable prompt · narrative · deck render",
+             "App":"Streamlit end-to-end across every view",
+             "Business":"Client macro views: rates · war · tax → prose, not the numbers"}
+_layer_files=collections.OrderedDict()
+for stem,title_,layer,desc,tests in DATA:
+    nf,nt=_layer_files.get(layer,(0,0))
+    _layer_files[layer]=(nf+1, nt+sum(pc for *_,pc in tests))
+cards=[(lyr, f"{nf} file{'s' if nf!=1 else ''} · {nt} tests", LAYER_BLURB.get(lyr,""))
+       for lyr,(nf,nt) in _layer_files.items()]
+n=len(cards); gap=PI(0.12); total=PI(12.0)
+cw=int((total-gap*(n-1))/n); x=PI(0.7)
 for title_,cnt,desc in cards:
     box(s,x,PI(2.3),cw,PI(2.6),fill="F4F6FB",line=LINE)
     box(s,x,PI(2.3),cw,PI(0.12),fill=GOLD)
-    txt(s,x+PI(0.25),PI(2.6),cw-PI(0.5),PI(0.5),[[(title_,22,True,NAVY)]])
-    txt(s,x+PI(0.25),PI(3.15),cw-PI(0.5),PI(0.4),[[(cnt,13,True,GOLD)]])
-    txt(s,x+PI(0.25),PI(3.7),cw-PI(0.5),PI(1.0),[[(desc,13,False,SOFT)]])
+    txt(s,x+PI(0.2),PI(2.6),cw-PI(0.4),PI(0.5),[[(title_,20,True,NAVY)]])
+    txt(s,x+PI(0.2),PI(3.12),cw-PI(0.4),PI(0.4),[[(cnt,12,True,GOLD)]])
+    txt(s,x+PI(0.2),PI(3.62),cw-PI(0.4),PI(1.1),[[(desc,12,False,SOFT)]])
     x=x+cw+gap
 txt(s,PI(0.7),PI(5.4),PI(12),PI(1.2),
     [[("What's proven end-to-end",15,True,NAVY)],
      [("• The v10 fix: research/other documents and tactical instructions change the deterministic "
        "commentary and every exported deck (HTML, PPTX, PDF).",12.5,False,INK)],
      [("• The same book reads differently by mandate: advisory flags, discretionary hard-blocks.",12.5,False,INK)],
-     [("• Reconciliation catches the ~$436 custodian break instead of trusting it silently.",12.5,False,INK)]],sp=6)
+     [("• Reconciliation catches the ~$436 custodian break instead of trusting it silently.",12.5,False,INK)],
+     [("• A client macro view (rate hike/cut, war, tax change) reshapes the commentary but never "
+       "moves the grounded figures.",12.5,False,INK)]],sp=6)
 
 # per-file slides
 ICON={"Engine":GOLD,"Deliverable":NAVY,"App":GREEN}

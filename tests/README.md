@@ -6,7 +6,7 @@ live-model path (`narrative.generate_claude`, `portfolio_qa.ask_ai`) is delibera
 fallback, which is the product's source of truth.
 
 ```bash
-python3 -m pytest            # whole suite (69 tests)
+python3 -m pytest            # whole suite (108 tests)
 python3 -m pytest tests/test_suitability.py -v
 ```
 
@@ -28,7 +28,8 @@ from the script location, so it runs from any working directory.
 | `test_doc_extract.py` | Deliverable · ingestion | txt/md/html/eml/csv/json read deterministically; unsupported types fail gracefully; truncation flagged; stable result shape |
 | `test_narrative.py` | Deliverable · prompt | Portable prompt carries every block (FACTS/intake/holdings/docs/tactical); documents embed verbatim; **the v10 fix** — documents change the deterministic commentary; figures are only ever quoted from the model, never invented; disclaimer present |
 | `test_generate_proposal.py` | Deliverable · deck | HTML/PPTX/PDF render with valid magic bytes; headline numbers appear; commentary slide present only with a narrative; **documents change every export format**; the liquidity event surfaces with docs; "not verified" disclaimer present |
-| `test_app_scenarios.py` | App · end-to-end | Streamlit `AppTest`: app boots; each sample loads; core views (Overview/Holdings/Suitability/Proposal) render without error; the prompt + commentary appear; tactical instructions reach the prompt; changing the mandate changes the gate; single-custodian book still produces a proposal; no-book views degrade gracefully |
+| `test_app_scenarios.py` | App · end-to-end | Streamlit `AppTest`: app boots; each sample loads; core views (Overview/Holdings/Suitability/Proposal) render without error; the prompt + commentary appear; tactical instructions reach the prompt; changing the mandate changes the gate; single-custodian book still produces a proposal; no-book views degrade gracefully; commentary does **not** auto-generate (button-gated) |
+| `test_business_scenarios.py` | Business | What happens to the output on a client **macro view** — a rate hike/cut, a war (or its end) prompting alternatives, a tax rise/cut — supplied as either a tactical instruction or a document: (1) it reaches the AI verbatim, (2) it **shapes the commentary**, (3) it **never moves the grounded figures** (FACTS identical with/without it), (4) the interest-rate tool reports bond exposure but refuses to fabricate an unsourced +100bp impact |
 
 ## Design notes
 
