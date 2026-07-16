@@ -105,6 +105,38 @@ def test_generate_button_produces_commentary_on_click():
         "commentary must be prose, not a deck spec"
 
 
+# --- a macro overlay MOVES the recommendation in the live proposal ---------- #
+def test_no_overlay_shows_no_tilt_banner():
+    at = _load(view="Proposal", macro_overlay="none")
+    assert not at.exception
+    assert "Macro overlay applied" not in _text(at)
+
+
+@pytest.mark.parametrize("overlay,up,down", [
+    ("rate_cuts", "Fixed income", "Cash"),      # deploy cash into bonds
+    ("defensive", "Commodity", "Equity"),        # risk-off: gold up, equity down
+])
+def test_overlay_moves_the_target_in_the_proposal(overlay, up, down):
+    """Selecting a macro overlay tilts the target the rebalance chases, and the Proposal
+    view says so — the up-sleeve's target rises and the down-sleeve's falls."""
+    at = _load(view="Proposal", macro_overlay=overlay)
+    assert not at.exception
+    banner = "\n".join(i.value for i in at.info if "Macro overlay applied" in i.value)
+    assert banner, f"{overlay}: expected a macro-overlay banner on the proposal"
+
+    def _arrow(sleeve, text):
+        # matches e.g. "Fixed income 30% → 36%"
+        import re
+        m = re.search(rf"{re.escape(sleeve)}\D*?(\d+)%\s*(?:→|->)\s*(\d+)%", text)
+        assert m, f"{overlay}: no target line for {sleeve} in banner: {text!r}"
+        return int(m.group(1)), int(m.group(2))
+
+    b_up, t_up = _arrow(up, banner)
+    b_dn, t_dn = _arrow(down, banner)
+    assert t_up > b_up, f"{overlay}: {up} target should rise ({b_up}→{t_up})"
+    assert t_dn < b_dn, f"{overlay}: {down} target should fall ({b_dn}→{t_dn})"
+
+
 # --- Proposal: the prompt + deterministic commentary appear ----------------- #
 def test_proposal_shows_prompt_and_commentary():
     at = _load(view="Proposal")

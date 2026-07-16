@@ -1,0 +1,27 @@
+INTERNAL RELATIONSHIP-MANAGER NOTE — CONFIDENTIAL
+Client: Kadir (household account)
+Prepared by: Relationship Manager, Meridian Family Office
+Last updated: 15 July 2026
+(Synthetic example for testing — no real client data. Advisory context only.)
+
+CONTEXT
+Following the conflict escalation, the client called to move to a risk-off footing. This
+note captures his stance for the proposal write-up. It is NOT a source of portfolio
+figures — every number comes from the parsed statements and the deterministic engine.
+
+CLIENT STANCE (this cycle)
+- Defensive tilt for now: comfortable raising gold and holding more dry powder in the
+  money-market fund.
+- Wants to DEFER Nasdaq-100 / S&P 500 additions even if the 15-20% pullback trigger is
+  hit, until volatility calms.
+- Gold discipline unchanged: accumulate below USD 4,000/oz; willing to add on safe-haven
+  demand within that rule.
+- No change to the long-term strategic plan — this is a tactical, reversible tilt.
+
+WATCH-OUTS FOR THE WRITE-UP
+- Be explicit that the defensive tilt is deliberate and temporary.
+- Flag any region/single-name concentration exposed to the conflict.
+- Keep the language calm and the logic transparent; do not overstate certainty on the
+  macro path.
+
+For internal advisory context only. Not investment advice.

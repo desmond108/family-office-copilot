@@ -43,6 +43,10 @@ FILES = [
   "What happens to the output on a client macro view — a rate hike/cut, a war (or its "
   "end) prompting alternatives, a tax rise/cut: it reaches the AI, shapes the commentary, "
   "and never moves the grounded figures."),
+ ("test_macro_overlay","Macro overlays","Business",
+  "A client macro view MOVES the recommendation: each overlay is a fixed, bounded, "
+  "provenanced tilt of the target allocation — the rebalancer chases it, so trades shift "
+  "in the scenario's direction while every figure stays deterministic."),
 ]
 
 HUMAN = {
@@ -99,12 +103,25 @@ HUMAN = {
  "test_rate_scenario_reports_exposure_without_fabricating":"Rate scenario reports bond exposure, invents no unsourced impact.",
  "test_rate_question_routes_to_the_rate_tool":"A rate-move question routes to the rate tool.",
  "test_scenario_changes_deck_prose_not_its_numbers":"The scenario moves the deck's prose, not its tables.",
+ "test_overlay_moves_each_sleeve_the_right_way":"Each overlay moves the target sleeves in the documented direction.",
+ "test_overlay_preserves_total_allocation":"A tilt sums to zero — the book stays fully invested.",
+ "test_overlay_never_goes_negative":"No sleeve is driven negative by a tilt.",
+ "test_none_overlay_is_a_no_op":"'No overlay' changes nothing.",
+ "test_unknown_overlay_falls_back_to_none":"An unknown overlay falls back to a no-op.",
+ "test_changes_reports_only_moved_sleeves_and_describe_is_provenanced":"Reported changes name only moved sleeves; the summary is provenanced.",
+ "test_no_overlay_shows_no_tilt_banner":"No overlay → no tilt banner on the proposal.",
+ "test_overlay_moves_the_target_in_the_proposal":"Selecting an overlay moves the target in the live proposal.",
 }
 PARAM = {"test_each_sample_loads_into_overview":3,"test_core_views_render_with_full_book":4,
          "test_mandate_drives_enforcement_severity":2,
          # business scenarios: 6 scenarios × 2 delivery channels
          "test_scenario_reaches_the_prompt":12, "test_scenario_shapes_the_commentary":12,
-         "test_scenario_leaves_the_numbers_grounded":12}
+         "test_scenario_leaves_the_numbers_grounded":12,
+         # macro overlays: 5 scenarios parametrised
+         "test_overlay_moves_each_sleeve_the_right_way":5, "test_overlay_preserves_total_allocation":5,
+         "test_overlay_never_goes_negative":5,
+         "test_changes_reports_only_moved_sleeves_and_describe_is_provenanced":5,
+         "test_overlay_moves_the_target_in_the_proposal":2}
 
 def first_line(s): return re.sub(r"\s+"," ",s.strip().split("\n\n")[0]).strip() if s else ""
 
@@ -320,8 +337,9 @@ txt(s,PI(0.7),PI(5.4),PI(12),PI(1.2),
        "commentary and every exported deck (HTML, PPTX, PDF).",12.5,False,INK)],
      [("• The same book reads differently by mandate: advisory flags, discretionary hard-blocks.",12.5,False,INK)],
      [("• Reconciliation catches the ~$436 custodian break instead of trusting it silently.",12.5,False,INK)],
-     [("• A client macro view (rate hike/cut, war, tax change) reshapes the commentary but never "
-       "moves the grounded figures.",12.5,False,INK)]],sp=6)
+     [("• A macro view as tactical text / documents reshapes the commentary but never moves the "
+       "figures; a selected macro OVERLAY deliberately shifts the recommendation via a bounded, "
+       "provenanced target tilt (rates → cash into bonds; risk-off → gold & cash up, equity down).",12.5,False,INK)]],sp=6)
 
 # per-file slides
 ICON={"Engine":GOLD,"Deliverable":NAVY,"App":GREEN}

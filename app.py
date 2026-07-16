@@ -108,6 +108,7 @@ import generate_proposal
 import narrative
 import vision_extract
 import doc_extract
+import macro_overlay
 
 
 def copy_button(text: str, label: str = "📋 Copy to clipboard",
@@ -345,8 +346,14 @@ def proposal_model(book: Book, params: dict) -> dict:
     for q in positions:
         alloc[q.asset_class] = alloc.get(q.asset_class, 0.0) + q.mv_base
     liquid = sum(q.mv_base for q in positions if q.asset_class not in ILLIQ)
-    keys = banded_keys(params["target_all"])
-    target = {k: params["target_all"][k] / 100 for k in keys}
+    # v10.1 — a MACRO OVERLAY tilts the target (deterministic, bounded, provenanced) so
+    # the rebalancing recommendation moves with the client's macro view. The drift table
+    # and the rebalance both chase the tilted target; suitability bands stay on the base.
+    eff_target_all, overlay = macro_overlay.apply_overlay(params["target_all"],
+                                                          params.get("macro_overlay"))
+    overlay_changes = macro_overlay.changes(params["target_all"], params.get("macro_overlay"))
+    keys = banded_keys(eff_target_all)
+    target = {k: eff_target_all[k] / 100 for k in keys}
 
     alloc_rows = []
     for c in dict.fromkeys(keys + list(alloc)):
@@ -357,7 +364,7 @@ def proposal_model(book: Book, params: dict) -> dict:
         alloc_rows.append([c.replace("_", " ").title(), money(cur), pct(w),
                            "no target" if t is None else pct(t), drift])
 
-    reb = rebalance(book, params["target_all"])
+    reb = rebalance(book, eff_target_all)
     reb_rows = [[str(r["Class"]).title(), f'{r["Before"] * 100:.1f}%', f'{r["Target"] * 100:.1f}%',
                  f'{r["Trade (USD)"]:+,.0f}', str(r["Direction"]), str(r["Note"])]
                 for _, r in reb.iterrows()]
@@ -393,9 +400,12 @@ def proposal_model(book: Book, params: dict) -> dict:
     for d in params.get("reference_docs") or []:
         notes.append(f"Document “{d.get('name', 'document')}” read and folded in as "
                      f"advisory context ({d.get('chars', 0):,} chars; NOT a source of figures).")
-    # FX / structured products now drive the engine and appear in the allocation &
-    # rebalance tables directly, so they are no longer surfaced as separate overlays.
-    overlays: list[str] = []
+    # v10.1 — macro overlay: surface the tilt in the deck notes + prompt so the AI
+    # explains WHY the recommendation moved (a deterministic, provenanced tilt).
+    overlay_note = macro_overlay.describe(params["target_all"], params.get("macro_overlay"))
+    if overlay_note:
+        notes.insert(0, overlay_note)
+    overlays = [f"{lbl}: target {b:.0f}% → {t:.0f}%" for lbl, b, t in overlay_changes]
 
     return {
         "title": "Asset Allocation Proposal",
@@ -416,6 +426,9 @@ def proposal_model(book: Book, params: dict) -> dict:
                         "net": f"${net_trades:+,.0f}", "selffund": bool(abs(net_trades) < 1000)},
         "gate": worst_enforcement(book.suit), "suit_items": suit_items,
         "data_quality": dq, "analyst_notes": notes, "overlays": overlays,
+        "overlay": {"key": overlay.key, "label": overlay.label,
+                    "rationale": overlay.rationale, "implementation": overlay.implementation,
+                    "changes": overlay_changes},   # (class-label, base%, tilted%) that moved
         # v10 — RAW material carried into the portable prompt (narrative.build_prompt):
         "intake": {  # the full mandate / policy the analyst set on the Intake page
             "mandate": params["mandate"], "risk": params["risk"], "ability": params["ability"],
@@ -514,7 +527,7 @@ def init_state():
                 "statement_sources": [],
                 "t_fx": 0.0, "t_structured_products": 0.0,
                 "alloc_notes": "",
-                "tactical_text": ""}
+                "tactical_text": "", "macro_overlay": "none"}
     for k, v in defaults.items():
         st.session_state.setdefault(k, v)
     for c, v in PRESETS["Balanced"].items():
@@ -750,6 +763,7 @@ params = {"mandate": st.session_state["mandate"], "risk": st.session_state["risk
           "considerations": st.session_state["alloc_notes"].strip(),
           # v10 — tactical instructions pass through as RAW text (no classification)
           "tactical_text": st.session_state.get("tactical_text", "").strip(),
+          "macro_overlay": st.session_state.get("macro_overlay", "none"),
           "statement_sources": st.session_state.get("statement_sources", []),
           "research_docs": st.session_state.get("research_docs", []),
           "other_docs": st.session_state.get("other_docs", []),
@@ -919,6 +933,25 @@ if view == "Intake":
     st.caption("These flow into the **prompt on the Proposal page** — where you (and the client) "
                "can read the exact prompt, copy it, and test it with alternative LLMs.")
 
+    # ---- Macro overlay (v10.1): a named macro view that MOVES the numbers ---- #
+    st.divider()
+    st.markdown("##### Macro overlay — move the numbers, not just the words")
+    st.caption("Optionally apply a client **macro view** as a deterministic, bounded tilt to the "
+               "target allocation. Unlike the tactical text (which shapes the write-up), this "
+               "**re-weights the target so the rebalancing recommendation shifts** — e.g. *rate "
+               "cuts* → deploy cash into bonds; *risk-off* → raise gold & cash, trim equity. The "
+               "tilt is a fixed, documented rule (never model-invented) and sums to zero; the "
+               "suitability bands stay on the strategic policy.")
+    _ov_labels = {k: l for k, l in macro_overlay.options()}
+    st.selectbox("Apply a macro overlay", list(_ov_labels), key="macro_overlay",
+                 format_func=lambda k: _ov_labels.get(k, k))
+    _ov_changes = macro_overlay.changes(
+        {k: st.session_state[f"t_{k}"] for k in ALLOC_KEYS}, st.session_state["macro_overlay"])
+    if _ov_changes:
+        _mv = " · ".join(f"{lbl} {b:.0f}%→{t:.0f}%" for lbl, b, t in _ov_changes)
+        st.markdown(f"<div class='prov'>↕ Target tilt: {_mv}</div>", unsafe_allow_html=True)
+        st.caption(macro_overlay.OVERLAYS[st.session_state["macro_overlay"]].implementation)
+
     if analyst_inputs_present():
         st.divider()
         st.markdown("##### Analyst inputs the copilot will pass to the AI")
@@ -982,6 +1015,16 @@ elif view == "Proposal":
                    "documents and the client's tactical instructions — and writes the proposal "
                    "narrative around those figures.")
         model = proposal_model(book, params)
+
+        # v10.1 — if a macro overlay is active, show that it MOVED the recommendation
+        # (the tilted target the rebalance chased) — deterministic and provenanced.
+        _ov = model.get("overlay") or {}
+        if _ov.get("changes"):
+            _mv = " · ".join(f"**{lbl}** {b:.0f}% → {t:.0f}%" for lbl, b, t in _ov["changes"])
+            st.info(f"↕ **Macro overlay applied — {_ov['label']}.** Target tilt: {_mv}. "
+                    f"{_ov['rationale']} The rebalancing below chased this tilted target, so the "
+                    f"recommendation moved with the view; every figure stays deterministic and the "
+                    f"suitability bands remain on the strategic policy.")
 
         # ---- v10: THE PROMPT — the focused instruction that generates the deck's
         #           CIO commentary. Surfaced so the client can read it, edit it, copy
